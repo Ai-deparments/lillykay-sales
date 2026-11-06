@@ -173,7 +173,7 @@ async function integrationWatch() {
     if (!prev) continue; // birinchi ko‘rish — xabar emas
     if (r.state === 'error') {
       audit('sys', names[r.name], 'Ulanish uzildi', { result: r.detail });
-      for (const u of leaders()) await sendStaff(u, `<b>${names[r.name]}: ulanish uzildi</b>\n${esc(clip(r.detail || '', 300))}`, [[{ text: 'Sozlamalar', url: `${config.publicUrl}/#sozlama` }]]);
+      for (const u of leaders()) await sendStaff(u, `<b>${names[r.name]}: ulanish uzildi</b>\n${esc(clip(r.detail || '', 300))}`, [[{ text: 'AI agent', url: `${config.publicUrl}/#agent` }]]);
     } else if (prev === 'error' && r.state === 'ok') {
       audit('sys', names[r.name], 'Ulanish tiklandi', { result: r.detail });
       for (const u of leaders()) await sendStaff(u, `<b>${names[r.name]}: ulanish tiklandi</b>\n${esc(clip(r.detail || '', 200))}`);

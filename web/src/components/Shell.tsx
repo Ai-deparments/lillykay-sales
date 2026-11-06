@@ -11,15 +11,8 @@ import { ThemeButton } from './ThemeButton';
 import { openChatStyleModal, openMeModal, openPasswordModal, openTelegramModal } from './MeModals';
 import { applyChatStyle } from '@/lib/chatStyle';
 import { Inbox } from './inbox/Inbox';
-import { Tasks } from './Tasks';
-import { Orders } from './Orders';
-import { Resale } from './Resale';
-import { Analytics } from './Analytics';
 import { Catalog } from './Catalog';
 import { Agent } from './Agent';
-import { Sellers } from './Sellers';
-import { Report } from './Report';
-import { Settings } from './Settings';
 import { Users } from './Users';
 import { Audit } from './Audit';
 
@@ -30,14 +23,11 @@ function NavItem({ href, ic, route, children, className = '' }: { href: string; 
 }
 
 export function Shell() {
-  const { boot, isLead, route, hash, navigate, badges, setBadge } = useApp();
+  const { boot, isLead, route, hash, navigate, badges } = useApp();
   const me = boot.me;
 
   // Rahbar bo‘limlariga sotuvchi kira olmaydi (app.js onRoute)
   useEffect(() => { if (LEAD_ONLY.includes(route) && !isLead) navigate('#suhbatlar'); }, [route, isLead, hash, navigate]);
-
-  // Vazifalar nishoni — ishga tushganda bir marta
-  useEffect(() => { api('/api/tasks').then(r => setBadge('tasks', (r.items || []).length)).catch(() => {}); }, [setBadge]);
 
   // Uzun tushuntirish matnlari (.lead) 2 qatorda yig‘iladi; bosilsa to‘liq ochiladi (modal ichidagilar doim to‘liq)
   useEffect(() => {
@@ -80,19 +70,12 @@ export function Shell() {
           <div className="nav-group">
             <div className="nav-label">Ish joyi</div>
             <NavItem href="suhbatlar" ic="chat" route={route}>Suhbatlar<span className="nav-badge" id="badgeWait" hidden={!badges.wait}>{badges.wait || ''}</span></NavItem>
-            <NavItem href="vazifalar" ic="refresh" route={route}>Vazifalar<span className="nav-badge" id="badgeTasks" hidden={!badges.tasks} style={{ background: 'var(--ink-2)' }}>{badges.tasks || ''}</span></NavItem>
-            <NavItem href="buyurtmalar" ic="card" route={route}>Buyurtmalar</NavItem>
-            <NavItem href="qayta" ic="spark" route={route}>Qayta sotuv</NavItem>
-            <NavItem href="tahlil" ic="chart" route={route}>Reja va tahlil</NavItem>
             <NavItem href="katalog" ic="book" route={route}>Bilim bazasi</NavItem>
             <NavItem href="jurnal" ic="log" route={route} className="seller-only">Audit jurnali</NavItem>
           </div>
           <div className="nav-group lead-only">
             <div className="nav-label">Boshqaruv</div>
             <NavItem href="agent" ic="spark" route={route}>AI agent</NavItem>
-            <NavItem href="sotuvchilar" ic="chart" route={route}>Sotuvchilar</NavItem>
-            <NavItem href="hisobot" ic="book" route={route}>Hisobot</NavItem>
-            <NavItem href="sozlama" ic="sliders" route={route}>Sozlamalar</NavItem>
             <NavItem href="xodimlar" ic="users" route={route}>Xodimlar va filiallar</NavItem>
             <NavItem href="jurnal" ic="log" route={route}>Audit jurnali</NavItem>
           </div>
@@ -121,15 +104,8 @@ export function Shell() {
         </header>
         <div className="screens">
           <section className="screen" id="s-suhbatlar" hidden={!act('suhbatlar')}><Inbox active={act('suhbatlar')} /></section>
-          <section className="screen" id="s-vazifalar" hidden={!act('vazifalar')}><div className="page" id="tasksPage"><Tasks active={act('vazifalar')} /></div></section>
-          <section className="screen" id="s-buyurtmalar" hidden={!act('buyurtmalar')}><div className="page" id="ordersPage"><Orders active={act('buyurtmalar')} /></div></section>
-          <section className="screen" id="s-qayta" hidden={!act('qayta')}><div className="page" id="resalePage"><Resale active={act('qayta')} /></div></section>
-          <section className="screen" id="s-tahlil" hidden={!act('tahlil')}><div className="page" id="analyticsPage"><Analytics active={act('tahlil')} /></div></section>
           <section className="screen" id="s-katalog" hidden={!act('katalog')}><div className="page" id="catalogPage"><Catalog active={act('katalog')} /></div></section>
           <section className="screen" id="s-agent" hidden={!act('agent')}><div className="page" id="agentPage"><Agent active={act('agent')} /></div></section>
-          <section className="screen" id="s-sotuvchilar" hidden={!act('sotuvchilar')}><div className="page" id="sellersPage"><Sellers active={act('sotuvchilar')} /></div></section>
-          <section className="screen" id="s-hisobot" hidden={!act('hisobot')}><div className="page" id="reportPage"><Report active={act('hisobot')} /></div></section>
-          <section className="screen" id="s-sozlama" hidden={!act('sozlama')}><div className="page" id="settingsPage"><Settings active={act('sozlama')} /></div></section>
           <section className="screen" id="s-xodimlar" hidden={!act('xodimlar')}><div className="page" id="usersPage"><Users active={act('xodimlar')} /></div></section>
           <section className="screen" id="s-jurnal" hidden={!act('jurnal')}><div className="page" id="auditPage"><Audit active={act('jurnal')} /></div></section>
         </div>

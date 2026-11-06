@@ -180,7 +180,7 @@ export function Users({ active }: { active: boolean }) {
                 <button className="btn sm ghost" type="button" data-invdel={i.id} onClick={() => revoke(i.id)}>Bekor qilish</button></td></tr>
           ))}
         </tbody></table></div></div> : null}
-      {billz.length ? <div className="panel"><div className="panel-head"><h2>BILLZ’dagi xodimlar</h2><span className="muted">Panelda hali yo‘q. Ism BILLZ’dagidek qoladi — «Reja va tahlil»dagi sotuvlari o‘zi bog‘lanadi</span></div>
+      {billz.length ? <div className="panel"><div className="panel-head"><h2>BILLZ’dagi xodimlar</h2><span className="muted">Panelda hali yo‘q. Ism BILLZ’dagidek qoladi</span></div>
         <div className="tbl"><table><thead><tr><th>Ism</th><th>BILLZ roli</th><th>Asosiy filial</th><th className="n">Chek, 90 kun</th><th></th></tr></thead><tbody>
           {billz.map((x, i) => (
             <tr key={i}><td>{x.name}</td><td className="muted">{x.roles.join(', ') || '—'}</td><td>{x.branch || '—'}</td><td className="n mono">{x.checks_90d}</td>

@@ -29,8 +29,8 @@ export interface AppCtx {
   /** Joriy bo‘lim kaliti (suhbatlar, vazifalar, ...) */
   route: string;
   navigate: (hash: string) => void;
-  badges: { wait: number; tasks: number };
-  setBadge: (k: 'wait' | 'tasks', n: number) => void;
+  badges: { wait: number };
+  setBadge: (k: 'wait', n: number) => void;
   catalogSeed: CatalogSeed | null;
   setCatalogSeed: (s: CatalogSeed | null) => void;
 }
@@ -44,20 +44,13 @@ export function useApp(): AppCtx {
 
 export const SCREENS: Record<string, [string, string]> = {
   suhbatlar: ['Suhbatlar', 'Telegram va Instagram — bitta navbat'],
-  vazifalar: ['Vazifalar', 'Agentlar qo‘ygan ochiq ishlar'],
-  buyurtmalar: ['Buyurtmalar', 'Karta, dastavka, muammoli tovar va yakunlanganlar'],
-  qayta: ['Qayta sotuv', 'Kunlik ro‘yxat, kampaniyalar, qoidalar — Chaqnoq'],
-  tahlil: ['Reja va tahlil', 'Reja, fakt, prognoz · filial va sotuvchilar — Obyektiv'],
   katalog: ['Bilim bazasi', 'Mahsulot kartalari — agent faqat shu yerdan gapiradi'],
   agent: ['AI agent', 'Kanal bo‘yicha yoqish, to‘xtatish va bosqichlar'],
-  sotuvchilar: ['Sotuvchilar', 'AI boshliq: topshiriqlar, tezlik, rag‘bat va ogohlantirish'],
-  hisobot: ['Hisobot', 'Oylik to‘liq tahlil — chop etish va PDF uchun'],
-  sozlama: ['Sozlamalar', 'Rahbar sozlaydi · har bir o‘zgarish yoziladi'],
   xodimlar: ['Xodimlar va filiallar', 'Rollar, Telegram bildirishnomalari'],
   jurnal: ['Audit jurnali', 'Har bir avtomatik amal']
 };
 /** Faqat rahbar/admin ko‘radigan bo‘limlar */
-export const LEAD_ONLY = ['agent', 'sotuvchilar', 'hisobot', 'sozlama', 'xodimlar'];
+export const LEAD_ONLY = ['agent', 'xodimlar'];
 
 /** app.js `route()`: hash → bo‘lim kaliti (`#suhbat/12` → suhbatlar; noma’lum → suhbatlar) */
 export function routeOf(hash: string): string {
@@ -72,7 +65,7 @@ export function AppProvider({ initialBoot, children }: { initialBoot: Boot; chil
   const [boot, setBoot] = useState<Boot>(initialBoot);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [modal, setModal] = useState<ModalState | null>(null);
-  const [badges, setBadges] = useState({ wait: 0, tasks: 0 });
+  const [badges, setBadges] = useState({ wait: 0 });
   const [catalogSeed, setCatalogSeed] = useState<CatalogSeed | null>(null);
   const hash = useHash();
   const seq = useRef(0);
@@ -106,7 +99,7 @@ export function AppProvider({ initialBoot, children }: { initialBoot: Boot; chil
   const closeModal = useCallback(() => setModal(null), []);
 
   const navigate = useCallback((h: string) => { location.hash = h; }, []);
-  const setBadge = useCallback((k: 'wait' | 'tasks', n: number) => setBadges(b => (b[k] === n ? b : { ...b, [k]: n })), []);
+  const setBadge = useCallback((k: 'wait', n: number) => setBadges(b => (b[k] === n ? b : { ...b, [k]: n })), []);
 
   const value = useMemo<AppCtx>(() => ({
     boot, reloadBoot, isLead, clockNow: clockNowFn, syncClock, toast, fail, openModal, closeModal, hash, route: routeOf(hash), navigate,

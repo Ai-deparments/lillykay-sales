@@ -11,10 +11,9 @@ import { refreshStatus as billzStatus } from './services/billz.js';
 import { getSettings } from './services/settings.js';
 import { billzTick } from './services/billz-sync.js';
 import { hasDemo, seedDemo } from './services/demo.js';
-import { startTelegram, stopTelegram, sendBusiness, sendBusinessFile, editBusiness, deleteBusiness, sendBusinessPhoto, sendBusinessAlbum, setBotReplyHook, tgTyping } from './channels/telegram.js';
+import { startTelegram, stopTelegram, sendBusiness, sendBusinessFile, editBusiness, deleteBusiness, sendBusinessPhoto, sendBusinessAlbum, tgTyping } from './channels/telegram.js';
 import { startInstagram, igTokenJob, sendInstagram, sendInstagramImage, sendInstagramAudio, senderAction } from './channels/instagram.js';
-import { dailyResale, rebalanceResale, campaignWorker, onBotReply, followups, arrivalsJob } from './agents/chaqnoq.js';
-import { dailyInsights } from './agents/obyektiv.js';
+import { followups } from './services/taqib.js';
 import { pairsJob } from './services/uslub.js';
 import { webImageJob } from './services/webimage.js';
 import { cleanupJob } from './services/tozalash.js';
@@ -97,16 +96,10 @@ server.listen(config.port, config.host, () => {
   import('./channels/keshbek.js').then(m => m.startCashbackBot()).catch(e => console.error('[keshbek]', e));
   // Mijozlarning profil rasmlari (Telegram / Instagram) — panelda bosh harflar o‘rniga; fon rejimida, sekin navbat bilan
   import('./services/avatar.js').then(m => m.startAvatars()).catch(e => console.error('[avatar]', e));
-  setBotReplyHook(onBotReply);
-  // Chaqnoq va Obyektiv: kunlik ro‘yxat, kampaniya ishchisi, kunlik xulosa (vaqtlar sozlamada, Toshkent); BILLZ sinxron
+  // Fon ishlari (har daqiqa): BILLZ sinxron, Instagram token, jim qolgan suhbatlar ta’qibi, uslub juftliklari, tozalash
   const tick = () => {
     billzTick().catch(e => console.error('billz', e));
     igTokenJob().catch(e => console.error('ig token', e));
-    dailyResale().catch(e => console.error('resale', e));
-    rebalanceResale().catch(e => console.error('resale-rebalance', e));
-    arrivalsJob().catch(e => console.error('arrivals', e));
-    campaignWorker().catch(e => console.error('campaign', e));
-    dailyInsights().catch(e => console.error('insights', e));
     followups().catch(e => console.error('followups', e));
     try { pairsJob(); } catch (e) { console.error('uslub', e); }
     try { retryAfterOutage(); } catch (e) { console.error('retry', e); }

@@ -124,29 +124,7 @@ function seedHistory(t) {
       }
     }
     for (const id of custIds) if (rnd() < 0.5) run('INSERT OR IGNORE INTO cashback(customer_id,amount,synced_at) VALUES(?,?,?)', id, Math.round(rnd() * 900) * 1000, t - 25 * 60e3);
-    // Botga ulangan va rozilik bergan demo mijozlar (kampaniya sinovi uchun; demo chat ID — manfiy, Telegram’ga yuborilmaydi)
-    custIds.slice(0, 12).forEach((id, i) => run('UPDATE customers SET bot_chat_id=?, consent_at=?, verified_at=?, verified_how=? WHERE id=?', -(900000 + i), t, t, 'Demo: botda kontakt ulashildi', id));
-    const P = n => one('SELECT id FROM products WHERE name=? AND is_demo=1', n)?.id;
-    const rule = (b, sgs, why, min = 7) => P(b) && P(sgs) && run(`INSERT INTO resale_rules(bought_product_id,suggest_product_id,reason,min_days,max_days,is_demo,created_at) VALUES(?,?,?,?,365,1,?)`, P(b), P(sgs), why, min, t);
-    rule('Sony A7 IV (korpus)', 'Sony FE 50mm f/1.8', 'Faqat korpus olgan — obyektiv xaridi yo‘q');
-    rule('Sony ZV-E10 kit 16-50mm', 'DJI Mic Mini (2 TX + 1 RX)', 'ZV-E10 egasi, mikrofon olmagan — 3.5 mm kirish orqali mos');
-    rule('Godox SL60W', 'Godox softbox 80 sm (Bowens)', 'Yoritgich olgan, softbox olmagan (Bowens ulanish)');
-    rule('Canon EOS R50 kit 18-45mm', 'Canon RF 50mm f/1.8 STM', 'R50 egasi — portret obyektiv (RF ulanish)');
-    rule('Fujifilm X-S20 + XC 15-45mm', 'SanDisk Extreme PRO SDXC 128 GB', 'Video uchun sig‘imli karta (SD slot)', 3);
-    rule('DJI Osmo Pocket 3', 'DJI Mic Mini (2 TX + 1 RX)', 'Pocket 3 egasi — tashqi mikrofon', 10);
   });
-  // Demo reja: joriy oy uchun tarixiy o‘rtacha × 1.05 (rahbar o‘zgartiradi)
-  const per = new Date(t + 5 * 3600e3).toISOString().slice(0, 7);
-  const hist = one(`SELECT sum(amount) s FROM purchases WHERE is_demo=1 AND sold_at<? AND sold_at>=?`, t - 20 * 864e5, t - 50 * 864e5).s || 0;
-  const monthPlan = Math.round(hist * 0.9 / 1e6) * 1e6; // ~30 kunlik tarix × 0.9
-  if (monthPlan) {
-    run(`INSERT OR IGNORE INTO plans(period,scope,scope_key,revenue,version,status,basis,created_by,created_at) VALUES(?,'company','*',?,1,'approved','Demo reja',?,?)`, per, monthPlan, 'demo', t);
-    run(`INSERT OR IGNORE INTO plans(period,scope,scope_key,revenue,version,status,basis,created_by,created_at) VALUES(?,'branch','Chilonzor (demo)',?,1,'approved','Demo reja',?,?)`, per, Math.round(monthPlan * 0.62 / 1e6) * 1e6, 'demo', t);
-    run(`INSERT OR IGNORE INTO plans(period,scope,scope_key,revenue,version,status,basis,created_by,created_at) VALUES(?,'branch','Yunusobod (demo)',?,1,'approved','Demo reja',?,?)`, per, Math.round(monthPlan * 0.38 / 1e6) * 1e6, 'demo', t);
-  }
-  const mic = one(`SELECT id FROM products WHERE name='DJI Mic Mini (2 TX + 1 RX)' AND is_demo=1`);
-  if (mic) run(`INSERT INTO campaigns(product_id,title,message,daily_limit,created_by,created_at,is_demo) VALUES(?,?,?,?,?,?,1)`, mic.id, 'Yangi kirim: DJI Mic Mini',
-    'Salom, {ism}! Siz olgan {xarid} bilan mos {mahsulot} keldi — qabul qilgich kameraning 3.5 mm kirishiga ulanadi. Narxi: {narx}. Qiziq bo‘lsa, «ha» deb yozing — sotuvchimiz batafsil aytadi.', 60, 'demo', t);
 }
 
 /* Demo akkauntga mijoz sifatida xabar (sinov: taymer, «O‘zim olaman», AI javobi) */
@@ -168,17 +146,12 @@ export function removeDemo(who) {
       run('DELETE FROM conversations WHERE id=?', id);
     }
     run('DELETE FROM accounts WHERE is_demo=1');
-    run('DELETE FROM campaign_sends WHERE campaign_id IN (SELECT id FROM campaigns WHERE is_demo=1)');
-    run('DELETE FROM campaigns WHERE is_demo=1');
-    run('DELETE FROM resale_rules WHERE is_demo=1');
-    run(`DELETE FROM plans WHERE created_by='demo'`);
     run('DELETE FROM tasks WHERE customer_id IN (SELECT id FROM customers WHERE is_demo=1)');
     run('DELETE FROM purchases WHERE is_demo=1');
     run('DELETE FROM cashback WHERE customer_id IN (SELECT id FROM customers WHERE is_demo=1)');
     run('UPDATE conversations SET customer_id=NULL WHERE customer_id IN (SELECT id FROM customers WHERE is_demo=1)');
     run('DELETE FROM customers WHERE is_demo=1');
-    run('DELETE FROM products WHERE is_demo=1');
-    run('DELETE FROM insights'); // demo savdosidan chiqqan xulosalar (har kuni haqiqiy ma’lumotdan qayta tuziladi)
+    run('DELETE FROM products WHERE is_demo=1'); // demo savdosidan chiqqan xulosalar (har kuni haqiqiy ma’lumotdan qayta tuziladi)
   });
   audit('staff', who, 'Demo ma’lumot o‘chirildi');
 }

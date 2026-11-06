@@ -1,13 +1,11 @@
 # Photobuy sotuv markazi
 
-Telegram (va keyin Instagram) suhbatlari, 4 ta AI agent va veb-panel. Tashqi paketlarsiz: Node ≥ 22.13 (`node:sqlite`).
+Telegram (va keyin Instagram) suhbatlari, 2 ta AI agent va veb-panel. Tashqi paketlarsiz: Node ≥ 22.13 (`node:sqlite`).
 
 | Agent | Fayl | Vazifa |
 |---|---|---|
 | Fokus | `src/agents/fokus.js` | Mijozga javob, ehtiyoj, katta ro‘yxat signali, sotuvchiga uzatish, eslatma, ta’qib matni |
 | Katalog | `src/agents/katalog.js` | Mahsulot kartasi qoralamasi (ishlab chiqaruvchi manbasi, sana bilan) — xodim tasdiqlaydi |
-| Chaqnoq | `src/agents/chaqnoq.js` | Kunlik qayta sotuv ro‘yxati, kampaniyalar (idempotent), jim qolganlar ta’qibi |
-| Obyektiv | `src/agents/obyektiv.js` | Reja/fakt/prognoz, filial va sotuvchi ko‘rsatkichlari, kunlik xulosa va ogohlantirish |
 
 Avtojavob yadrosi — `src/services/inbox.js` (3 rejim, T taymer, «O‘zim olaman», atomar yuborish, kuzatish → tasdiq → avtomatik bosqichlari). Q1 qabul sinovi: `npm test`.
 
@@ -44,11 +42,6 @@ Panelni kompyuter yoki telefonga alohida ilova qilib o‘rnatish: chap paneldagi
 - Fayllar: `public/manifest.webmanifest`, `public/sw.js` (hech narsa keshlamaydi — faqat internet yo‘qligida sahifa), `public/pwa.js` (o‘rnatish tugmasi va yo‘riqnoma), `public/icon-*.png`, `public/apple-touch-icon.png`.
 - Telefonga o‘rnatilgan ilovada panel kompyuterdagidek 1280 px ko‘rinishda ochiladi (ekranga sig‘adigan holatda, barmoq bilan kattalashtiriladi); oddiy brauzerda telefon ko‘rinishi qoladi.
 - Sayt yangilansa ilova ham o‘zi yangilanadi — alohida chiqarish (do‘kon) kerak emas.
-
-## Qayta sotuv taqsimoti
-Kunlik ro‘yxat (Chaqnoq) faol sotuvchilarga filial bo‘yicha navbat bilan tushadi. Sotuvchi o‘chirilsa yoki ro‘yxat tuzilganda sotuvchi bo‘lmasa,
-egasiz vazifalar har daqiqada faol sotuvchilarga qayta taqsimlanadi (`rebalanceResale`) va sotuvchiga Telegram’da xabar ketadi.
-Sotuvchi kartasida: qo‘ng‘iroq, suhbatni ochish va BILLZ ma’lumotidan tuzilgan tayyor taklif matni.
 
 ## Instagram Direct (Meta)
 Veb-huk manzili: `https://<domen>/webhook/instagram` (GET — tasdiq, POST — hodisalar; har so‘rov `X-Hub-Signature-256` bilan tekshiriladi).

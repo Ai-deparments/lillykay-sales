@@ -1,7 +1,7 @@
 import { config, aiReady } from './config.js';
 import { aiInfo } from './ai/index.js';
-import { one, all, run, tx, kvGet, kvSet } from './db.js';
-import { now, code6, token, jparse, clip, currency, money } from './util.js';
+import { one, all, run, tx, kvGet } from './db.js';
+import { now, code6, token, jparse, clip } from './util.js';
 import { router, readJson, json, HttpError, bad } from './core/http.js';
 import { login, logout, currentUser, need, can, convScopeSql, publicUser, hashPassword, checkPassword, normLogin } from './core/auth.js';
 import { audit, recentAudit } from './core/audit.js';
@@ -10,11 +10,9 @@ import * as inbox from './services/inbox.js';
 import { customerProfile, billzMode, resetBranchKinds } from './services/billz.js';
 import { listProducts, product, saveProduct, verifyProduct, cardForAgent } from './services/catalog.js';
 import { avatarUrl, readAvatar } from './services/avatar.js';
-import { hasDemo, seedDemo, removeDemo, simulateClient } from './services/demo.js';
+import { hasDemo, simulateClient } from './services/demo.js';
 import { botUsername, telegramRunning } from './channels/telegram.js';
 import { fetchMedia } from './services/media.js';
-import { dailyResale, candidates, createCampaign, setCampaignStatus, campaignSegment, campaignStats, personalize, suggestRules, rejectSuggestion, bestInCategory, starterRules, newArrivals } from './agents/chaqnoq.js';
-import { dashboard, setPlan, suggestPlan, dailyInsights, currentPeriod, topProducts } from './agents/obyektiv.js';
 
 export const api = router();
 const R = api;
@@ -56,43 +54,6 @@ function backupState() {
   const hours = Math.round((now() - at) / 36e5);
   const when = new Date(at + 5 * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
   return { state: hours > 36 ? 'error' : 'ok', detail: `Oxirgisi: ${when}${hours > 36 ? ` (${hours} soat oldin — tekshirish kerak)` : ''} · ${info}` };
-}
-
-/* ---------- ishga tushirish tayyorligi ---------- */
-/* Rahbar bitta joyda ko‘radi: nima tayyor, nima kutilmoqda, kim qiladi va bo‘lmasa nima ishlamaydi.
-   Hammasi jonli ma’lumotdan sanaladi — qo‘lda belgilanadigan ro‘yxat emas. */
-export function readiness() {
-  const int = integrations();
-  const n = (sql, ...a) => one(sql, ...a).n;
-  const staff = n(`SELECT count(*) n FROM users WHERE active=1 AND role<>'admin'`);
-  const noPass = n(`SELECT count(*) n FROM users WHERE active=1 AND pass_hash IS NULL`);
-  const noTg = n(`SELECT count(*) n FROM users WHERE active=1 AND tg_chat_id IS NULL`);
-  const chan = n(`SELECT count(*) n FROM accounts WHERE enabled=1 AND channel<>'demo'`);
-  const plan = one(`SELECT revenue FROM plans WHERE period=? AND status='approved' ORDER BY version DESC LIMIT 1`, currentPeriod());
-  const rules = n(`SELECT count(*) n FROM resale_rules WHERE active=1`);
-  const cards = n(`SELECT count(*) n FROM products WHERE billz_id IS NOT NULL`);
-  const ok = n(`SELECT count(*) n FROM products WHERE status='verified'`);
-  const pre = n(`SELECT count(*) n FROM products WHERE specs LIKE 'Dastlabki%'`);
-  const item = (state, title, detail, who, gap) => ({ state, title, detail, who, gap });
-  const items = [
-    item(int.billz.state === 'ok' ? 'ok' : 'wait', 'BILLZ ma’lumoti', int.billz.detail || int.billz.state, 'Photobuy', 'Narx, qoldiq, xarid va keshbek — yo‘q'),
-    item(int.ai.state === 'ok' ? 'ok' : 'wait', 'AI kaliti (Gemini yoki Anthropic)', int.ai.detail, 'Photobuy', 'AI qoralama yozmaydi — javobni sotuvchi yozadi'),
-    item(botUsername() ? (chan ? 'ok' : 'wait') : 'wait', 'Telegram Business ulanishi',
-      botUsername() ? (chan ? `${chan} ta akkaunt ulangan` : `@${botUsername()} tayyor — BotFather’da Business Mode va akkauntga ulash kerak`) : 'Bot tokeni kiritilmagan',
-      'Photobuy', 'Telegram suhbatlari panelga tushmaydi'),
-    item(int.instagram.state === 'ok' ? 'ok' : 'wait', 'Instagram', int.instagram.detail, 'Photobuy (Meta)', 'Instagram Direct panelga tushmaydi'),
-    item(staff ? 'ok' : 'wait', 'Xodimlar va filiallar', `${staff} xodim, ${n('SELECT count(*) n FROM branches WHERE active=1')} filial`, 'Sotuv rahbari', 'Suhbatga mas’ul tayinlanmaydi'),
-    item(noPass ? 'wait' : 'ok', 'Xodimlarga parol', noPass ? `${noPass} xodimga hali parol berilmagan` : 'Hammasida parol bor', 'Sotuv rahbari', 'Ular panelga kira olmaydi'),
-    item(noTg ? 'wait' : 'ok', 'Telegram bildirishnomalari', noTg ? `${noTg} xodim ulanmagan` : 'Hamma ulangan', 'Har bir xodim', 'Katta buyurtma va kechikish signali bormaydi'),
-    item(plan ? 'ok' : 'wait', 'Oylik reja', plan ? `${currentPeriod()}: ${money(plan.revenue)}` : 'Kiritilmagan — «Reja va tahlil»da tasdiqlanadi', 'Sotuv rahbari', 'Bajarilish foizi va «reja ortda» ogohlantirishi yo‘q'),
-    item(rules ? 'ok' : 'wait', 'Qayta sotuv qoidalari', rules ? `${rules} qoida yoqilgan` : 'Yoqilmagan — «Qoidalar»da boshlang‘ich ro‘yxat tayyor', 'Sotuv rahbari', 'Kunlik qayta sotuv ro‘yxati tuzilmaydi'),
-    item(ok >= 60 ? 'ok' : 'wait', 'Bilim bazasi kartalari',
-      `${ok} / ${cards} tasdiqlangan${ok < 60 ? ' (qabul sinovi uchun kamida 60 ta)' : ''} · ${pre} tasida dastlabki qoralama tayyor — AI kaliti kelgach «A to‘lqini» (60 ta) ~15 daqiqada to‘ldiriladi`,
-      'Sotuv rahbari + AI kaliti', 'Agent moslik va xususiyatni aytmaydi — savol sotuvchiga uzatiladi'),
-    item(hasDemo() ? 'wait' : 'ok', 'Demo ma’lumot', hasDemo() ? 'Hali yoqilgan — haqiqiy ish oldidan o‘chiriladi' : 'O‘chirilgan', 'Automind', 'Hisobotlarga demo raqamlar aralashadi'),
-    item(int.backup.state === 'ok' ? 'ok' : 'wait', 'Zaxira nusxa', int.backup.detail, 'Automind', 'Nosozlikda ma’lumot tiklanmaydi')
-  ];
-  return { items, ready: items.filter(x => x.state === 'ok').length, total: items.length };
 }
 
 /* ---------- suhbatlar ---------- */
@@ -396,39 +357,6 @@ R.post('/api/accounts/:id', async (req, res, u, p) => {
   inbox.setAccount(Number(p.id), { mode: b.mode, rollout: b.rollout, ai_enabled: b.ai_enabled, branch_id: b.branch_id, owner_user_id: b.owner_user_id }, u);
   json(res, { ok: true });
 });
-/* Sotuvchilar nazorati (boshliq agent): davr bo‘yicha natija, ochiq topshiriqlar */
-R.get('/api/sellers', async (req, res, u) => {
-  need(u, 'settings');
-  const days = [1, 7, 30].includes(Number(new URL(req.url, 'http://x').searchParams.get('days'))) ? Number(new URL(req.url, 'http://x').searchParams.get('days')) : 7;
-  const today0 = new Date(new Date(now() + 5 * 3600e3).toISOString().slice(0, 10) + 'T00:00:00+05:00').getTime();
-  const from = today0 - (days - 1) * 864e5;
-  const d = await import('./services/dispatch.js');
-  const s = getSettings();
-  json(res, { days, items: d.sellerStats(from, now(), s), open: d.openAssignments(), kinds: d.KINDS, statusL: d.STATUS_L, bot: botUsername(),
-    settings: { assign_accept_minutes: s.assign_accept_minutes, assign_done_minutes: s.assign_done_minutes, seller_report_time: s.seller_report_time, seller_auto_warn: s.seller_auto_warn, assign_urgent_minutes: s.assign_urgent_minutes, staff_active_minutes: s.staff_active_minutes } });
-});
-/* Sotuvchi profili: natija, AI va tizim izohlari, rahbar bilan yozishma, topshiriqlari */
-R.get('/api/sellers/:id', async (req, res, u, p) => {
-  need(u, 'settings');
-  const days = [7, 30, 90].includes(Number(new URL(req.url, 'http://x').searchParams.get('days'))) ? Number(new URL(req.url, 'http://x').searchParams.get('days')) : 30;
-  const d = await import('./services/dispatch.js');
-  const prof = d.sellerProfile(Number(p.id), days);
-  if (!prof) throw new HttpError(404, 'not_found');
-  json(res, { ...prof, days, kinds: d.KINDS, statusL: d.STATUS_L });
-});
-/* Rahbar paneldan: topshiriqni bajarildi deb belgilash yoki bekor qilish */
-R.post('/api/assignments/:id', async (req, res, u, p) => {
-  need(u, 'settings');
-  const b = await readJson(req);
-  const d = await import('./services/dispatch.js');
-  if (b.action === 'done') return json(res, { ok: true, msg: d.doneAssignment(p.id, u) });
-  if (b.action === 'cancel') {
-    const r = run(`UPDATE assignments SET status='cancelled', done_at=? WHERE id=? AND status IN ('queued','offered','accepted','escalated')`, now(), Number(p.id));
-    if (r.changes) audit('staff', u.name, 'Topshiriq bekor qilindi', { object: `assignment:${p.id}` });
-    return json(res, { ok: Boolean(r.changes) });
-  }
-  throw bad('bad_action');
-});
 /* AI agent sahifasi: har kanal bo‘yicha bugungi ish (Toshkent kuni) */
 R.get('/api/agent', (req, res, u) => {
   need(u, 'settings');
@@ -467,8 +395,6 @@ R.get('/api/agent/pulse', (req, res, u) => {
    o‘zgarishlar tarixi esa faqat jurnalni ko‘ra oladiganlarga */
 R.get('/api/settings', (req, res, u) => json(res, { settings: getSettings(), changes: can.audit(u) ? recentChanges(60) : [] }));
 R.post('/api/settings', async (req, res, u) => { need(u, 'settings'); const ch = updateSettings(await readJson(req), u.name); json(res, { ok: true, changed: ch }); });
-
-R.get('/api/readiness', (req, res, u) => { need(u, 'settings'); json(res, readiness()); });
 
 /* ---------- audit ---------- */
 R.get('/api/audit', (req, res, u) => { need(u, 'audit'); json(res, { items: recentAudit(new URL(req.url, 'http://x').searchParams.get('kind')) }); });
@@ -717,33 +643,6 @@ R.post('/api/bot/reklama', async (req, res, u) => {
   json(res, { ok: true, id, total: r.total });
 });
 
-/* ---------- Buyurtmalar bo'limi ----------
-   AI boshliq qo'ygan ishlar turi bo'yicha: karta/to'lov so'raganlar, dastavka, muammoli tovar (shikoyat),
-   rasm so'raganlar va yakunlanganlar. «Mijozga javob berish» (javob) bu yerga kirmaydi — u «Vazifalar»da. */
-const ORDER_KINDS = ['tolov', 'buyurtma', 'shikoyat', 'rasm', 'boshqa'];
-R.get('/api/orders', (req, res, u) => {
-  const want = new URL(req.url, 'http://x').searchParams.get('tab');
-  const tab = ORDER_KINDS.includes(want) ? want : want === 'yakun' ? 'yakun' : 'tolov';
-  const sc = convScopeSql(u);
-  const scope = can.seeAll(u) ? '1=1' : `(${sc.where})`;
-  const sa = can.seeAll(u) ? [] : sc.args;
-  const OPEN_S = `('queued','offered','accepted','escalated')`;
-  const week = now() - 7 * 864e5;
-  const counts = {};
-  for (const k of ORDER_KINDS) counts[k] = one(`SELECT count(*) n FROM assignments a JOIN conversations c ON c.id=a.conversation_id
-    WHERE a.kind=? AND a.status IN ${OPEN_S} AND ${scope}`, k, ...sa).n;
-  counts.yakun = one(`SELECT count(*) n FROM assignments a JOIN conversations c ON c.id=a.conversation_id
-    WHERE a.kind<>'javob' AND a.status='done' AND a.done_at>? AND ${scope}`, week, ...sa).n;
-  const base = `SELECT a.id, a.kind, a.title, a.body, a.status, a.urgent, a.created_at, a.done_at, a.conversation_id,
-      us.name AS user_name, c.display_name, c.handle, c.phone, c.stage, c.heat, ac.channel
-    FROM assignments a JOIN conversations c ON c.id=a.conversation_id JOIN accounts ac ON ac.id=c.account_id
-    LEFT JOIN users us ON us.id=a.user_id WHERE ${scope} AND `;
-  const items = tab === 'yakun'
-    ? all(base + `a.kind<>'javob' AND a.status='done' AND a.done_at>? ORDER BY a.done_at DESC LIMIT 100`, ...sa, week)
-    : all(base + `a.kind=? AND a.status IN ${OPEN_S} ORDER BY a.urgent DESC, a.created_at ASC LIMIT 100`, ...sa, tab);
-  json(res, { tab, counts, items });
-});
-
 /* ---------- Taklif havolasi ----------
    Rahbar havola yaratadi → xodim havolani ochadi → o‘zi parol qo‘yadi → o‘ziga berilgan rolda darhol kiradi.
    Parol hech qachon rahbarda ham, yozishmada ham ko‘rinmaydi. Havola bir martalik va muddatli. */
@@ -887,21 +786,6 @@ R.post('/api/branches', async (req, res, u) => {
   json(res, { ok: true });
 });
 
-/* ---------- vazifalar ---------- */
-R.get('/api/tasks', (req, res, u) => {
-  // Sotuvchi/filial: o‘z vazifalari va egasiz vazifalar — faqat o‘zi ko‘radigan suhbatlardan (boshqa filial suhbati matni chiqmaydi)
-  const sc = convScopeSql(u);
-  const mine = can.seeAll(u) ? '1=1' : `t.user_id=? OR (t.user_id IS NULL AND (t.conversation_id IS NULL OR (${sc.where})))`;
-  json(res, { items: all(`SELECT t.*, us.name AS user_name, c.display_name AS conv_name FROM tasks t LEFT JOIN users us ON us.id=t.user_id
-    LEFT JOIN conversations c ON c.id=t.conversation_id WHERE t.status='open' AND t.kind NOT IN ('resale','campaign','campaign_reply') ${can.seeAll(u) ? '' : "AND t.kind<>'arrival'"} AND (${mine})
-    ORDER BY CASE WHEN t.kind IN ('handoff','draft_failed','send_failed','send_unknown','window_closed','big_order') THEN 0 ELSE 1 END, t.created_at DESC LIMIT 300`, ...(can.seeAll(u) ? [] : [u.id, ...sc.args])),   // mijoz kutayotgan ishlar va yangilari tepada (ilgari eng eskisi birinchi — yangisi 200 talikka sig‘masdi)
-    // Yopilgan vazifa izsiz yo‘qolmasin: oxirgi sutkada yopilganlari ham ko‘rinadi
-    closed: all(`SELECT t.id, t.kind, t.title, t.result, t.done_at, us.name AS user_name, c.display_name AS conv_name, t.conversation_id
-      FROM tasks t LEFT JOIN users us ON us.id=t.user_id LEFT JOIN conversations c ON c.id=t.conversation_id
-      WHERE t.status='done' AND t.done_at > ? AND t.kind NOT IN ('resale','campaign','campaign_reply') AND (${mine})
-      ORDER BY t.done_at DESC LIMIT 40`, now() - 24 * 3600e3, ...(can.seeAll(u) ? [] : [u.id, ...sc.args])) });
-});
-
 /* ---------- BILLZ: qo‘lda sinxron (rahbar/admin) ---------- */
 R.post('/api/billz/sync', async (req, res, u) => {
   need(u, 'settings');
@@ -914,8 +798,6 @@ R.post('/api/billz/sync', async (req, res, u) => {
 });
 
 /* ---------- demo ---------- */
-R.post('/api/demo/seed', (req, res, u) => { need(u, 'settings'); json(res, { ok: seedDemo() }); });
-R.post('/api/demo/remove', (req, res, u) => { need(u, 'settings'); removeDemo(u.name); json(res, { ok: true }); });
 R.post('/api/demo/client', async (req, res, u) => {
   need(u, 'settings');
   const b = await readJson(req);
@@ -924,53 +806,6 @@ R.post('/api/demo/client', async (req, res, u) => {
   json(res, { ok: true, id: c.id });
 });
 
-/* ---------- Chaqnoq: qayta sotuv va kampaniyalar ---------- */
-R.get('/api/resale', (req, res, u) => {
-  const mine = can.seeAll(u) ? '' : 'AND (t.user_id=? OR t.user_id IS NULL)';
-  const items = all(`SELECT t.*, us.name AS user_name, c.name AS customer_name, c.phone, c.bot_chat_id,
-      (SELECT v.id FROM conversations v WHERE v.customer_id=t.customer_id ORDER BY v.last_msg_at DESC LIMIT 1) conv_id FROM tasks t LEFT JOIN users us ON us.id=t.user_id
-    LEFT JOIN customers c ON c.id=t.customer_id WHERE t.kind IN ('resale','campaign','campaign_reply') AND (t.status='open' OR t.done_at>?) ${mine}
-    ORDER BY t.status='open' DESC, t.due_at LIMIT 300`, now() - 864e5, ...(can.seeAll(u) ? [] : [u.id]));
-  json(res, { items: items.map(t => ({ ...t, meta: jparse(t.meta, null), phone: can.seeAll(u) || t.user_id === u.id ? t.phone : null })),
-    overdue: all(`SELECT count(*) n FROM tasks WHERE kind='resale' AND status='open' AND due_at<?`, now())[0].n,
-    rules: one(`SELECT count(*) n FROM resale_rules WHERE active=1`)?.n ?? 0 });
-});
-R.post('/api/resale/run', async (req, res, u) => { need(u, 'settings'); json(res, { ok: true, ...(await dailyResale({ force: true, who: u.name })) }); });
-R.get('/api/rules', (req, res, u) => json(res, { items: all(`SELECT r.*, bp.name AS bought_name, sp.name AS suggest_name FROM resale_rules r LEFT JOIN products bp ON bp.id=r.bought_product_id JOIN products sp ON sp.id=r.suggest_product_id ORDER BY r.id`)
-  .map(r => ({ ...r, evidence: jparse(r.evidence, null), today: r.suggest_category ? (bestInCategory(r.suggest_category)?.name ?? null) : null,
-    bought_category: r.bought_category?.replaceAll('|', ' / ') ?? null, suggest_category: r.suggest_category?.replaceAll('|', ' / ') ?? null })) }));
-/* Xaridlar tarixidan tavsiyalar (10 daqiqa xotirada — hisoblash og‘ir emas, lekin sahifa har ochilganda qayta sanalmasin) */
-let sugCache = { at: 0, data: null };
-R.get('/api/rules/suggest', (req, res, u) => {
-  need(u, 'catalogEdit');
-  if (!sugCache.data || now() - sugCache.at > 600e3) sugCache = { at: now(), data: { ...suggestRules(), starter: starterRules() } };
-  json(res, sugCache.data);
-});
-R.post('/api/rules/reject', async (req, res, u) => {
-  need(u, 'catalogEdit');
-  const b = await readJson(req);
-  if (!b.a || !b.b) throw bad('rule_incomplete');
-  rejectSuggestion(clip(b.a, 120), clip(b.b, 120), u.name); sugCache.at = 0;
-  json(res, { ok: true });
-});
-R.post('/api/rules', async (req, res, u) => {
-  need(u, 'catalogEdit');
-  const b = await readJson(req);
-  const cats = b.bought_category && b.suggest_category;
-  // Tur bo‘yicha qoida: namuna tovar — bugun shu turdagi eng mos mavjud model (keyin har kuni qayta tanlanadi)
-  const suggestId = Number(b.suggest_product_id) || (b.suggest_category ? (bestInCategory(b.suggest_category)?.id ?? one('SELECT id FROM products WHERE category=? LIMIT 1', b.suggest_category.split('|')[0])?.id) : null);
-  if (!suggestId || !String(b.reason || '').trim() || !(b.bought_product_id || b.bought_match || b.bought_category)) throw bad('rule_incomplete');
-  const minD = Math.max(1, Number(b.min_days) || 7), maxD = Math.min(730, Math.max(minD, Number(b.max_days) || 365));
-  const ev = b.evidence ? JSON.stringify(b.evidence).slice(0, 2000) : null;
-  if (b.id) run('UPDATE resale_rules SET bought_product_id=?, bought_match=?, bought_category=?, suggest_product_id=?, suggest_category=?, reason=?, min_days=?, max_days=?, active=? WHERE id=?',
-    b.bought_product_id || null, b.bought_match || null, cats ? clip(b.bought_category, 300) : null, suggestId, cats ? clip(b.suggest_category, 300) : null, clip(b.reason, 200), minD, maxD, b.active === false ? 0 : 1, b.id);
-  else run('INSERT INTO resale_rules(bought_product_id,bought_match,bought_category,suggest_product_id,suggest_category,reason,min_days,max_days,evidence,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
-    b.bought_product_id || null, b.bought_match || null, cats ? clip(b.bought_category, 300) : null, suggestId, cats ? clip(b.suggest_category, 300) : null, clip(b.reason, 200), minD, maxD, ev, now());
-  sugCache.at = 0;
-  audit('staff', u.name, 'Qayta sotuv qoidasi saqlandi', { data: cats ? `${b.bought_category} → ${b.suggest_category}: ${b.reason}` : b.reason });
-  if (b.starter) kvSet('rule_starter_added', now());
-  json(res, { ok: true });
-});
 /* Keshbekli mijozlar (BILLZ): balans, jami xaridi va oxirgi xaridi. Qidiruv va filtrlar bilan — «Keshbek» bo‘limi.
    Filtrlar: q — ism yoki telefon; min — eng kam balans; phone=1 — faqat telefoni borlar;
    period: yangi (90 kun ichida xarid qilgan) | uxlagan (1 yildan beri xarid yo‘q); sort: keshbek | xarid | oxirgi. */
@@ -998,35 +833,6 @@ R.get('/api/cashback', (req, res, u) => {
   const bor = one(`SELECT count(*) n FROM cashback cb JOIN customers c ON c.id=cb.customer_id WHERE cb.amount>0 AND COALESCE(c.is_demo,0)=0`);
   json(res, { items, n: sum.n, total: sum.total, hammasi: bor.n, synced_at: one('SELECT max(synced_at) t FROM cashback').t });
 });
-/* Qoida/kampaniya oynasi uchun tovar tanlash: hammasi, do‘konda bori oldin (katalog sahifasi 100 tadan cheklangan) */
-R.get('/api/pick/products', (req, res, u) => {
-  const { items } = listProducts('', { limit: 5000 });
-  json(res, { items: items.map(p => ({ id: p.id, name: p.name, stock: p.billz.stock_total, has_photo: p.has_photo })) });
-});
-R.get('/api/campaigns', (req, res, u) => json(res, { items: all(`SELECT c.*, p.name AS product_name FROM campaigns c JOIN products p ON p.id=c.product_id ORDER BY c.id DESC LIMIT 50`)
-  .map(c => ({ ...c, stats: campaignStats(c.id) })) }));
-R.post('/api/campaigns', async (req, res, u) => { need(u, 'settings'); const b = await readJson(req); json(res, { ok: true, id: createCampaign(b, u.name) }); });
-R.get('/api/campaigns/:id/segment', (req, res, u, p) => {
-  const cp = one('SELECT * FROM campaigns WHERE id=?', Number(p.id)); if (!cp) throw new HttpError(404, 'not_found');
-  const seg = campaignSegment(cp.id), product = one('SELECT * FROM products WHERE id=?', cp.product_id);
-  const sample = seg.bot[0] || seg.task[0];
-  json(res, { total: seg.total, excluded: seg.excluded, freq: seg.freq, bot: seg.bot.length, no_consent: seg.no_consent.length, task: seg.task.length,
-    preview: sample ? personalize(cp.message, sample, product) : null, reason: sample?.rule.reason || null });
-});
-R.post('/api/campaigns/:id/status', async (req, res, u, p) => { need(u, 'settings'); const b = await readJson(req); setCampaignStatus(Number(p.id), b.status, u.name); json(res, { ok: true }); });
-
-R.get('/api/arrivals', (req, res, u) => json(res, { items: newArrivals({ days: Number(new URL(req.url, 'http://x').searchParams.get('days')) || 14 }) }));
-
-/* ---------- Obyektiv: reja, fakt, prognoz ---------- */
-R.get('/api/analytics', (req, res, u) => {
-  const period = new URL(req.url, 'http://x').searchParams.get('period') || currentPeriod();
-  if (!/^\d{4}-\d{2}$/.test(period)) throw bad('bad_period');
-  json(res, dashboard(period, u));
-});
-R.post('/api/plans', async (req, res, u) => { need(u, 'settings'); const b = await readJson(req); json(res, { ok: true, version: setPlan({ period: b.period, scope: b.scope || 'company', key: b.key || '*', revenue: b.revenue }, u.name) }); });
-R.post('/api/plans/suggest', async (req, res, u) => { need(u, 'settings'); const b = await readJson(req); json(res, suggestPlan(b.period || currentPeriod(), u.name)); });
-R.post('/api/insights/run', async (req, res, u) => { need(u, 'settings'); json(res, { ok: true, made: await dailyInsights({ force: true }) }); });
-
 /* ---------- CSV eksport (Excel: UTF-8 BOM, «;» ajratgich) — rahbar ---------- */
 /* Formula in’ektsiyasi: mijoz ismi «=», «+», «-», «@» bilan boshlansa Excel uni formula deb bajarmasin */
 const csvCell = v => {
@@ -1049,28 +855,6 @@ R.get('/api/export/:name', (req, res, u, p) => {
     return sendCsv(res, 'suhbatlar.csv', ['ID', 'Mijoz', 'Akkaunt', 'Kanal', 'Filial', 'Mas’ul', 'Bosqich', 'Qiziqish', 'So‘ralgan', 'Budjet', 'Keyingi qadam', 'Yo‘qotish sababi', 'Birinchi murojaat', 'Oxirgi xabar', 'Javob kutmoqda (daq)'],
       rows.map(c => [c.id, c.display_name || c.handle, c.account_name, c.channel, c.branch_name, c.owner_name, inbox.STAGES[c.stage], c.heat, c.asked, c.budget, c.next_step, c.lost_reason,
         dt(c.created_at), dt(c.last_msg_at), c.pending_since ? Math.floor((now() - c.pending_since) / 60e3) : '']));
-  }
-  if (p.name === 'qayta-sotuv.csv') {
-    const rows = all(`SELECT t.*, us.name AS user_name, c.name AS customer_name, c.phone FROM tasks t LEFT JOIN users us ON us.id=t.user_id LEFT JOIN customers c ON c.id=t.customer_id
-      WHERE t.kind IN ('resale','campaign','campaign_reply') ORDER BY t.created_at DESC LIMIT 5000`);
-    return sendCsv(res, 'qayta-sotuv.csv', ['Sana', 'Turi', 'Mijoz', 'Telefon', 'Mas’ul', 'Sabab', 'Tavsiya', 'Holat', 'Natija', 'Muddat'],
-      rows.map(t => { const m = jparse(t.meta, {}) || {}; return [dt(t.created_at), t.kind, t.customer_name, t.phone, t.user_name, m.reason || t.body, m.suggest?.name, t.status, t.result, dt(t.due_at)]; }));
-  }
-  if (p.name === 'sotuvchilar.csv' || p.name === 'filiallar.csv') {
-    const period = q.get('period') || currentPeriod();
-    if (!/^\d{4}-\d{2}$/.test(period)) throw bad('bad_period');
-    const d = dashboard(period, u);
-    const c = currency();
-    if (p.name === 'filiallar.csv') return sendCsv(res, `filiallar-${period}.csv`, ['Filial', `Reja (${c})`, `Fakt, sof (${c})`, 'Bajarilish %', `Prognoz (${c})`, 'Chek', 'Suhbat', '1-javob mediana (daq)', '30+ daq javobsiz'],
-      d.branches.map(b => [b.name, b.plan, b.net, b.pct, b.forecast, b.checks, b.conv?.convs, b.conv?.first_median_min, b.conv?.late30]));
-    return sendCsv(res, `sotuvchilar-${period}.csv`, ['Sotuvchi', `Fakt, sof (${c})`, `Reja (${c})`, 'Bajarilish %', 'Chek', 'Suhbat', '1-javob o‘zi (daq)', 'AI yordam bergan', 'Ochiq vazifa'],
-      d.sellers.map(x => [x.name, x.net, x.plan, x.pct, x.checks, x.conv?.convs, x.conv?.first_human_median_min, x.conv?.ai_assisted, x.open_tasks]));
-  }
-  if (p.name === 'tovarlar.csv') {
-    const period = q.get('period') || currentPeriod();
-    if (!/^\d{4}-\d{2}$/.test(period)) throw bad('bad_period');
-    return sendCsv(res, `tovarlar-${period}.csv`, ['Tovar', 'Toifa', `Sof savdo (${currency()})`, 'Dona (sof)', 'Chek', 'Qaytarilgan dona'],
-      topProducts(period, { limit: 1000 }).map(x => [x.name, x.category, x.net, x.qty, x.checks, x.returned]));
   }
   if (p.name === 'audit.csv') {
     const rows = all('SELECT * FROM audit ORDER BY id DESC LIMIT 20000');

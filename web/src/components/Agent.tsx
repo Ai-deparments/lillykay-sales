@@ -178,7 +178,7 @@ export function Agent({ active }: { active: boolean }) {
         </div>
       )) : <div className="banner warn"><div><b>Hali kanal ulanmagan.</b> Telegram yoki Instagram ulangach shu yerda chiqadi.</div></div>}
       <div className="panel"><div className="panel-head"><h2>Umumiy qoidalar</h2></div>
-        <p className="lead" style={{ fontSize: 13, margin: 0 }}>Kechikish T = <b>{T} s</b> · tungi avtojavob: <b>{r.settings.night_autoreply ? 'yoqilgan' : 'o‘chiq'}</b> · ish vaqti {r.settings.work_from}–{r.settings.work_to}. O‘zgartirish: <a href="#sozlama">Sozlamalar → Qoidalar</a>.</p></div>
+        <p className="lead" style={{ fontSize: 13, margin: 0 }}>Kechikish T = <b>{T} s</b> · tungi avtojavob: <b>{r.settings.night_autoreply ? 'yoqilgan' : 'o‘chiq'}</b> · ish vaqti {r.settings.work_from}–{r.settings.work_to}.</p></div>
       {use ? <UsagePanel x={use} /> : null}
     </>
   );

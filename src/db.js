@@ -415,6 +415,16 @@ ALTER TABLE conversations ADD COLUMN avatar_v INTEGER;
 /* Mijoz ovozli javobni xohlaydimi: 'ha' — o'zi so'ragan yoki ovozda yozishyapti, 'yoq' — matnda so'ragan,
    NULL — hali noma'lum (unda ovozli xabar yuborgan bo'lsa javob ham ovozda ketadi). AI suhbatdan bilib qo'yadi. */
 ALTER TABLE conversations ADD COLUMN voice_pref TEXT;
+`,
+`
+/* Sun HighTech (2026-11-06): «Qayta sotuv», «Buyurtmalar», «Vazifalar», «Reja va tahlil» bo‘limlari olib tashlandi —
+   ularning jadvallari va ular qo‘ygan vazifalar ham. Suhbatlar, bilim bazasi, AI agent va xodimlar qoladi. */
+DROP TABLE IF EXISTS campaign_sends;
+DROP TABLE IF EXISTS campaigns;
+DROP TABLE IF EXISTS resale_rules;
+DROP TABLE IF EXISTS plans;
+DROP TABLE IF EXISTS insights;
+DELETE FROM tasks WHERE kind IN ('resale','campaign','campaign_reply','arrival');
 `
 ];
 

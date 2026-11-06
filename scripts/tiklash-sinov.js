@@ -46,7 +46,7 @@ check('joriy kod uchun migratsiya', migrated);
 
 // 3) ma’lumot joyidami
 const n = t => one(`SELECT count(*) c FROM ${t}`).c;
-const rows = { xodimlar: n('users'), filiallar: n('branches'), tovarlar: n('products'), mijozlar: n('customers'), xaridlar: n('purchases'), suhbatlar: n('conversations'), xabarlar: n('messages'), qoidalar: n('resale_rules') };
+const rows = { xodimlar: n('users'), filiallar: n('branches'), tovarlar: n('products'), mijozlar: n('customers'), xaridlar: n('purchases'), suhbatlar: n('conversations'), xabarlar: n('messages') };
 console.log('  ' + Object.entries(rows).map(([k, v]) => `${k}: ${v}`).join(' · '));
 check('xodimlar va filiallar bor', rows.xodimlar > 0 && rows.filiallar > 0);
 check('parollar saqlangan', one(`SELECT count(*) c FROM users WHERE pass_hash LIKE 's1$%'`).c > 0, `${one(`SELECT count(*) c FROM users WHERE pass_hash LIKE 's1$%'`).c} ta xodim kira oladi`);

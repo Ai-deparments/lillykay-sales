@@ -69,7 +69,6 @@ const { migrate, run, one, all } = await import('../src/db.js');
 const { billzTick, syncPurchases, refreshClientByPhone, syncProducts } = await import('../src/services/billz-sync.js');
 const { integration } = await import('../src/services/settings.js');
 const { customerByPhone, priceStock, customerProfile } = await import('../src/services/billz.js');
-const { facts } = await import('../src/agents/obyektiv.js');
 const { config } = await import('../src/config.js');
 const { resetBillzAuth } = await import('../src/services/billz-api.js');
 
@@ -179,14 +178,6 @@ test('xaridlar: sotuv va qaytarish alohida; sof = sotuv − qaytarish; chek soni
   assert.ok(ret.product_id, 'tovar BILLZ product_id bo‘yicha bog‘landi');
   assert.equal(sales.find(s => s.product_name === 'Aksessuar 1').branch_id, one(`SELECT id FROM branches WHERE name='Yunusobod'`).id);
   assert.equal(sales.find(s => s.product_name === 'Aksessuar 1').customer_id, null, 'mijozsiz savdo hech kimga bog‘lanmadi');
-  const period = TODAY.slice(0, 7), f = facts(period);
-  if (YDAY.slice(0, 7) === period) {
-    assert.equal(f.gross, 9800000 + 3300000 + 100000 + 70.5);
-    assert.equal(f.returns, 3300000 + 60);
-    assert.equal(f.net, 9800000 + 100000 + 10.5, 'almashtirishning sof ta’siri (+70,5 − 60) sentigacha');
-    assert.equal(f.checks, 2, 'almashtirish cheki sotuv cheklariga kirmaydi');
-  }
-  assert.equal(f.demo, false);
   const prof = customerProfile((run(`UPDATE customers SET verified_at=1 WHERE id=?`, j), j));
   assert.ok(prof.purchases.some(p => p.kind === 'return' && p.amount === -3300000));
 });

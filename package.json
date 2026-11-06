@@ -2,7 +2,7 @@
   "name": "photobuy-sales",
   "version": "0.1.0",
   "private": true,
-  "description": "Photobuy sotuv bo‘limi: suhbatlar markazi, AI agentlar (Fokus, Katalog, Chaqnoq, Obyektiv) va veb-panel",
+  "description": "Photobuy sotuv bo‘limi: suhbatlar markazi, AI agentlar (Fokus, Katalog) va veb-panel",
   "type": "module",
   "engines": { "node": ">=22.13" },
   "scripts": {

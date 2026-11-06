@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Sun HighTech · Sotuv markazi",
   "short_name": "Sun HighTech",
-  "description": "Sun HighTech sotuv paneli: suhbatlar, buyurtmalar, AI agent",
+  "description": "Sun HighTech sotuv paneli: suhbatlar, bilim bazasi, AI agent",
   "lang": "uz",
   "start_url": "/",
   "scope": "/",
@@ -42,18 +42,8 @@
       ]
     },
     {
-      "name": "Vazifalar",
-      "url": "/#vazifalar",
-      "icons": [
-        {
-          "src": "/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "Buyurtmalar",
-      "url": "/#buyurtmalar",
+      "name": "Bilim bazasi",
+      "url": "/#katalog",
       "icons": [
         {
           "src": "/icon-192.png",

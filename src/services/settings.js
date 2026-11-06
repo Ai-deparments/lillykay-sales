@@ -13,14 +13,10 @@ export const DEFAULTS = {
   big_positions: 5, big_qty: 10, big_categories: 3, big_amount: 0, // 0 = kiritilmagan
   big_accept_minutes: 3,             // qabul qilinmasa zaxira mas'ulga
   small_max_wait_minutes: 10,
-  campaign_daily_limit: 60, campaign_per_customer_30d: 2,
-  resale_time: '07:30', resale_quiet_days: 7, resale_daily_limit: 30, campaign_from: '11:00', campaign_to: '19:00',
-  report_time: '09:10',
   assign_accept_minutes: 10,         // sotuvchi topshiriqni shu vaqtda qabul qilmasa — keyingisiga
   assign_done_minutes: 120,          // qabul qilgan, lekin shu vaqtda bajarmasa — keyingisiga
   assign_urgent_minutes: 3,          // shoshilinch (mijoz hozir to‘lamoqchi) — qabul qilish muddati
   staff_active_minutes: 30,          // shu vaqt ichida faol bo‘lgan sotuvchi «online» hisoblanadi
-  seller_report_time: '20:30',       // kunlik sotuvchilar hisoboti (rahbarga va har sotuvchiga)
   seller_auto_warn: true,            // o‘tkazib yuborgan sotuvchiga avtomatik ogohlantirish
   currency: 'UZS'                    // hisob valyutasi: BILLZ summalari shu valyutada (Photobuy — USD)
 };
@@ -38,7 +34,7 @@ export const setting = k => getSettings()[k];
 const RANGE = {
   T_seconds: [15, 3600], followup_first_hours: [1, 23], followup_second_days: [1, 30],
   big_positions: [2, 100], big_qty: [2, 10000], big_categories: [1, 50], big_amount: [0, 1e12], big_accept_minutes: [1, 120],
-  small_max_wait_minutes: [1, 240], assign_accept_minutes: [2, 120], assign_done_minutes: [10, 1440], assign_urgent_minutes: [1, 30], staff_active_minutes: [5, 240], campaign_daily_limit: [0, 5000], campaign_per_customer_30d: [0, 30], resale_quiet_days: [0, 365], resale_daily_limit: [0, 500]
+  small_max_wait_minutes: [1, 240], assign_accept_minutes: [2, 120], assign_done_minutes: [10, 1440], assign_urgent_minutes: [1, 30], staff_active_minutes: [5, 240]
 };
 const badSetting = k => Object.assign(new Error('bad_setting'), { status: 400, code: 'bad_setting', key: k });
 

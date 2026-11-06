@@ -26,7 +26,7 @@ const STD = async (u, text, o = {}) => { const ok = deliver(u); sent.push({ to: 
 
 before(() => {
   migrate();
-  updateSettings({ work_from: '00:00', work_to: '23:59', assign_done_minutes: 120, assign_urgent_minutes: 3, seller_report_time: '23:59', seller_auto_warn: true }, 'test', { unchecked: true });
+  updateSettings({ work_from: '00:00', work_to: '23:59', assign_done_minutes: 120, assign_urgent_minutes: 3, seller_auto_warn: true }, 'test', { unchecked: true });
   d.setDispatchSender(STD);
   d.setBossAgent(async () => { throw new Error('AI yo‘q'); });
   inbox.setInboxHooks({ draft: async () => ({ ok: true, text: 'x', sources: [], card: {} }), send: async () => 'ext', notify: () => {}, onSellerReply: d.onSellerReply });
@@ -262,7 +262,6 @@ test('sotuvchi «vaqtim yo‘q» desa — darhol boshqasiga; rad etish qayd etil
   assert.match(sent.filter(m => m.to === first).at(-1).text, /boshqa(siga| sotuvchiga) beraman/);
   const msgs = all('SELECT dir FROM staff_messages WHERE user_id=? ORDER BY id DESC LIMIT 2', first);
   assert.deepEqual(msgs.map(m => m.dir).sort(), ['in', 'out'], 'yozishma jurnalda');
-  assert.ok(d.sellerStats(0).find(r => r.id === first).declined >= 1);
 });
 
 test('boshliq AI: savolga javob beradi, ko‘rganini belgilaydi, profilga izoh yozadi', async () => {
@@ -306,33 +305,4 @@ test('tez-tez ko‘rmasa — kuniga bir marta «iltimos, e’tiborli bo‘ling»
   }
   assert.equal(warnCount() - start, 1, 'bitta ogohlantirish');
   assert.ok(one(`SELECT 1 FROM staff_notes WHERE user_id=1 AND kind='ogohlantirish'`), 'profilida qayd');
-});
-
-test('profil: natija, izohlar, yozishma va ish qadamlari', async () => {
-  const prof = d.sellerProfile(1, 30);
-  assert.equal(prof.user.name, 'Hilola');
-  assert.ok(prof.stats.offered >= 1);
-  assert.ok(prof.notes.length >= 1);
-  assert.ok(prof.messages.length >= 1);
-  assert.ok(prof.tasks.length >= 1 && prof.tasks[0].steps.includes('offered'));
-  assert.equal(d.sellerProfile(9999), null);
-});
-
-test('reyting: javob ulushi, ko‘rmaslik, rad etish va tavsiya', async () => {
-  const rows = d.sellerStats(0);
-  const h = rows.find(r => r.id === 1), y = rows.find(r => r.id === 4);
-  assert.ok(h.offered >= 3 && h.missed >= 3);
-  assert.ok(h.score >= 0 && h.score <= 100);
-  assert.equal(h.rec, 'ogohlantirish', 'ko‘p ko‘rmagan');
-  assert.equal(y.linked, false);
-  assert.equal(y.status, 'kam');
-  const before = rows.find(r => r.id === 2);
-  for (let i = 0; i < 3; i++) {
-    const id = await d.assign({ conv: conv(), kind: 'rasm', task: `Rad sinovi ${i}` });
-    run(`UPDATE assignments SET user_id=2, status='offered' WHERE id=?`, id);
-    await d.declineAssignment(id, U(2), 'bandman');
-  }
-  const after = d.sellerStats(0).find(r => r.id === 2);
-  assert.equal(after.declined, before.declined + 3);
-  assert.equal(after.rec, 'ogohlantirish');
 });

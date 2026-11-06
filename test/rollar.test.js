@@ -57,17 +57,6 @@ before(async () => {
   run(`INSERT INTO tasks(kind,conversation_id,user_id,title,due_at,created_by,created_at) VALUES('followup',?,?,'A vazifa',?,'test',?)`, ids.convA, ids.selA, t, t);
   run(`INSERT INTO tasks(kind,conversation_id,user_id,title,due_at,created_by,created_at) VALUES('followup',?,?,'B vazifa',?,'test',?)`, ids.convB, ids.selB, t, t);
   ids.cust = run(`INSERT INTO customers(name,phone,created_at) VALUES('Mijoz','+998901112233',?)`, t).lastInsertRowid;
-  run(`INSERT INTO tasks(kind,customer_id,user_id,title,due_at,created_by,created_at) VALUES('resale',?,?,'B qayta sotuv',?,'test',?)`, ids.cust, ids.selB, t, t);
-  // savdo: har filialda boshqa summa
-  buy('A filial', 'Sotuvchi A', 1000, inThisMonth(t - DAY));
-  buy('B filial', 'Sotuvchi B', 7000, inThisMonth(t - DAY));
-  // xulosalar: umumiy, A filialga tegishli, B filialga tegishli va shaxsiy
-  const ins = (audience, branch_id, user_id, title) => run(`INSERT INTO insights(at,audience,user_id,branch_id,title,period,hypothesis) VALUES(?,?,?,?,?,'2026-09',0)`, t, audience, user_id, branch_id, title);
-  ins('team', null, null, 'Kompaniya xulosasi');
-  ins('team', ids.bA, null, 'A filial xulosasi');
-  ins('team', ids.bB, null, 'B filial xulosasi');
-  ins('user', null, ids.selA, 'Sotuvchi A shaxsiy');
-  ins('user', null, ids.selB, 'Sotuvchi B shaxsiy');
 
   server = createServer(handle);
   await new Promise(r => server.listen(0, '127.0.0.1', r));
@@ -119,17 +108,15 @@ test('ruxsatlar: sozlama, xodimlar va eksport faqat rahbarga; jurnal va keshbek 
   for (const p of ['/api/audit', '/api/cashback']) {
     for (const [who, s] of [['rahbar', lead], ['filial', fil], ['sotuvchi', sel]]) assert.equal((await s.get(p)).status, 200, `${who}: ${p}`);
   }
-  for (const p of ['/api/export/sotuvchilar.csv', '/api/export/audit.csv']) {
+  for (const p of ['/api/export/audit.csv', '/api/export/suhbatlar.csv']) {
     assert.equal((await fil.get(p)).status, 403, `filial eksport: ${p}`);
     assert.equal((await sel.get(p)).status, 403, `sotuvchi eksport: ${p}`);
   }
-  for (const p of ['/api/settings', '/api/demo/remove', '/api/billz/sync', '/api/plans', '/api/insights/run', '/api/campaigns']) {
+  for (const p of ['/api/settings', '/api/billz/sync']) {
     assert.equal((await fil.post(p)).status, 403, `filial yozuv: ${p}`);
     assert.equal((await sel.post(p)).status, 403, `sotuvchi yozuv: ${p}`);
   }
-  // katalog va qoidalar: filial rahbari tahrirlaydi, sotuvchi — yo‘q
-  assert.equal((await fil.get('/api/rules/suggest')).status, 200);
-  assert.equal((await sel.get('/api/rules/suggest')).status, 403);
+  // katalog: filial rahbari tahrirlaydi, sotuvchi — yo‘q
   assert.equal((await sel.post('/api/products', { name: 'Yangi' })).status, 403);
 });
 
@@ -154,49 +141,13 @@ test('suhbatlar: filial o‘z filialini, sotuvchi o‘zinikini va navbatdagini k
   assert.equal((await lead.get(`/api/conversations/${ids.convB}`)).status, 200);
 });
 
-test('vazifalar: begona vazifa ko‘rinmaydi va yopilmaydi; qayta sotuvda telefon yashiriladi', async () => {
-  const sel = await session('sa'), fil = await session('fa');
-  const mine = (await sel.get('/api/tasks')).body.items.map(x => x.title);
-  assert.deepEqual(mine, ['A vazifa']);
-  assert.ok(!(await fil.get('/api/tasks')).body.items.some(x => x.title === 'B vazifa'), 'boshqa filial vazifasi chiqmaydi');
+test('vazifalar: begona vazifa yopilmaydi, o‘ziniki yopiladi', async () => {
+  const sel = await session('sa');
   const bTask = one(`SELECT id FROM tasks WHERE title='B vazifa'`).id;
   assert.equal((await sel.post(`/api/tasks/${bTask}/done`, { result: 'ok' })).status, 403);
-  const resale = (await sel.get('/api/resale')).body.items;
-  assert.deepEqual(resale.map(x => x.title), [], 'boshqa sotuvchining qayta sotuvi chiqmaydi');
-  const lead = await session('r');
-  const leadResale = (await lead.get('/api/resale')).body.items;
-  assert.equal(leadResale[0].phone, '+998901112233', 'rahbar telefonni ko‘radi');
-});
-
-test('tahlil: filial — o‘z filiali, sotuvchi — o‘z natijasi', async () => {
-  const lead = await session('r'), fil = await session('fa'), sel = await session('sa');
-  const period = new Date(t + 5 * 3600e3).toISOString().slice(0, 7);
-  const L = (await lead.get(`/api/analytics?period=${period}`)).body;
-  assert.equal(L.scope.kind, 'company');
-  assert.equal(L.company.net, 8000, 'rahbar — butun kompaniya');
-  assert.equal(L.branches.length, 2);
-
-  const F = (await fil.get(`/api/analytics?period=${period}`)).body;
-  assert.equal(F.scope.kind, 'branch');
-  assert.equal(F.company.net, 1000, 'filial rahbariga faqat o‘z filiali summasi');
-  assert.deepEqual(F.branches.map(b => b.name), ['A filial']);
-  assert.deepEqual(F.sellers.map(s => s.name).sort(), ['Filial A', 'Sotuvchi A']);
-  assert.ok(!JSON.stringify(F).includes('B filial'), 'boshqa filial nomi javobga tushmaydi');
-
-  const S = (await sel.get(`/api/analytics?period=${period}`)).body;
-  assert.equal(S.scope.kind, 'user');
-  assert.equal(S.company.net, 1000, 'sotuvchiga faqat o‘z savdosi');
-  assert.deepEqual(S.branches, []);
-  assert.deepEqual(S.sellers.map(s => s.name), ['Sotuvchi A']);
-});
-
-test('xulosalar: shaxsiy — faqat egasiga, filialniki — o‘z filialiga', async () => {
-  const lead = await session('r'), fil = await session('fa'), sel = await session('sa');
-  const period = new Date(t + 5 * 3600e3).toISOString().slice(0, 7);
-  const titles = async s => (await s.get(`/api/analytics?period=${period}`)).body.insights.map(i => i.title).sort();
-  assert.deepEqual(await titles(lead), ['A filial xulosasi', 'B filial xulosasi', 'Kompaniya xulosasi']);
-  assert.deepEqual(await titles(fil), ['A filial xulosasi', 'Kompaniya xulosasi']);
-  assert.deepEqual(await titles(sel), ['Sotuvchi A shaxsiy']);
+  const aTask = one(`SELECT id FROM tasks WHERE title='A vazifa'`).id;
+  assert.equal((await sel.post(`/api/tasks/${aTask}/done`, { result: 'ok' })).status, 200);
+  assert.equal(one('SELECT status FROM tasks WHERE id=?', aTask).status, 'done');
 });
 
 test('statik fayl: o‘zgarmagan bo‘lsa 304, o‘zgarsa yangisi keladi (deploydan keyin eski app.js qolmaydi)', async () => {
@@ -217,30 +168,11 @@ test('statik fayl: o‘zgarmagan bo‘lsa 304, o‘zgarsa yangisi keladi (deploy
   assert.equal((await fetch(`${base}/app.css?v=${m[1]}`)).status, 200, 'versiyali havola ochiladi');
 });
 
-test('tayyorlik ro‘yxati: jonli holatdan sanaladi, faqat rahbarga', async () => {
-  const lead = await session('r'), sel = await session('sa');
-  assert.equal((await sel.get('/api/readiness')).status, 403, 'sotuvchiga ko‘rinmaydi');
-  run('INSERT INTO users(login,name,role,branch_id,created_at) VALUES(?,?,?,?,?)', 'parolsiz2', 'Parolsiz ikki', 'sotuvchi', ids.bA, t);
-  const r = await lead.get('/api/readiness');
-  assert.equal(r.status, 200);
-  assert.equal(r.body.total, r.body.items.length);
-  const byTitle = Object.fromEntries(r.body.items.map(x => [x.title, x]));
-  assert.equal(byTitle['Xodimlarga parol'].state, 'wait', 'parolsiz xodim bor — kutilmoqda');
-  assert.ok(byTitle['Xodimlarga parol'].detail.includes('parol berilmagan'));
-  assert.equal(byTitle['Oylik reja'].state, 'wait', 'reja kiritilmagan');
-  // reja kiritilsa — holat o‘zgaradi
-  const period = new Date(t + 5 * 3600e3).toISOString().slice(0, 7);
-  assert.equal((await lead.post('/api/plans', { period, revenue: 1000 })).status, 200);
-  const r2 = await lead.get('/api/readiness');
-  assert.equal(r2.body.items.find(x => x.title === 'Oylik reja').state, 'ok');
-  assert.equal(r2.body.ready, r.body.ready + 1);
-});
-
 test('CSV eksport: paneldagi har bir havola ishlaydi', async () => {
   const lg = await fetch(`${base}/api/login`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ login: 'r', password: 'parol12345' }) });
   const cookie = (lg.headers.getSetCookie?.() || []).map(c => c.split(';')[0]).join('; ');
   const period = new Date(t + 5 * 3600e3).toISOString().slice(0, 7);
-  for (const name of ['suhbatlar.csv', 'qayta-sotuv.csv', 'sotuvchilar.csv', 'filiallar.csv', 'tovarlar.csv', 'audit.csv']) {
+  for (const name of ['suhbatlar.csv', 'audit.csv']) {
     const r = await fetch(`${base}/api/export/${name}?period=${period}`, { headers: { cookie } });
     assert.equal(r.status, 200, `${name} ochilmadi`);
     assert.match(r.headers.get('content-type') || '', /text\/csv/, `${name}: content-type`);

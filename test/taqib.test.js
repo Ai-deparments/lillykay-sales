@@ -13,7 +13,7 @@ const dir = mkdtempSync(join(tmpdir(), 'sales-taqib-'));
 Object.assign(process.env, { DB_FILE: join(dir, 't.db'), DATA_DIR: dir, TG_DISABLED: '1', ENV_FILE: join(dir, 'yoq.env'), AI_MOCK: '1', DRAFT_DEBOUNCE_MS: '999999' });
 
 const { migrate, run, one, all } = await import('../src/db.js');
-const { followups } = await import('../src/agents/chaqnoq.js');
+const { followups } = await import('../src/services/taqib.js');
 const inbox = await import('../src/services/inbox.js');
 const { updateSettings } = await import('../src/services/settings.js');
 
