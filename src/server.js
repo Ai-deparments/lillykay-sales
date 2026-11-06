@@ -14,6 +14,7 @@ import { hasDemo, seedDemo } from './services/demo.js';
 import { startTelegram, stopTelegram, sendBusiness, sendBusinessFile, editBusiness, deleteBusiness, sendBusinessPhoto, sendBusinessAlbum, tgTyping } from './channels/telegram.js';
 import { startInstagram, igTokenJob, sendInstagram, sendInstagramImage, sendInstagramAudio, senderAction } from './channels/instagram.js';
 import { followups } from './services/taqib.js';
+import { odooTick } from './services/odoo.js';
 import { pairsJob } from './services/uslub.js';
 import { webImageJob } from './services/webimage.js';
 import { cleanupJob } from './services/tozalash.js';
@@ -100,6 +101,7 @@ server.listen(config.port, config.host, () => {
   const tick = () => {
     billzTick().catch(e => console.error('billz', e));
     igTokenJob().catch(e => console.error('ig token', e));
+    odooTick();
     followups().catch(e => console.error('followups', e));
     try { pairsJob(); } catch (e) { console.error('uslub', e); }
     try { retryAfterOutage(); } catch (e) { console.error('retry', e); }

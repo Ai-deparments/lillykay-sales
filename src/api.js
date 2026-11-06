@@ -13,6 +13,7 @@ import { avatarUrl, readAvatar } from './services/avatar.js';
 import { hasDemo, simulateClient } from './services/demo.js';
 import { botUsername, telegramRunning } from './channels/telegram.js';
 import { fetchMedia } from './services/media.js';
+import { odooLive, odooStatus, syncOdoo } from './services/odoo.js';
 
 export const api = router();
 const R = api;
@@ -43,9 +44,18 @@ function integrations() {
     billz: rows.billz || { state: billzMode(), detail: '' },
     ai: aiReady() ? { state: 'ok', detail: aiInfo() } : { state: 'off', detail: 'AI kaliti kiritilmagan (Gemini yoki Anthropic: deploy/sozla.sh) — AI qoralama yozmaydi' },
     instagram: rows.instagram || { state: 'off', detail: 'Meta ilovasi va ruxsati kutilmoqda' },
+    odoo: rows.odoo || { state: odooLive() ? 'wait' : 'off', detail: odooLive() ? 'Birinchi sinxron kutilmoqda' : 'ODOO_URL va ODOO_API_KEY kiritilmagan' },
     backup: backupState()
   };
 }
+
+/* ---------- Odoo CRM (faqat o‘qish): holat va qo‘lda sinxron ---------- */
+R.get('/api/odoo/status', (req, res, u) => { need(u, 'settings'); json(res, odooStatus()); });
+R.post('/api/odoo/sync', async (req, res, u) => {
+  need(u, 'settings');
+  audit('staff', u.name, 'Odoo sinxronini qo‘lda boshladi');
+  json(res, { ok: true, ...(await syncOdoo({ force: true, who: u.name })) });
+});
 
 /* Zaxira nusxa: har kuni Toshkent vaqti 02:30 da (systemd sales-backup.timer). 36 soat kechiksa — rahbarga Telegram xabari. */
 function backupState() {

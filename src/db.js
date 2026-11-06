@@ -425,6 +425,28 @@ DROP TABLE IF EXISTS resale_rules;
 DROP TABLE IF EXISTS plans;
 DROP TABLE IF EXISTS insights;
 DELETE FROM tasks WHERE kind IN ('resale','campaign','campaign_reply','arrival');
+`,
+`
+/* Odoo CRM nusxasi (faqat o‘qish, services/odoo.js). Vaqtlar — epoch ms (UTC). */
+CREATE TABLE odoo_teams (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
+CREATE TABLE odoo_stages (id INTEGER PRIMARY KEY, name TEXT NOT NULL, sequence INTEGER NOT NULL DEFAULT 0, is_won INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE odoo_users (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
+CREATE TABLE odoo_lost_reasons (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
+CREATE TABLE odoo_sources (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
+CREATE TABLE odoo_leads (
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL, stage_id INTEGER, team_id INTEGER, user_id INTEGER, source_id INTEGER, lost_reason_id INTEGER,
+  active INTEGER NOT NULL DEFAULT 1, probability REAL NOT NULL DEFAULT 0, expected_revenue INTEGER NOT NULL DEFAULT 0, tags TEXT,
+  created_at INTEGER, opened_at INTEGER, stage_at INTEGER, closed_at INTEGER, updated_at INTEGER
+);
+CREATE INDEX odoo_leads_stage ON odoo_leads(stage_id, active);
+CREATE INDEX odoo_leads_user ON odoo_leads(user_id);
+CREATE INDEX odoo_leads_created ON odoo_leads(created_at);
+/* Bosqich o‘tishlari (Odoo mail.tracking.value): lid, qaysi bosqichdan qaysiga, qachon, kim */
+CREATE TABLE odoo_stage_log (id INTEGER PRIMARY KEY, lead_id INTEGER NOT NULL, from_stage INTEGER, to_stage INTEGER, at INTEGER NOT NULL, author TEXT);
+CREATE INDEX odoo_stage_log_lead ON odoo_stage_log(lead_id, at);
+/* Menejer izohlari va xatlar lid bo‘yicha (uchrashuvdan keyin nima yozilgan) */
+CREATE TABLE odoo_messages (id INTEGER PRIMARY KEY, lead_id INTEGER NOT NULL, at INTEGER NOT NULL, author TEXT, kind TEXT, body TEXT NOT NULL);
+CREATE INDEX odoo_messages_lead ON odoo_messages(lead_id, at);
 `
 ];
 

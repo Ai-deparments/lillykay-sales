@@ -78,6 +78,13 @@ export const config = {
   billzToken: env('BILLZ_SECRET_TOKEN'),
   billzBase: env('BILLZ_API_BASE', 'https://api-admin.billz.ai'),
 
+  /* Mijozning Odoo CRM (faqat o‘qish): JSON-RPC, login + API kalit (kalit parol o‘rnida). Kalit faqat serverda. */
+  odooUrl: env('ODOO_URL').replace(/\/$/, ''),
+  odooDb: env('ODOO_DB'),
+  odooLogin: env('ODOO_LOGIN', 'admin'),
+  odooKey: env('ODOO_API_KEY'),
+  odooTimeoutMs: Number(env('ODOO_TIMEOUT_MS', 60000)),
+
   /* Instagram Direct (Meta). Token va sirlar faqat .env da; veb-huk imzosi app secret bilan tekshiriladi. */
   igToken: env('IG_TOKEN'),
   igUserId: env('IG_USER_ID'),
