@@ -45,6 +45,7 @@ export function useApp(): AppCtx {
 export const SCREENS: Record<string, [string, string]> = {
   suhbatlar: ['Suhbatlar', 'Telegram va Instagram — bitta navbat'],
   voronka: ['Voronka', 'Lid qayerda, nimaga, kim tomonidan tushib qolyapti — Odoo CRM'],
+  nazorat: ['Nazorat 24 soat', 'Qimirlamay qolgan lidlar, menejerga va rahbarga xabar'],
   katalog: ['Bilim bazasi', 'Mahsulot kartalari — agent faqat shu yerdan gapiradi'],
   agent: ['AI agent', 'Kanal bo‘yicha yoqish, to‘xtatish va bosqichlar'],
   xodimlar: ['Xodimlar va filiallar', 'Rollar, Telegram bildirishnomalari'],

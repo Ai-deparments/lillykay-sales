@@ -15,6 +15,7 @@ import { startTelegram, stopTelegram, sendBusiness, sendBusinessFile, editBusine
 import { startInstagram, igTokenJob, sendInstagram, sendInstagramImage, sendInstagramAudio, senderAction } from './channels/instagram.js';
 import { followups } from './services/taqib.js';
 import { odooTick } from './services/odoo.js';
+import { nazoratJob } from './services/nazorat.js';
 import { pairsJob } from './services/uslub.js';
 import { webImageJob } from './services/webimage.js';
 import { cleanupJob } from './services/tozalash.js';
@@ -102,6 +103,7 @@ server.listen(config.port, config.host, () => {
     billzTick().catch(e => console.error('billz', e));
     igTokenJob().catch(e => console.error('ig token', e));
     odooTick();
+    nazoratJob().catch(e => console.error('nazorat', e));
     followups().catch(e => console.error('followups', e));
     try { pairsJob(); } catch (e) { console.error('uslub', e); }
     try { retryAfterOutage(); } catch (e) { console.error('retry', e); }

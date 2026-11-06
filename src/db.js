@@ -458,6 +458,14 @@ CREATE TABLE odoo_stage_log (
 );
 CREATE INDEX odoo_stage_log_lead ON odoo_stage_log(lead_id, at);
 CREATE INDEX odoo_stage_log_at ON odoo_stage_log(at);
+`,
+`
+/* Nazorat 24 soat: panel xodimi ↔ Odoo foydalanuvchisi bog‘lami va yuborilgan ogohlantirishlar (lid + daraja — bir marta) */
+ALTER TABLE users ADD COLUMN odoo_user_id INTEGER;
+CREATE TABLE nazorat_alerts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, lead_id INTEGER NOT NULL, level INTEGER NOT NULL, sent_at INTEGER NOT NULL,
+  to_user_id INTEGER, delivered INTEGER NOT NULL DEFAULT 0, UNIQUE (lead_id, level)
+);
 `
 ];
 

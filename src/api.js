@@ -15,6 +15,7 @@ import { botUsername, telegramRunning } from './channels/telegram.js';
 import { fetchMedia } from './services/media.js';
 import { odooLive, odooStatus, syncOdoo } from './services/odoo.js';
 import { voronka } from './services/voronka.js';
+import { nazoratList, nazoratJob } from './services/nazorat.js';
 
 export const api = router();
 const R = api;
@@ -58,6 +59,25 @@ R.get('/api/voronka', (req, res) => {
   const team = sp.get('team') === 'all' ? null : (sp.get('team') ? Number(sp.get('team')) : undefined);
   const days = [7, 30, 90, 365, 0].includes(Number(sp.get('days'))) ? Number(sp.get('days')) : 30;
   json(res, voronka({ team, days }));
+});
+/* Nazorat 24 soat: qimirlamagan lidlar, menejer kesimi, sozlamalar (bosqichlar va soatlar — rahbar o‘zgartiradi) */
+R.get('/api/nazorat', (req, res) => {
+  const sp = new URL(req.url, 'http://x').searchParams;
+  const team = sp.get('team') === 'all' ? null : (sp.get('team') ? Number(sp.get('team')) : undefined);
+  json(res, nazoratList({ team }));
+});
+R.post('/api/nazorat/settings', async (req, res, u) => {
+  need(u, 'settings');
+  const b = await readJson(req);
+  const patch = {};
+  if (Array.isArray(b.stages)) patch.nazorat_stages = b.stages.map(Number).filter(Boolean).join(',');
+  for (const k of ['nazorat_hours', 'nazorat_escalate_hours', 'nazorat_notify']) if (b[k] !== undefined) patch[k] = b[k];
+  json(res, { ok: true, changed: updateSettings(patch, u.name) });
+});
+R.post('/api/nazorat/run', async (req, res, u) => {
+  need(u, 'settings');
+  audit('staff', u.name, 'Nazorat tekshiruvini qo‘lda boshladi');
+  json(res, { ok: true, ...(await nazoratJob({ force: true })) });
 });
 R.post('/api/odoo/sync', async (req, res, u) => {
   need(u, 'settings');

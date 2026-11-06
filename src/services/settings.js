@@ -18,6 +18,12 @@ export const DEFAULTS = {
   assign_urgent_minutes: 3,          // shoshilinch (mijoz hozir to‘lamoqchi) — qabul qilish muddati
   staff_active_minutes: 30,          // shu vaqt ichida faol bo‘lgan sotuvchi «online» hisoblanadi
   seller_auto_warn: true,            // o‘tkazib yuborgan sotuvchiga avtomatik ogohlantirish
+  /* Nazorat 24 soat (Odoo lidlari): nazorat bosqichlari (Odoo stage id’lari, vergul bilan; bo‘sh — nomidan: Ўчрашув / Тижорат таклиф),
+     necha soatdan keyin menejerga, necha soatdan keyin rahbarga; xabarlar yoqilganmi */
+  nazorat_stages: '',
+  nazorat_hours: 24,
+  nazorat_escalate_hours: 48,
+  nazorat_notify: true,
   currency: 'UZS'                    // hisob valyutasi: BILLZ summalari shu valyutada (Photobuy — USD)
 };
 const CHOICES = { currency: ['UZS', 'USD'] };
@@ -34,7 +40,8 @@ export const setting = k => getSettings()[k];
 const RANGE = {
   T_seconds: [15, 3600], followup_first_hours: [1, 23], followup_second_days: [1, 30],
   big_positions: [2, 100], big_qty: [2, 10000], big_categories: [1, 50], big_amount: [0, 1e12], big_accept_minutes: [1, 120],
-  small_max_wait_minutes: [1, 240], assign_accept_minutes: [2, 120], assign_done_minutes: [10, 1440], assign_urgent_minutes: [1, 30], staff_active_minutes: [5, 240]
+  small_max_wait_minutes: [1, 240], assign_accept_minutes: [2, 120], assign_done_minutes: [10, 1440], assign_urgent_minutes: [1, 30], staff_active_minutes: [5, 240],
+  nazorat_hours: [1, 720], nazorat_escalate_hours: [1, 720]
 };
 const badSetting = k => Object.assign(new Error('bad_setting'), { status: 400, code: 'bad_setting', key: k });
 
