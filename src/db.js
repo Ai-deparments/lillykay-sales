@@ -447,6 +447,17 @@ CREATE INDEX odoo_stage_log_lead ON odoo_stage_log(lead_id, at);
 /* Menejer izohlari va xatlar lid bo‘yicha (uchrashuvdan keyin nima yozilgan) */
 CREATE TABLE odoo_messages (id INTEGER PRIMARY KEY, lead_id INTEGER NOT NULL, at INTEGER NOT NULL, author TEXT, kind TEXT, body TEXT NOT NULL);
 CREATE INDEX odoo_messages_lead ON odoo_messages(lead_id, at);
+`,
+`
+/* Bosqich tarixi ikki manbadan: Odoo tracking (odoo_id, faqat administrator ko‘radi) va o‘zimizniki (sinxronlar orasidagi farq).
+   source: odoo | sync | snapshot (birinchi sinxron — hozirgi bosqichga kirish vaqti). */
+DROP TABLE IF EXISTS odoo_stage_log;
+CREATE TABLE odoo_stage_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, odoo_id INTEGER UNIQUE, lead_id INTEGER NOT NULL, from_stage INTEGER, to_stage INTEGER,
+  at INTEGER NOT NULL, author TEXT, source TEXT NOT NULL DEFAULT 'sync'
+);
+CREATE INDEX odoo_stage_log_lead ON odoo_stage_log(lead_id, at);
+CREATE INDEX odoo_stage_log_at ON odoo_stage_log(at);
 `
 ];
 

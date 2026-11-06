@@ -90,10 +90,16 @@ const LEAD_FIELDS = ['name', 'stage_id', 'team_id', 'user_id', 'source_id', 'los
   'create_date', 'date_open', 'date_last_stage_update', 'date_closed', 'write_date'];
 async function syncLeads() {
   const wm = kvGet('odoo_wm_leads') || EPOCH;
+  const first = wm === EPOCH;
   const rows = await allRows('crm.lead', [['active', 'in', [true, false]], ['write_date', '>', wm]], LEAD_FIELDS, 'write_date, id');
   let max = wm;
   tx(() => {
     for (const l of rows) {
+      // O‘z tariximiz: Odoo tracking yopiq bo‘lsa ham bosqich o‘tishlari ko‘rinsin. Birinchi sinxronda — hozirgi bosqichga kirish vaqti (date_last_stage_update).
+      const prev = one('SELECT stage_id FROM odoo_leads WHERE id=?', l.id);
+      const stage = m2o(l.stage_id), at = utc(l.date_last_stage_update) || utc(l.write_date) || now();
+      if (!prev) run('INSERT INTO odoo_stage_log(lead_id,from_stage,to_stage,at,author,source) VALUES(?,?,?,?,?,?)', l.id, null, stage, first ? at : (utc(l.create_date) || at), m2oName(l.user_id), first ? 'snapshot' : 'sync');
+      else if (prev.stage_id !== stage) run('INSERT INTO odoo_stage_log(lead_id,from_stage,to_stage,at,author,source) VALUES(?,?,?,?,?,?)', l.id, prev.stage_id, stage, at, m2oName(l.user_id), 'sync');
       run(`INSERT INTO odoo_leads(id,name,stage_id,team_id,user_id,source_id,lost_reason_id,active,probability,expected_revenue,tags,created_at,opened_at,stage_at,closed_at,updated_at)
         VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, stage_id=excluded.stage_id, team_id=excluded.team_id, user_id=excluded.user_id,
         source_id=excluded.source_id, lost_reason_id=excluded.lost_reason_id, active=excluded.active, probability=excluded.probability, expected_revenue=excluded.expected_revenue,
@@ -108,11 +114,21 @@ async function syncLeads() {
   return rows.length;
 }
 
-/* ---------- bosqich tarixi: kim, qachon, qaysi bosqichdan qaysiga ---------- */
+/* ---------- bosqich tarixi (Odoo tracking): kim, qachon, qaysi bosqichdan qaysiga.
+   mail.tracking.value faqat administratorga ochiq — ruxsat bo‘lmasa jimgina o‘tkaziladi (o‘z tariximiz syncLeads’da yuritiladi). ---------- */
 async function syncStageLog() {
+  if (kvGet('odoo_tracking_denied')) return 0;
   const wm = kvGet('odoo_wm_stagelog') || EPOCH;
-  const tv = await allRows('mail.tracking.value', [['field_id.name', '=', 'stage_id'], ['field_id.model', '=', 'crm.lead'], ['create_date', '>', wm]],
-    ['mail_message_id', 'old_value_integer', 'new_value_integer', 'create_date'], 'create_date, id');
+  let tv;
+  try {
+    tv = await allRows('mail.tracking.value', [['field_id.name', '=', 'stage_id'], ['field_id.model', '=', 'crm.lead'], ['create_date', '>', wm]],
+      ['mail_message_id', 'old_value_integer', 'new_value_integer', 'create_date'], 'create_date, id');
+  } catch (e) {
+    if (!/not allowed to access|access denied|AccessError/i.test(String(e.message))) throw e;
+    kvSet('odoo_tracking_denied', 1);
+    audit('sys', 'Odoo sinxron', 'Bosqich tarixi (mail.tracking.value) yopiq — o‘z tariximiz yuritiladi', { result: 'Administrator huquqli API foydalanuvchi bo‘lsa to‘liq tarix olinadi' });
+    return 0;
+  }
   if (!tv.length) return 0;
   const msgIds = [...new Set(tv.map(x => m2o(x.mail_message_id)).filter(Boolean))];
   const msgs = new Map();
@@ -124,8 +140,10 @@ async function syncStageLog() {
     for (const x of tv) {
       const m = msgs.get(m2o(x.mail_message_id));
       if (!m || m.model !== 'crm.lead') continue;
-      run('INSERT INTO odoo_stage_log(id,lead_id,from_stage,to_stage,at,author) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET lead_id=excluded.lead_id, from_stage=excluded.from_stage, to_stage=excluded.to_stage, at=excluded.at, author=excluded.author',
-        x.id, m.res_id, x.old_value_integer || null, x.new_value_integer || null, utc(m.date || x.create_date), m2oName(m.author_id));
+      run('INSERT INTO odoo_stage_log(odoo_id,lead_id,from_stage,to_stage,at,author,source) VALUES(?,?,?,?,?,?,?) ON CONFLICT(odoo_id) DO UPDATE SET lead_id=excluded.lead_id, from_stage=excluded.from_stage, to_stage=excluded.to_stage, at=excluded.at, author=excluded.author',
+        x.id, m.res_id, x.old_value_integer || null, x.new_value_integer || null, utc(m.date || x.create_date), m2oName(m.author_id), 'odoo');
+      // Odoo tarixi kelgach — o‘sha o‘tish uchun bizning «sync» yozuvimiz ortiqcha
+      run(`DELETE FROM odoo_stage_log WHERE source IN ('sync','snapshot') AND lead_id=? AND to_stage IS ? AND odoo_id IS NULL`, m.res_id, x.new_value_integer || null);
       if (x.create_date > max) max = x.create_date;
     }
   });
