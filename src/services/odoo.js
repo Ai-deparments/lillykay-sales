@@ -87,7 +87,8 @@ async function syncRefs() {
 
 /* ---------- lidlar (faol + yo‘qotilgan), write_date bo‘yicha o‘sib boruvchi ---------- */
 const LEAD_FIELDS = ['name', 'stage_id', 'team_id', 'user_id', 'source_id', 'lost_reason_id', 'active', 'probability', 'expected_revenue', 'tag_ids',
-  'create_date', 'date_open', 'date_last_stage_update', 'date_closed', 'write_date'];
+  'partner_name', 'contact_name', 'phone', 'email_from', 'city', 'create_date', 'date_open', 'date_last_stage_update', 'date_closed', 'write_date'];
+const txt = (v, n) => (v ? String(v).slice(0, n) : null);
 async function syncLeads() {
   const wm = kvGet('odoo_wm_leads') || EPOCH;
   const first = wm === EPOCH;
@@ -100,12 +101,14 @@ async function syncLeads() {
       const stage = m2o(l.stage_id), at = utc(l.date_last_stage_update) || utc(l.write_date) || now();
       if (!prev) run('INSERT INTO odoo_stage_log(lead_id,from_stage,to_stage,at,author,source) VALUES(?,?,?,?,?,?)', l.id, null, stage, first ? at : (utc(l.create_date) || at), m2oName(l.user_id), first ? 'snapshot' : 'sync');
       else if (prev.stage_id !== stage) run('INSERT INTO odoo_stage_log(lead_id,from_stage,to_stage,at,author,source) VALUES(?,?,?,?,?,?)', l.id, prev.stage_id, stage, at, m2oName(l.user_id), 'sync');
-      run(`INSERT INTO odoo_leads(id,name,stage_id,team_id,user_id,source_id,lost_reason_id,active,probability,expected_revenue,tags,created_at,opened_at,stage_at,closed_at,updated_at)
-        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, stage_id=excluded.stage_id, team_id=excluded.team_id, user_id=excluded.user_id,
+      run(`INSERT INTO odoo_leads(id,name,stage_id,team_id,user_id,source_id,lost_reason_id,active,probability,expected_revenue,tags,partner,contact,phone,email,city,created_at,opened_at,stage_at,closed_at,updated_at)
+        VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, stage_id=excluded.stage_id, team_id=excluded.team_id, user_id=excluded.user_id,
         source_id=excluded.source_id, lost_reason_id=excluded.lost_reason_id, active=excluded.active, probability=excluded.probability, expected_revenue=excluded.expected_revenue,
-        tags=excluded.tags, created_at=excluded.created_at, opened_at=excluded.opened_at, stage_at=excluded.stage_at, closed_at=excluded.closed_at, updated_at=excluded.updated_at`,
+        tags=excluded.tags, partner=excluded.partner, contact=excluded.contact, phone=excluded.phone, email=excluded.email, city=excluded.city,
+        created_at=excluded.created_at, opened_at=excluded.opened_at, stage_at=excluded.stage_at, closed_at=excluded.closed_at, updated_at=excluded.updated_at`,
         l.id, String(l.name || '').slice(0, 200), m2o(l.stage_id), m2o(l.team_id), m2o(l.user_id), m2o(l.source_id), m2o(l.lost_reason_id), l.active ? 1 : 0,
         Number(l.probability) || 0, Math.round(Number(l.expected_revenue) || 0), JSON.stringify(l.tag_ids || []),
+        txt(l.partner_name, 120), txt(l.contact_name, 120), txt(l.phone, 40), txt(l.email_from, 120), txt(l.city, 80),
         utc(l.create_date), utc(l.date_open), utc(l.date_last_stage_update), utc(l.date_closed), utc(l.write_date));
       if (l.write_date > max) max = l.write_date;
     }

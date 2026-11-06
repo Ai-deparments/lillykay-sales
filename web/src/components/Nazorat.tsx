@@ -4,6 +4,7 @@ import { api } from '@/lib/api';
 import { fmtDT } from '@/lib/format';
 import { useApp } from './AppContext';
 import { Select } from './Select';
+import { useOpenLead } from './LeadModal';
 
 /* NAZORAT 24 SOAT — Odoo lidlari: nazorat bosqichida qimirlamay qolganlar, menejer kesimi, Telegram ogohlantirishlar (mijoz talabi, 2026-11-06) */
 interface StageOpt { id: number; name: string; sequence: number; is_won: number }
@@ -47,6 +48,7 @@ function SettingsForm({ d, onSaved }: { d: Data; onSaved: () => void }) {
 
 export function Nazorat({ active }: { active: boolean }) {
   const { isLead, toast, fail } = useApp();
+  const openLead = useOpenLead();
   const [team, setTeam] = useState<string>('');
   const [d, setD] = useState<Data | null>(null);
   const [rev, setRev] = useState(0);
@@ -89,9 +91,9 @@ export function Nazorat({ active }: { active: boolean }) {
             : <tr><td colSpan={6} className="muted">Nazorat bosqichlarida qimirlamagan lid yo‘q</td></tr>}
         </tbody></table></div></div>
 
-      <div className="panel"><div className="panel-head"><h2>Lidlar</h2><span className="muted">oxirgi harakat — bosqichga kirish, bosqich o‘tishi yoki Odoo’dagi izoh · {d.items.length} ta</span></div>
+      <div className="panel"><div className="panel-head"><h2>Lidlar</h2><span className="muted">oxirgi harakat — bosqichga kirish, bosqich o‘tishi yoki Odoo’dagi izoh · {d.items.length} ta · satrga bosing — lid kartasi</span></div>
         {d.items.length ? <div className="tbl"><table><thead><tr><th>Lid</th><th>Bosqich</th><th>Mas’ul</th><th className="n">Harakatsiz</th><th>Oxirgi harakat</th><th>Oxirgi izoh</th><th>Xabar</th></tr></thead><tbody>
-          {d.items.map(x => <tr key={x.id}><td><b>{x.name}</b></td><td>{x.stage}</td><td>{x.user || <span className="pill bad">mas’ul yo‘q</span>}</td>
+          {d.items.map(x => <tr key={x.id} style={{ cursor: 'pointer' }} onClick={() => openLead(x.id)} title="Lid kartasi"><td><b>{x.name}</b></td><td>{x.stage}</td><td>{x.user || <span className="pill bad">mas’ul yo‘q</span>}</td>
             <td className="n"><span className={`pill ${levelCls(x.hours)}`}>{hoursStr(x.hours)}</span></td><td className="mono muted">{fmtDT(x.last_at)}</td>
             <td className="muted" style={{ maxWidth: 320 }}>{x.last_note || 'izoh yo‘q'}</td>
             <td>{x.alerted.length ? <span className="pill ok" title="Telegram’ga yetkazilgan darajalar">{x.alerted.map(l => `${l} s`).join(' · ')}</span> : <span className="muted" title="Hali yuborilmagan yoki yetkazilmagan">—</span>}</td></tr>)}

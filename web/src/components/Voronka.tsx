@@ -4,15 +4,17 @@ import { api } from '@/lib/api';
 import { fmtDT } from '@/lib/format';
 import { useApp } from './AppContext';
 import { Select } from './Select';
+import { LeadsDrill, useOpenLead } from './LeadModal';
+import type { Drill } from './LeadModal';
 
 /* VORONKA — Odoo CRM bo‘yicha: lid qayerda tushib qolyapti · nimaga · kim tomonidan (mijoz doskasidagi 3 savol, 2026-11-06) */
 interface Stage { id: number; name: string; is_won: boolean; active: number; lost_here: number; reached: number; over_24h: number; over_72h: number; avg_days: number | null; max_days: number | null }
-interface Row { name: string; total: number; active?: number; lost: number; won: number; over_24h?: number }
+interface Row { id: number; name: string; total: number; active?: number; lost: number; won: number; over_24h?: number }
 interface Stuck { id: number; name: string; stage: string | null; user: string | null; days_on_stage: number; age_days: number; last_note: string | null; last_note_at: number | null }
 interface Data {
   synced: number; teams: { id: number; name: string; leads: number }[]; team: { id: number; name: string } | null; period_days: number; as_of: number;
   totals: { total: number; active: number; lost: number; won: number; conversion: number | null };
-  stages: Stage[]; reasons: { name: string; n: number }[]; users: Row[]; sources: Row[]; stuck: Stuck[];
+  stages: Stage[]; reasons: { id: number; name: string; n: number }[]; users: Row[]; sources: Row[]; stuck: Stuck[];
 }
 
 const ANSWER_STYLE = `.answer{margin:0;font-size:13.5px;line-height:1.55;color:var(--ink-2)} .answer b{color:var(--ink)}`;
@@ -56,6 +58,11 @@ export function Voronka({ active }: { active: boolean }) {
   const [team, setTeam] = useState<string>('');
   const [days, setDays] = useState(30);
   const [d, setD] = useState<Data | null>(null);
+  const [drill, setDrill] = useState<Drill | null>(null);
+  const openLead = useOpenLead();
+  // Satrga bosilsa — chuqur ko‘rish paneli ochiladi va ekran unga suriladi
+  const open = (dr: Drill) => { setDrill(dr); setTimeout(() => document.getElementById('drillPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); };
+  const click = { cursor: 'pointer' as const };
 
   useEffect(() => {
     if (!active) return;
@@ -82,14 +89,15 @@ export function Voronka({ active }: { active: boolean }) {
       <div className="kpis">
         <div className="kpi"><span className="lbl">Lidlar</span><span className="v">{t.total}</span><span className="s">davrda kelgan</span></div>
         <div className="kpi"><span className="lbl">Ishda</span><span className="v">{t.active - t.won}</span><span className="s">faol, hali yutilmagan</span></div>
-        <div className="kpi"><span className="lbl">Yo‘qotilgan</span><span className="v">{t.lost} <small>{lostPct}%</small></span><span className="s">Odoo’da «yo‘qotildi» deb belgilangan</span></div>
+        <div className="kpi" style={click} onClick={() => open({ kind: 'lost', label: 'davrda yo‘qotilgan lidlar' })} title="Ro‘yxatni ochish"><span className="lbl">Yo‘qotilgan</span><span className="v">{t.lost} <small>{lostPct}%</small></span><span className="s">Odoo’da «yo‘qotildi» deb belgilangan · bosing — ro‘yxat</span></div>
         <div className="kpi"><span className="lbl">Yutilgan</span><span className="v">{t.won} <small>{t.conversion ?? 0}%</small></span><span className="s">konversiya = yutilgan ÷ kelgan</span></div>
       </div>
       <Answers d={d} />
+      {drill ? <LeadsDrill drill={drill} team={team} days={days} onClose={() => setDrill(null)} /> : null}
 
       <div className="panel"><div className="panel-head"><h2>Bosqichlar</h2><span className="muted">har bosqichda hozir nechta lid, shu bosqichda nechtasi yo‘qotilgan, qancha turibdi</span></div>
         <div className="tbl"><table><thead><tr><th>Bosqich</th><th>Hozir</th><th className="n">Yo‘qotilgan</th><th className="n">24 soat+</th><th className="n">72 soat+</th><th className="n">O‘rtacha</th><th className="n">Eng uzoq</th><th className="n">O‘tgan</th></tr></thead><tbody>
-          {d.stages.length ? d.stages.map(s => <tr key={s.id}>
+          {d.stages.length ? d.stages.map(s => <tr key={s.id} style={click} onClick={() => open({ kind: 'stage', id: s.id, label: s.name })} title="Shu bosqichdagi lidlar">
             <td>{s.is_won ? <span className="pill ok">{s.name}</span> : s.name}</td>
             <td><span className="bar"><span className="track"><span className="fill" style={{ width: `${pct(s.active, maxActive)}%` }}></span></span><b className="mono">{s.active}</b></span></td>
             <td className="n">{s.lost_here ? <span className="pill bad">{s.lost_here}</span> : <span className="muted">0</span>}</td>
@@ -100,25 +108,25 @@ export function Voronka({ active }: { active: boolean }) {
             <td className="n mono muted">{s.reached}</td>
           </tr>) : <tr><td colSpan={8} className="muted">Bu davrda lid yo‘q</td></tr>}
         </tbody></table></div>
-        <p className="muted tbl-note">«Yo‘qotilgan» — lid qaysi bosqichda turganida yo‘qotildi deb belgilangan. «24 soat+ / 72 soat+» — hozir shu bosqichda shuncha vaqtdan ko‘p turgan faol lidlar. «O‘tgan» — shu bosqichga kirgan lidlar soni (tarix bo‘yicha).</p>
+        <p className="muted tbl-note">Satrga bosing — shu bosqichdagi lidlar ro‘yxati (faol va yo‘qotilgan). «Yo‘qotilgan» — lid qaysi bosqichda turganida yo‘qotildi deb belgilangan. «24 soat+ / 72 soat+» — hozir shu bosqichda shuncha vaqtdan ko‘p turgan faol lidlar. «O‘tgan» — shu bosqichga kirgan lidlar soni (tarix bo‘yicha).</p>
       </div>
 
       <div className="grid-2">
         <div className="panel"><div className="panel-head"><h2>Nimaga yo‘qotildi</h2><span className="muted">Odoo’dagi yo‘qotish sabablari</span></div>
           <div className="tbl"><table><thead><tr><th>Sabab</th><th className="n">Lid</th><th className="n">Ulush</th></tr></thead><tbody>
-            {d.reasons.length ? d.reasons.map((r, i) => <tr key={i}><td>{r.name === 'Sabab ko‘rsatilmagan' ? <span className="pill warn">{r.name}</span> : r.name}</td><td className="n mono">{r.n}</td><td className="n"><span className="bar"><span className="track"><span className="fill" style={{ width: `${pct(r.n, t.lost)}%` }}></span></span>{pct(r.n, t.lost)} %</span></td></tr>)
+            {d.reasons.length ? d.reasons.map((r, i) => <tr key={i} style={click} onClick={() => open({ kind: 'reason', id: r.id, label: r.name })} title="Shu sabab bilan yo‘qotilganlar"><td>{r.name === 'Sabab ko‘rsatilmagan' ? <span className="pill warn">{r.name}</span> : r.name}</td><td className="n mono">{r.n}</td><td className="n"><span className="bar"><span className="track"><span className="fill" style={{ width: `${pct(r.n, t.lost)}%` }}></span></span>{pct(r.n, t.lost)} %</span></td></tr>)
               : <tr><td colSpan={3} className="muted">Davrda yo‘qotilgan lid yo‘q</td></tr>}
           </tbody></table></div></div>
         <div className="panel"><div className="panel-head"><h2>Manbalar</h2><span className="muted">qayerdan kelgan, qanchasi yutildi</span></div>
           <div className="tbl"><table><thead><tr><th>Manba</th><th className="n">Lid</th><th className="n">Yo‘qotilgan</th><th className="n">Yutilgan</th></tr></thead><tbody>
-            {d.sources.length ? d.sources.map((s, i) => <tr key={i}><td>{s.name}</td><td className="n mono">{s.total}</td><td className="n mono">{s.lost}</td><td className="n mono">{s.won}</td></tr>)
+            {d.sources.length ? d.sources.map((s, i) => <tr key={i} style={click} onClick={() => open({ kind: 'source', id: s.id, label: s.name })} title="Shu manbadan kelganlar"><td>{s.name}</td><td className="n mono">{s.total}</td><td className="n mono">{s.lost}</td><td className="n mono">{s.won}</td></tr>)
               : <tr><td colSpan={4} className="muted">Ma’lumot yo‘q</td></tr>}
           </tbody></table></div></div>
       </div>
 
-      <div className="panel"><div className="panel-head"><h2>Kim tomonidan</h2><span className="muted">menejer kesimida: nechta lid, nechtasi yo‘qotilgan, nechtasi 24 soatdan ko‘p qimirlamayapti</span></div>
+      <div className="panel"><div className="panel-head"><h2>Kim tomonidan</h2><span className="muted">menejer kesimida: nechta lid, nechtasi yo‘qotilgan, nechtasi 24 soatdan ko‘p qimirlamayapti · satrga bosing — uning lidlari</span></div>
         <div className="tbl"><table><thead><tr><th>Mas’ul</th><th className="n">Lid</th><th className="n">Ishda</th><th className="n">Yo‘qotilgan</th><th className="n">Yutilgan</th><th className="n">24 soat+</th></tr></thead><tbody>
-          {d.users.length ? d.users.map((u, i) => <tr key={i}><td>{u.name === 'Mas’ul yo‘q' ? <span className="pill bad">{u.name}</span> : u.name}</td><td className="n mono">{u.total}</td><td className="n mono">{(u.active ?? 0) - u.won}</td>
+          {d.users.length ? d.users.map((u, i) => <tr key={i} style={click} onClick={() => open({ kind: 'user', id: u.id, label: u.name })} title="Shu menejerning lidlari"><td>{u.name === 'Mas’ul yo‘q' ? <span className="pill bad">{u.name}</span> : u.name}</td><td className="n mono">{u.total}</td><td className="n mono">{(u.active ?? 0) - u.won}</td>
             <td className="n">{u.lost ? <span className={`pill ${pct(u.lost, u.total) >= 40 ? 'bad' : ''}`}>{u.lost} · {pct(u.lost, u.total)}%</span> : <span className="muted">0</span>}</td>
             <td className="n mono">{u.won}</td><td className="n">{u.over_24h ? <span className="pill warn">{u.over_24h}</span> : <span className="muted">0</span>}</td></tr>)
             : <tr><td colSpan={6} className="muted">Ma’lumot yo‘q</td></tr>}
@@ -126,7 +134,7 @@ export function Voronka({ active }: { active: boolean }) {
 
       <div className="panel"><div className="panel-head"><h2>Qotib qolgan lidlar</h2><span className="muted">bosqichda 24 soatdan ko‘p turganlar — eng uzoq turgani birinchi · {d.stuck.length} ta</span></div>
         {d.stuck.length ? <div className="tbl"><table><thead><tr><th>Lid</th><th>Bosqich</th><th>Mas’ul</th><th className="n">Bosqichda</th><th className="n">Kelganiga</th><th>Oxirgi izoh</th></tr></thead><tbody>
-          {d.stuck.map(x => <tr key={x.id}><td><b>{x.name}</b></td><td>{x.stage || '—'}</td><td>{x.user || <span className="pill bad">mas’ul yo‘q</span>}</td>
+          {d.stuck.map(x => <tr key={x.id} style={click} onClick={() => openLead(x.id)} title="Lid kartasi"><td><b>{x.name}</b></td><td>{x.stage || '—'}</td><td>{x.user || <span className="pill bad">mas’ul yo‘q</span>}</td>
             <td className="n"><span className={`pill ${x.days_on_stage >= 3 ? 'bad' : 'warn'}`}>{dayStr(x.days_on_stage)}</span></td><td className="n mono">{dayStr(x.age_days)}</td>
             <td className="muted" style={{ maxWidth: 360 }}>{x.last_note ? <>{x.last_note}{x.last_note_at ? <> <span className="mono">· {fmtDT(x.last_note_at)}</span></> : null}</> : 'izoh yo‘q'}</td></tr>)}
         </tbody></table></div> : <p className="muted" style={{ margin: 0 }}>Hozir qotib qolgan lid yo‘q.</p>}

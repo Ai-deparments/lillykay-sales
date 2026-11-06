@@ -11,13 +11,13 @@ import { join } from 'node:path';
 const dir = mkdtempSync(join(tmpdir(), 'sales-voronka-'));
 Object.assign(process.env, { DB_FILE: join(dir, 't.db'), DATA_DIR: dir, TG_DISABLED: '1', ENV_FILE: join(dir, 'yoq.env') });
 const { migrate, run } = await import('../src/db.js');
-const { voronka } = await import('../src/services/voronka.js');
+const { voronka, leadList, leadDetail } = await import('../src/services/voronka.js');
 
 const T = Date.parse('2026-11-06T08:00:00Z'), H = 3600e3, D = 864e5;
 let id = 0;
 const lead = ({ stage, user = 1, team = 12, active = 1, lost = null, source = 3, created = T - 5 * D, stageAt = T - 2 * H }) =>
-  run('INSERT INTO odoo_leads(id,name,stage_id,team_id,user_id,source_id,lost_reason_id,active,created_at,stage_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)',
-    ++id, `Lid ${id}`, stage, team, user, source, lost, active, created, stageAt, stageAt).lastInsertRowid;
+  run('INSERT INTO odoo_leads(id,name,stage_id,team_id,user_id,source_id,lost_reason_id,active,created_at,stage_at,updated_at,partner,phone,city) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+    ++id, `Lid ${id}`, stage, team, user, source, lost, active, created, stageAt, stageAt, `Mijoz ${id}`, `+99890000000${id}`, 'Toshkent').lastInsertRowid;
 
 before(() => {
   migrate();
@@ -67,4 +67,23 @@ test('davr va jamoa filtri: hammasi (0 kun) va «all» jamoa', () => {
   assert.equal(v.totals.total, 10);
   assert.ok(v.stages.some(s => s.name === 'HR bosqich'));
   assert.equal(voronka({ t: T, days: 0 }).totals.total, 9, 'faqat jamoa filtri');
+});
+
+test('chuqur ko‘rish: bosqich / menejer / sabab / manba / yo‘qotilganlar ro‘yxati; lid kartasi — tarix, izohlar, mijoz', () => {
+  const byStage = leadList({ t: T, stage: 2 });
+  assert.equal(byStage.length, 5, 'Ўчрашув: 3 faol + 2 yo‘qotilgan');
+  assert.deepEqual(byStage.map(x => x.status).sort(), ['active', 'active', 'active', 'lost', 'lost']);
+  assert.ok(byStage.every(x => x.phone && x.partner), 'mijoz va telefon bor');
+  assert.equal(leadList({ t: T, user: 2 }).length, 3);
+  assert.equal(leadList({ t: T, reason: 5 }).length, 1);
+  assert.equal(leadList({ t: T, reason: 0 }).length, 1, 'sababsiz yo‘qotilgan');
+  assert.equal(leadList({ t: T, source: 4 }).length, 2);
+  assert.equal(leadList({ t: T, lost: true }).length, 2);
+  assert.equal(leadList({ t: T, days: 0, team: null }).length, 10);
+  const lostLead = leadList({ t: T, reason: 5 })[0];
+  const d = leadDetail(lostLead.id, { t: T });
+  assert.equal(d.status, 'lost'); assert.equal(d.reason, 'Қиммат'); assert.equal(d.user, 'Shahzoda'); assert.equal(d.team, 'Savdo');
+  assert.equal(d.history.length, 1); assert.equal(d.history[0].from_stage, 'Янги'); assert.equal(d.history[0].to_stage, 'Ўчрашув');
+  assert.equal(d.notes.length, 1); assert.equal(d.notes[0].body, 'Mijoz qimmat dedi');
+  assert.equal(leadDetail(99999), null);
 });

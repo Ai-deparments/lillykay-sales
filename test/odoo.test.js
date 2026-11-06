@@ -19,6 +19,7 @@ const state = { key: 'togri-kalit', calls: [], leads: [], tracking: [], messages
 const lead = (id, { stage = 1, user = 10, active = true, write = '2026-11-01 08:00:00', lost = false } = {}) => ({
   id, name: `Lid ${id}`, stage_id: [stage, `Bosqich ${stage}`], team_id: [12, 'Savdo'], user_id: [user, `User ${user}`], source_id: [3, 'Instagram'],
   lost_reason_id: lost ? [2, 'Qimmat'] : false, active, probability: active ? 20 : 0, expected_revenue: 40000000, tag_ids: [1],
+  partner_name: `Mijoz ${id}`, contact_name: false, phone: '+998901112233', email_from: false, city: 'Toshkent',
   create_date: '2026-10-20 06:00:00', date_open: '2026-10-20 06:00:00', date_last_stage_update: write, date_closed: false, write_date: write
 });
 const applyDomain = (rows, domain) => rows.filter(r => domain.every(([f, op, v]) => {
@@ -94,6 +95,8 @@ test('birinchi sinxron: ma’lumotnomalar, faol va yo‘qotilgan lidlar, bosqich
   const lost = one('SELECT * FROM odoo_leads WHERE id=102');
   assert.equal(lost.active, 0); assert.equal(lost.lost_reason_id, 2);
   assert.equal(one('SELECT created_at FROM odoo_leads WHERE id=100').created_at, Date.parse('2026-10-20T06:00:00Z'), 'UTC → epoch ms');
+  const c = { ...one('SELECT partner, contact, phone, email, city FROM odoo_leads WHERE id=100') };
+  assert.deepEqual(c, { partner: 'Mijoz 100', contact: null, phone: '+998901112233', email: null, city: 'Toshkent' }, 'Odoo false → NULL');
   const log = all('SELECT * FROM odoo_stage_log ORDER BY id');
   assert.equal(log.filter(x => x.source === 'snapshot').length, 2, 'birinchi sinxron: har lidga kirish yozuvi (101 niki Odoo tarixi bilan almashdi)');
   const tr = log.find(x => x.source === 'odoo');

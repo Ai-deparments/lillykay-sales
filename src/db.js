@@ -466,6 +466,15 @@ CREATE TABLE nazorat_alerts (
   id INTEGER PRIMARY KEY AUTOINCREMENT, lead_id INTEGER NOT NULL, level INTEGER NOT NULL, sent_at INTEGER NOT NULL,
   to_user_id INTEGER, delivered INTEGER NOT NULL DEFAULT 0, UNIQUE (lead_id, level)
 );
+`,
+`
+/* Lid kartasi uchun: mijoz, kontakt, telefon, email, shahar (Odoo crm.lead). Keyingi sinxron hammasini qayta o‘qiydi. */
+ALTER TABLE odoo_leads ADD COLUMN partner TEXT;
+ALTER TABLE odoo_leads ADD COLUMN contact TEXT;
+ALTER TABLE odoo_leads ADD COLUMN phone TEXT;
+ALTER TABLE odoo_leads ADD COLUMN email TEXT;
+ALTER TABLE odoo_leads ADD COLUMN city TEXT;
+DELETE FROM kv WHERE k IN ('odoo_wm_leads','odoo_sync_at');
 `
 ];
 

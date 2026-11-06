@@ -14,7 +14,7 @@ import { hasDemo, simulateClient } from './services/demo.js';
 import { botUsername, telegramRunning } from './channels/telegram.js';
 import { fetchMedia } from './services/media.js';
 import { odooLive, odooStatus, syncOdoo } from './services/odoo.js';
-import { voronka } from './services/voronka.js';
+import { voronka, leadList, leadDetail } from './services/voronka.js';
 import { nazoratList, nazoratJob } from './services/nazorat.js';
 
 export const api = router();
@@ -59,6 +59,20 @@ R.get('/api/voronka', (req, res) => {
   const team = sp.get('team') === 'all' ? null : (sp.get('team') ? Number(sp.get('team')) : undefined);
   const days = [7, 30, 90, 365, 0].includes(Number(sp.get('days'))) ? Number(sp.get('days')) : 30;
   json(res, voronka({ team, days }));
+});
+/* Chuqur ko‘rish: bosqich / menejer / sabab / manba bo‘yicha lidlar (0 = «yo‘q»: mas’ulsiz, sababsiz, manbasiz) va lid kartasi */
+R.get('/api/voronka/leads', (req, res) => {
+  const sp = new URL(req.url, 'http://x').searchParams;
+  const num = k => sp.has(k) ? Number(sp.get(k)) : null;
+  const team = sp.get('team') === 'all' ? null : (sp.get('team') ? Number(sp.get('team')) : undefined);
+  const days = [7, 30, 90, 365, 0].includes(Number(sp.get('days'))) ? Number(sp.get('days')) : 30;
+  const lost = sp.get('lost') === '1' ? true : sp.get('lost') === '0' ? false : null;
+  json(res, { items: leadList({ team, days, stage: num('stage'), user: num('user'), reason: num('reason'), source: num('source'), lost }) });
+});
+R.get('/api/voronka/lead/:id', (req, res, u, p) => {
+  const d = leadDetail(Number(p.id));
+  if (!d) throw new HttpError(404, 'not_found');
+  json(res, d);
 });
 /* Nazorat 24 soat: qimirlamagan lidlar, menejer kesimi, sozlamalar (bosqichlar va soatlar — rahbar o‘zgartiradi) */
 R.get('/api/nazorat', (req, res) => {
