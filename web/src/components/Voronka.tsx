@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { fmtDT } from '@/lib/format';
 import { useApp } from './AppContext';
@@ -18,6 +18,64 @@ interface Data {
 }
 
 const ANSWER_STYLE = `.answer{margin:0;font-size:13.5px;line-height:1.55;color:var(--ink-2)} .answer b{color:var(--ink)}`;
+
+/* Yo‘qotish sabablari — AI xulosasi (menejer izohlari asosida). O‘qish hammaga, yaratish — rahbarga (har so‘rov AI sarfi) */
+interface SababGroup { name: string; n: number; share: number; leads: { id: number; name: string }[]; quote: string | null; fix: string | null }
+interface Sabab {
+  state: 'off' | 'empty' | 'few' | 'none' | 'ok'; ai: boolean; total_lost: number; with_notes: number; without_notes: number; limit: number;
+  stale?: boolean; at?: number; model?: string | null; summary?: string; notes_quality?: string | null; groups?: SababGroup[]; analyzed?: number; reused?: boolean;
+}
+const SABAB_STYLE = `.sabab{border-top:1px solid var(--line);margin-top:12px;padding-top:12px} .sabab .sum{margin:0 0 10px;font-size:13.5px;line-height:1.55} .sabab .grp{padding:8px 0;border-top:1px dashed var(--line)}
+.sabab .grp h4{margin:0 0 4px;font-size:13.5px;display:flex;gap:8px;align-items:center} .sabab .q{font-style:italic;color:var(--ink-2);font-size:12.5px;margin:2px 0} .sabab .fix{font-size:12.5px;margin:2px 0}
+.sabab .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px} .sabab .chips button{font-size:11.5px;padding:2px 8px}`;
+function SababAI({ team, days, canRun }: { team: string; days: number; canRun: boolean }) {
+  const { fail, toast } = useApp();
+  const openLead = useOpenLead();
+  const [s, setS] = useState<Sabab | null>(null);
+  const [busy, setBusy] = useState(false);
+  const q = `days=${days}${team ? `&team=${team}` : ''}`;
+  const qRef = useRef(q); qRef.current = q;
+  // Filtr o‘zgarsa — eski natija ko‘rinmasin; kechikkan javob (boshqa jamoa/davr) yozilmasin
+  useEffect(() => { let dead = false; setS(null); api<Sabab>(`/api/voronka/sabab?${q}`).then(x => { if (!dead) setS(x); }).catch(fail); return () => { dead = true; }; }, [q, fail]);
+  const run = async (force: boolean) => {
+    setBusy(true);
+    try {
+      const r = await api<Sabab & { ok?: boolean; why?: string }>(`/api/voronka/sabab?${q}`, { force });
+      if (qRef.current !== q) return;
+      if (r.ok === false) { toast(r.why || 'AI xatosi'); return; }
+      setS(r); toast(r.reused ? 'Yaqinda tahlil qilingan — saqlangani ko‘rsatildi' : 'AI xulosasi tayyor');
+    } catch (e) { fail(e); } finally { setBusy(false); }
+  };
+  if (!s) return null;
+  const runBtn = (label: string, force: boolean) => canRun ? <button className="btn sm primary" type="button" data-sabab-run disabled={busy} onClick={() => { void run(force); }}>{busy ? 'AI o‘qiyapti…' : label}</button> : null;
+  return (
+    <div className="sabab" data-sabab-state={s.state}>
+      <style>{SABAB_STYLE}</style>
+      <div className="panel-head" style={{ padding: 0, marginBottom: 6 }}><h3 style={{ margin: 0, fontSize: 14 }}>AI xulosasi — izohlardan haqiqiy sabablar</h3>
+        <span className="muted" style={{ fontSize: 12 }}>{s.total_lost} yo‘qotilgan · izohi bor {s.with_notes} · izohsiz {s.without_notes}</span></div>
+      {s.state === 'off' ? <p className="muted" style={{ margin: 0 }}>AI kaliti kiritilmagan — «AI agent» bo‘limida ulang, shunda menejer izohlaridan sabab guruhlari chiqadi.</p>
+        : s.state === 'empty' ? <p className="muted" style={{ margin: 0 }}>Davrda yo‘qotilgan lid yo‘q.</p>
+        : s.state === 'few' ? <p className="muted" style={{ margin: 0 }}>Izohi bor yo‘qotilgan lid juda kam ({s.with_notes} ta) — tahlil uchun kamida 3 ta kerak. Menejerlar Odoo’da yo‘qotish sababini izohga yozsin.</p>
+        : s.state === 'none' ? <div className="row-actions"><span className="muted" style={{ fontSize: 12.5 }}>{s.with_notes > s.limit ? `Izohi bor ${s.with_notes} liddan eng yangi ${s.limit} tasining` : `${s.with_notes} ta lidning`} izohlari tahlil qilinadi (Odoo’dagi rasmiy sabab emas — menejer nima yozgani).</span>{runBtn('AI bilan tahlil qilish', false)}{!canRun ? <span className="muted" style={{ fontSize: 12 }}>Tahlilni rahbar ishga tushiradi.</span> : null}</div>
+        : <>
+          <p className="sum">{s.summary}</p>
+          {s.groups?.map((g, i) => (
+            <div className="grp" key={i}>
+              <h4><span>{g.name}</span><span className="pill">{g.n} ta · {g.share}%</span></h4>
+              {g.quote ? <p className="q">«{g.quote}»</p> : null}
+              {g.fix ? <p className="fix"><b>Nima qilish:</b> {g.fix}</p> : null}
+              <div className="chips">{g.leads.slice(0, 8).map(l => <button key={l.id} className="btn sm ghost" type="button" onClick={() => openLead(l.id)} title="Lid kartasi">{l.name}</button>)}{g.leads.length > 8 ? <span className="muted" style={{ fontSize: 12 }}>… va yana {g.leads.length - 8} ta</span> : null}</div>
+            </div>
+          ))}
+          <div className="row-actions" style={{ marginTop: 8 }}>
+            <span className="muted" style={{ fontSize: 12 }}>{s.analyzed} lid izohi · {s.at ? fmtDT(s.at) : ''}{s.model ? ` · ${s.model}` : ''}{s.notes_quality ? ` · ${s.notes_quality}` : ''}</span>
+            {s.stale ? <span className="pill warn" title="Yo‘qotilgan lidlar yoki izohlar o‘zgargan">eskirgan</span> : null}
+            {runBtn(s.stale ? 'Yangilash' : 'Qayta tahlil', true)}
+          </div>
+        </>}
+    </div>
+  );
+}
 const PERIODS: [number, string][] = [[7, '7 kun'], [30, '30 kun'], [90, '90 kun'], [0, 'Hammasi']];
 const pct = (n: number, of: number) => (of ? Math.round(100 * n / of) : 0);
 const dayStr = (d: number | null) => d == null ? '—' : d < 1 ? `${Math.max(1, Math.round(d * 24))} soat` : `${d} kun`;
@@ -54,7 +112,7 @@ function Answers({ d }: { d: Data }) {
 }
 
 export function Voronka({ active }: { active: boolean }) {
-  const { fail } = useApp();
+  const { fail, isLead } = useApp();
   const [team, setTeam] = useState<string>('');
   const [days, setDays] = useState(30);
   const [d, setD] = useState<Data | null>(null);
@@ -116,7 +174,8 @@ export function Voronka({ active }: { active: boolean }) {
           <div className="tbl"><table><thead><tr><th>Sabab</th><th className="n">Lid</th><th className="n">Ulush</th></tr></thead><tbody>
             {d.reasons.length ? d.reasons.map((r, i) => <tr key={i} style={click} onClick={() => open({ kind: 'reason', id: r.id, label: r.name })} title="Shu sabab bilan yo‘qotilganlar"><td>{r.name === 'Sabab ko‘rsatilmagan' ? <span className="pill warn">{r.name}</span> : r.name}</td><td className="n mono">{r.n}</td><td className="n"><span className="bar"><span className="track"><span className="fill" style={{ width: `${pct(r.n, t.lost)}%` }}></span></span>{pct(r.n, t.lost)} %</span></td></tr>)
               : <tr><td colSpan={3} className="muted">Davrda yo‘qotilgan lid yo‘q</td></tr>}
-          </tbody></table></div></div>
+          </tbody></table></div>
+          {active ? <SababAI team={team} days={days} canRun={isLead} /> : null}</div>
         <div className="panel"><div className="panel-head"><h2>Manbalar</h2><span className="muted">qayerdan kelgan, qanchasi yutildi</span></div>
           <div className="tbl"><table><thead><tr><th>Manba</th><th className="n">Lid</th><th className="n">Yo‘qotilgan</th><th className="n">Yutilgan</th></tr></thead><tbody>
             {d.sources.length ? d.sources.map((s, i) => <tr key={i} style={click} onClick={() => open({ kind: 'source', id: s.id, label: s.name })} title="Shu manbadan kelganlar"><td>{s.name}</td><td className="n mono">{s.total}</td><td className="n mono">{s.lost}</td><td className="n mono">{s.won}</td></tr>)

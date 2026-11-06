@@ -147,7 +147,7 @@ function runCli(system, prompt, { allowTools = '', timeoutMs = 180000, model } =
 
 export async function runAgent({
   system, userContent, attachments = [], tools = [], serverTools = [],
-  handlers = {}, maxTurns = 8, maxTokens = 8000, effort, model
+  handlers = {}, maxTurns = 8, maxTokens = 8000, effort, model, finalTool = null
 } = {}) {
   void maxTokens; void effort;                       // CLI bularni qabul qilmaydi
   const tmp = mkdtempSync(join(workdir(), 'ish-'));
@@ -189,6 +189,15 @@ export async function runAgent({
         return { text: text.trim(), stop: 'end_turn', model: r.model, toolLog, usage };
       }
 
+      // Yakuniy vosita chaqirildi — uni bajarib to‘xtaymiz (CLI majburlay olmaydi, lekin ikkinchi progon ketmaydi)
+      if (finalTool && calls.some(c => c.name === finalTool)) {
+        for (const c of calls.filter(c => c.name === finalTool)) {
+          const t0 = Date.now();
+          try { await handlers[c.name](c.input || {}); toolLog.push({ name: c.name, input: c.input, turn, ms: Date.now() - t0 }); }
+          catch (e) { toolLog.push({ name: c.name, input: c.input, error: true, turn, ms: Date.now() - t0 }); throw new AiError('tool_failed', String(e.message || e)); }
+        }
+        return { text: typeof obj?.text === 'string' ? obj.text.trim() : '', stop: 'tool', model: r.model, toolLog, usage };
+      }
       // Oxirgi qadamda vositalar o'chadi — yig'ilgani bilan javob yoziladi
       if (turn === maxTurns - 1) {
         const last = await runCli(`${sysFull}\n\n[DIQQAT: vositalar tugadi. Yig'ilgan ma'lumot bilan {"text":"..."} javobini bering.]`,

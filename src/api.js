@@ -1,5 +1,5 @@
 import { config, aiReady } from './config.js';
-import { aiInfo } from './ai/index.js';
+import { aiInfo, AiError } from './ai/index.js';
 import { one, all, run, tx, kvGet } from './db.js';
 import { now, code6, token, jparse, clip, nameKey } from './util.js';
 import { router, readJson, json, HttpError, bad } from './core/http.js';
@@ -16,6 +16,7 @@ import { fetchMedia } from './services/media.js';
 import { odooLive, odooStatus, syncOdoo } from './services/odoo.js';
 import { voronka, leadList, leadDetail } from './services/voronka.js';
 import { nazoratList, nazoratJob } from './services/nazorat.js';
+import { sababStatus, sababGenerate } from './services/sabab.js';
 
 export const api = router();
 const R = api;
@@ -54,25 +55,35 @@ function integrations() {
 /* ---------- Odoo CRM (faqat o‘qish): holat va qo‘lda sinxron ---------- */
 R.get('/api/odoo/status', (req, res, u) => { need(u, 'settings'); json(res, odooStatus()); });
 /* Voronka: lid qayerda, nimaga, kim tomonidan tushib qolyapti (hamma xodim ko‘radi — menejer o‘z natijasini ham ko‘rsin) */
-R.get('/api/voronka', (req, res) => {
-  const sp = new URL(req.url, 'http://x').searchParams;
-  const team = sp.get('team') === 'all' ? null : (sp.get('team') ? Number(sp.get('team')) : undefined);
-  const days = [7, 30, 90, 365, 0].includes(Number(sp.get('days'))) ? Number(sp.get('days')) : 30;
-  json(res, voronka({ team, days }));
-});
+/* Jamoa va davr: team=all → hamma; berilmasa → asosiy jamoa (undefined); days — ruxsat etilgan qiymatlardan, bo‘lmasa 30 */
+const voronkaArgs = sp => ({ team: sp.get('team') === 'all' ? null : (sp.get('team') ? Number(sp.get('team')) : undefined), days: [7, 30, 90, 365, 0].includes(Number(sp.get('days'))) ? Number(sp.get('days')) : 30 });
+R.get('/api/voronka', (req, res) => json(res, voronka(voronkaArgs(new URL(req.url, 'http://x').searchParams))));
 /* Chuqur ko‘rish: bosqich / menejer / sabab / manba bo‘yicha lidlar (0 = «yo‘q»: mas’ulsiz, sababsiz, manbasiz) va lid kartasi */
 R.get('/api/voronka/leads', (req, res) => {
   const sp = new URL(req.url, 'http://x').searchParams;
   const num = k => sp.has(k) ? Number(sp.get(k)) : null;
-  const team = sp.get('team') === 'all' ? null : (sp.get('team') ? Number(sp.get('team')) : undefined);
-  const days = [7, 30, 90, 365, 0].includes(Number(sp.get('days'))) ? Number(sp.get('days')) : 30;
   const lost = sp.get('lost') === '1' ? true : sp.get('lost') === '0' ? false : null;
-  json(res, { items: leadList({ team, days, stage: num('stage'), user: num('user'), reason: num('reason'), source: num('source'), lost }) });
+  json(res, { items: leadList({ ...voronkaArgs(sp), stage: num('stage'), user: num('user'), reason: num('reason'), source: num('source'), lost }) });
 });
 R.get('/api/voronka/lead/:id', (req, res, u, p) => {
   const d = leadDetail(Number(p.id));
   if (!d) throw new HttpError(404, 'not_found');
   json(res, d);
+});
+/* Yo‘qotish sabablari — AI xulosasi: o‘qish hammaga, yaratish (AI sarfi) — rahbarga */
+const sababArgs = req => voronkaArgs(new URL(req.url, 'http://x').searchParams);
+R.get('/api/voronka/sabab', (req, res) => json(res, sababStatus(sababArgs(req))));
+const AI_WHY = { no_ai_key: 'AI kaliti kiritilmagan', refusal: 'AI so‘rovni rad etdi', max_tokens: 'AI javobi uzilib qoldi', too_many_turns: 'AI juda ko‘p qadam qildi', empty: 'AI xulosa bermadi', tool_failed: 'AI xulosasini qabul qilib bo‘lmadi' };
+R.post('/api/voronka/sabab', async (req, res, u) => {
+  need(u, 'settings');
+  const b = await readJson(req);
+  try { json(res, await sababGenerate({ ...sababArgs(req), who: u.name, force: Boolean(b.force) })); }
+  catch (e) {
+    if (!(e instanceof AiError)) throw e;
+    console.error('[sabab] AI xatosi', e.code, String(e.detail || '').slice(0, 300));
+    // budget_* xatolarida detail’da tayyor o‘zbekcha matn bor (ai/gemini.js)
+    json(res, { ok: false, error: e.code, why: AI_WHY[e.code] || (String(e.code).startsWith('budget_') && e.detail) || `AI xatosi: ${e.code}` }, 502);
+  }
 });
 /* Nazorat 24 soat: qimirlamagan lidlar, menejer kesimi, sozlamalar (bosqichlar va soatlar — rahbar o‘zgartiradi) */
 R.get('/api/nazorat', (req, res) => {

@@ -218,7 +218,8 @@ async function getCache(model, system, allTools) {
   }
 }
 
-export async function runAgent({ system, userContent, attachments = [], tools = [], serverTools = [], handlers = {}, maxTurns = 8, maxTokens = 8000, model: prefer = null }) {
+/* finalTool — shu vosita majburan chaqiriladi (mode ANY) va chaqirilgach sikl to‘xtaydi: tuzilgan natija kerak bo‘lganda ikkinchi (bekor) so‘rov ketmaydi */
+export async function runAgent({ system, userContent, attachments = [], tools = [], serverTools = [], handlers = {}, maxTurns = 8, maxTokens = 8000, model: prefer = null, finalTool = null }) {
   const chain = chainFor(prefer);
   const contents = [{ role: 'user', parts: [{ text: String(userContent) }, ...attachments.map(a => ({ inlineData: { mimeType: a.mime, data: a.data } }))] }];
   const fnTools = tools.length ? [{ functionDeclarations: tools.map(declare) }] : [];
@@ -238,13 +239,15 @@ export async function runAgent({ system, userContent, attachments = [], tools = 
     const cached = !lastTurn && !closing ? await getCache(cacheModel, system, allTools) : null;
     const lvl = thinkingFor(model || chain[0]);
     const gen = { maxOutputTokens: maxTokens, ...(lvl !== 'off' ? { thinkingConfig: { thinkingLevel: lvl } } : {}) };
+    const toolConfig = lastTurn ? { functionCallingConfig: { mode: 'NONE' } }
+      : finalTool && !closing && fnTools.length ? { functionCallingConfig: { mode: 'ANY', allowedFunctionNames: [finalTool] } } : null;
     const plain = {
       systemInstruction: { parts: [{ text: system }] }, contents,
       ...(allTools.length && !closing ? { tools: allTools } : {}),
-      ...(lastTurn ? { toolConfig: { functionCallingConfig: { mode: 'NONE' } } } : {}),
+      ...(toolConfig ? { toolConfig } : {}),
       generationConfig: gen
     };
-    const body = cached ? { cachedContent: cached, contents, generationConfig: gen } : plain;
+    const body = cached ? { cachedContent: cached, contents, ...(toolConfig ? { toolConfig } : {}), generationConfig: gen } : plain;
     let res;
     try {
       if (model) res = await geminiPost(body, { model });
@@ -296,6 +299,8 @@ export async function runAgent({ system, userContent, attachments = [], tools = 
       const response = out && typeof out === 'object' && !Array.isArray(out) ? out : { result: out };
       return { functionResponse: { ...(c.id ? { id: c.id } : {}), name: c.name, response } };
     }));
+    // Yakuniy vosita chaqirildi — natija qo‘lda, modelga qaytib so‘rov yuborilmaydi
+    if (finalTool && calls.some(c => c.functionCall.name === finalTool)) return { text: textOf(parts), stop: 'tool', model: res.modelVersion || model, toolLog, usage };
     // Yakunda ham chaqirsa: vositalar bajarildi (karta yangilanishi yo‘qolmasin), matn bo‘lsa — javob shu
     if (closing) { const text = textOf(parts); if (text.trim()) return { text, stop: cand.finishReason || 'STOP', model: res.modelVersion || model, toolLog, usage }; break; }
     contents.push({ role: 'user', parts: responses });

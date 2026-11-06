@@ -59,7 +59,8 @@ function echoable(content) {
   Tool loop: handlers — { toolName: async (input) => result(obj|string) }.
   Qaytaradi: { text, stop, model, toolLog, usage }
 */
-export async function runAgent({ system, userContent, attachments = [], tools = [], serverTools = [], handlers = {}, maxTurns = 8, maxTokens = 8000, effort = config.aiEffort }) {
+/* finalTool — shu vosita majburan chaqiriladi (tool_choice) va chaqirilgach sikl to‘xtaydi: tuzilgan natija uchun ikkinchi so‘rov ketmaydi */
+export async function runAgent({ system, userContent, attachments = [], tools = [], serverTools = [], handlers = {}, maxTurns = 8, maxTokens = 8000, effort = config.aiEffort, finalTool = null }) {
   // attachments: [{ mime, data(base64) }] — mijoz yuborgan rasmlar (Claude: image/jpeg, png, gif, webp)
   const imgs = attachments.filter(a => /^image\/(jpeg|png|gif|webp)$/.test(a.mime));
   const messages = [{ role: 'user', content: imgs.length
@@ -76,7 +77,7 @@ export async function runAgent({ system, userContent, attachments = [], tools = 
       messages,
       tools: [...serverTools, ...tools],
       // Oxirgi qadam: vositalarsiz — model yig‘ilgan ma’lumot bilan javobni yozadi
-      ...(turn === maxTurns - 1 && (serverTools.length || tools.length) ? { tool_choice: { type: 'none' } } : {}),
+      ...(turn === maxTurns - 1 && (serverTools.length || tools.length) ? { tool_choice: { type: 'none' } } : finalTool && tools.length ? { tool_choice: { type: 'tool', name: finalTool } } : {}),
       thinking: { type: 'adaptive' },
       output_config: { effort },
       ...(useFallback() ? { fallbacks: 'default' } : {}),
@@ -109,6 +110,8 @@ export async function runAgent({ system, userContent, attachments = [], tools = 
       toolLog.push({ name: c.name, input: c.input, error: isError || undefined, turn, ms: Date.now() - t0 });
       return { type: 'tool_result', tool_use_id: c.id, content: typeof out === 'string' ? out : JSON.stringify(out), ...(isError ? { is_error: true } : {}) };
     }));
+    // Yakuniy vosita chaqirildi — natija qo‘lda, modelga qaytib so‘rov yuborilmaydi
+    if (finalTool && calls.some(c => c.name === finalTool)) return { text: content.filter(b => b.type === 'text').map(b => b.text).join('').trim(), stop: 'tool', model: last.model, toolLog, usage };
     messages.push({ role: 'user', content: results });
   }
   throw new AiError('too_many_turns');

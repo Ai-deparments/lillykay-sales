@@ -83,6 +83,17 @@ test('funksiya sikli: vosita chaqiriladi, thoughtSignature o‘zgarishsiz qaytad
   assert.deepEqual(r.usage, { input: 200, output: 40, cache_read: 0 });
 });
 
+test('finalTool: vosita majburan so‘raladi (mode ANY) va chaqirilgach sikl to‘xtaydi — bitta so‘rov, ikkinchi (bekor) so‘rov yo‘q', async () => {
+  reset(say([{ functionCall: { id: 'c1', name: 'xulosa', args: { summary: 'S', groups: [] } } }]), say([{ text: 'bu so‘rov ketmasligi kerak' }]));
+  let got = null;
+  const r = await runAgent({ system: 's', userContent: 'u', maxTurns: 2, finalTool: 'xulosa',
+    tools: [{ name: 'xulosa', description: 'x', input_schema: { type: 'object', properties: { summary: { type: 'string' } } } }],
+    handlers: { xulosa: a => { got = a; return { ok: true }; } } });
+  assert.equal(calls.length, 1, 'faqat bitta so‘rov');
+  assert.deepEqual(calls[0].body.toolConfig, { functionCallingConfig: { mode: 'ANY', allowedFunctionNames: ['xulosa'] } });
+  assert.equal(got.summary, 'S'); assert.equal(r.stop, 'tool'); assert.equal(r.toolLog[0].name, 'xulosa');
+});
+
 test('oxirgi qadamda vositalar o‘chiriladi — model yig‘ilganini yozadi, «juda ko‘p qadam» xatosi bo‘lmaydi', async () => {
   const fc = n => say([{ functionCall: { id: 'c' + n, name: 'search_catalog', args: { query: 'chiroq ' + n } } }]);
   reset(fc(1), fc(2), say([{ text: 'Mana 2 ta variant' }]));
