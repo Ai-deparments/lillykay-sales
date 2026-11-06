@@ -1,0 +1,31 @@
+[Unit]
+Description=Photobuy sotuv — veb-panel va AI agentlar
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sales
+Group=sales
+WorkingDirectory=/opt/sales/app
+Environment=ENV_FILE=/opt/sales/.env
+Environment=NODE_ENV=production
+ExecStart=__NODE__ --disable-warning=ExperimentalWarning src/server.js
+Restart=always
+RestartSec=3
+# RAM kam (3.3 GB) — Nova bilan bo‘lishiladi. Ovozli xabarni matnga aylantirish (whisper small) ~470 MB oladi — shu sabab 1.2 GB
+MemoryHigh=800M
+MemoryMax=1200M
+Nice=5
+# Xavfsizlik: /home (Nova — /home/claude) ko‘rinmaydi, faqat data papkasiga yoza oladi
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/opt/sales/data
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target

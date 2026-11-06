@@ -1,0 +1,14 @@
+body:has(.guide){overflow:auto}
+.guide{max-width:880px;margin:0 auto;padding:28px 20px 60px;display:flex;flex-direction:column;gap:26px;font-size:14.5px;line-height:1.6}
+.guide h1{font-family:var(--f-display);font-size:26px;margin:0;letter-spacing:-.02em}
+.guide h2{font-size:18px;margin-top:6px}
+.guide h3{font-size:15px;margin:0}
+.guide p{margin:0;color:var(--ink-2)}
+.guide ol,.guide ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;color:var(--ink-2)}
+.guide b{color:var(--ink)}
+.guide .panel{gap:10px}
+.guide .tbl td,.guide .tbl th{font-size:13.5px}
+.topnav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.topnav a{text-decoration:none}
+.kbd{font-family:var(--f-mono);font-size:12.5px;background:var(--sunk);border-radius:5px;padding:1px 6px}
+@media print{.topnav{display:none}.guide{padding:0}.panel{break-inside:avoid}}

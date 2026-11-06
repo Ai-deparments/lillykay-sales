@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kirish · Photobuy Sotuv</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Unbounded:wght@600&display=swap">
+<link rel="stylesheet" href="/app.css">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151B1A" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Photobuy">
+<script src="/theme.js"></script>
+<script src="/pwa.js" defer></script>
+</head>
+<body>
+<div class="login-wrap">
+  <form class="login" id="f">
+    <div class="brand login-brand" style="padding:0">
+      <div class="brand-mark"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5 16 12M19.36 7.75 14 15.46M19.36 16.25 10 15.46M12 20.5 8 12M4.64 16.25 10 8.54M4.64 7.75 14 8.54"/></svg></div>
+      <div><div class="brand-name">Photobuy</div><div class="brand-sub">Sotuv markazi</div></div>
+    </div>
+    <div>
+      <h1>Kirish</h1>
+      <p class="login-sub">Telefon raqamingiz — loginingiz. Parolni o‘zingiz qo‘ygansiz.</p>
+    </div>
+    <label class="field"><span>Telefon raqamingiz</span><input id="login" name="login" type="tel" inputmode="tel" autocomplete="username tel" placeholder="+998 90 123 45 67" autocapitalize="none" spellcheck="false" required autofocus></label>
+    <label class="field"><span>Parol</span>
+      <span class="pw-row">
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button class="pw-eye" type="button" id="eye" aria-pressed="false" aria-label="Parolni ko‘rsatish" title="Parolni ko‘rsatish">
+          <svg class="ic ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg class="ic ic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.9 5.8A9.8 9.8 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3.2 3.9M6.4 7.7A17 17 0 0 0 2.5 12S6 18.5 12 18.5c1.2 0 2.3-.2 3.3-.6"/><path d="m3.5 3.5 17 17"/></svg>
+        </button>
+      </span>
+    </label>
+    <div class="caps" id="caps" hidden>
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5 4.5 12h4v4h7v-4h4z"/><path d="M8.5 19.5h7"/></svg>
+      Caps Lock yoqilgan — parol katta harflarda yozilyapti
+    </div>
+    <div class="err" id="err" role="alert"></div>
+    <button class="btn primary" type="submit" style="justify-content:center">Kirish</button>
+    <details class="forgot">
+      <summary>Parolni unutdingizmi?</summary>
+      <div class="forgot-body">
+        <p>Parolni o‘zi tiklaydigan havola yo‘q — yangi parolni <b>rahbaringiz</b> beradi. Shunday qiling:</p>
+        <ol>
+          <li>Rahbaringizga yozing: «panelga kira olmayapman, parol kerak».</li>
+          <li>U paneldan <b>Xodimlar va filiallar</b> bo‘limini ochadi va sizning qatoringizdagi <b>«Parolni o‘zgartirish»</b> tugmasini bosadi.</li>
+          <li>Sizga havola keladi. Havolani ochib, <b>yangi parolni o‘zingiz</b> qo‘yasiz — uni hech kim, hatto rahbaringiz ham ko‘rmaydi.</li>
+        </ol>
+        <p class="muted">Login — ishga qabul qilinganda bergan telefon raqamingiz. Uni <span class="mono">+998 90 123 45 67</span> yoki <span class="mono">901234567</span> ko‘rinishida yozsangiz ham bo‘ladi. Qaysi raqam ekanini bilmasangiz, rahbaringiz aytadi.</p>
+      </div>
+    </details>
+    <button class="btn ghost install-btn login-install" type="button" data-install>
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>
+      Ilovani yuklab olish
+    </button>
+  </form>
+</div>
+<script src="/login.js" defer></script>
+</body>
+</html>

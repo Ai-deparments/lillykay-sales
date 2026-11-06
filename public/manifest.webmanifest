@@ -1,0 +1,23 @@
+{
+  "id": "/",
+  "name": "Photobuy Sotuv markazi",
+  "short_name": "Photobuy",
+  "description": "Photobuy sotuv paneli: suhbatlar, buyurtmalar, AI agent",
+  "lang": "uz",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#EDF0EE",
+  "theme_color": "#FFFFFF",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Suhbatlar", "url": "/#suhbatlar", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Vazifalar", "url": "/#vazifalar", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Buyurtmalar", "url": "/#buyurtmalar", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

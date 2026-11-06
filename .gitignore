@@ -1,0 +1,23 @@
+# Sirlar va ma'lumot — hech qachon repoga tushmasin
+.env
+.env.*
+*.env
+ai-keys.env
+*token*
+*.key
+*.pem
+
+# Baza va fayllar
+data/
+*.db
+*.db-shm
+*.db-wal
+backups/
+reklama/
+files/
+photos/
+
+# Boshqalar
+node_modules/
+*.log
+.DS_Store

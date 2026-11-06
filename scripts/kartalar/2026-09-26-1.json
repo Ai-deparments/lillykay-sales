@@ -1,0 +1,50 @@
+[
+  {
+    "id": 656,
+    "specs": "7 bo‘g‘inli alyuminiy teleskopik tayoq: balandlik 30–144 cm. To‘rt rejim — qo‘lda, «mantis», polda tripod va tepadan (overhead) suratga olish. Telefon ushlagichi MagSafe magnit panel va prujinali qisqich bilan; 270° egiladi, 360° aylanadi. Og‘irligi taxminan 335 g. Ajraladigan Bluetooth pult 30 m gacha ishlaydi. Ikkita cold shoe — chiroq yoki mikrofon qo‘yish uchun.",
+    "kit": "Selfi tayoq-tripod, ajraladigan Bluetooth pult, pultni zaryadlash uchun USB-C kabel.",
+    "compat": "MagSafe magnit ulanishi: iPhone 13–16. Boshqa telefonlar — prujinali qisqich orqali. Yuk: qisqich 800 g gacha, tepadan (overhead) rejimida 500 g gacha.",
+    "limits": "MagSafe’siz telefonlarda magnit ishlamaydi — faqat qisqich bilan. 30 m — pultning ochiq joydagi masofasi. Qutidagi to‘liq ro‘yxatni birinchi sotuvda tekshiring.",
+    "sources": ["https://www.ulanzi.com/products/magsafe-overhead-selfie-stick-t111 — Ulanzi rasmiy sahifasi", "https://www.ulanzi.de/en/products/4-in-1-magsafe-selfie-stick-t111 — Ulanzi (DE) sahifasi"]
+  },
+  {
+    "id": 837,
+    "specs": "Simsiz petlichka mikrofon (2.4 GHz), 48 kHz / 24-bit. Ikki darajali shovqin pasaytirish (Basic / Strong), 5 darajali kuchaytirish, avtomatik limiter, uchta ovoz tembri (Regular, Rich, Bright). Masofa: 400 m gacha (2 TX + 1 RX, ochiq joyda), mobil qabul qilgich bilan 300 m. Uzatgich taxminan 11 g; ish vaqti — uzatgich ~11,5 soat, qabul qilgich ~10,5 soat, zaryad qutisi bilan jami 48 soatgacha. 5 daqiqa zaryad ≈ 1 soat ishlash.",
+    "kit": "To‘plam variantga bog‘liq: 2 TX + 1 RX + zaryad qutisi; 1 TX + 1 RX; 1 TX + mobil RX + quti; 2 TX + mobil RX + quti. Almashtiriladigan magnit qopqoqlar (qora va oq) standart.",
+    "compat": "Kamera qabul qilgichi — 3.5 mm chiqish (mirrorless va boshqa kameralar). Mobil qabul qilgich — USB-C (smartfonlar). DJI kameralariga to‘g‘ridan-to‘g‘ri ulanadi (OsmoAudio Direct Connection). DJI Mic seriyasi mobil qabul qilgichi DJI Mic 3 bilan ham ishlaydi.",
+    "limits": "BILLZ nomida («DJI MIC MINI 2») qaysi to‘plam ekani ko‘rsatilmagan — mijozga aytishdan oldin qutidagi variantni tekshiring. Lightning’li (eski) iPhone uchun moslik tasdiqlanmagan.",
+    "sources": ["https://dl.djicdn.com/downloads/MIC_MINI_2/20260421/UM/MINI2_um_en2.pdf — DJI rasmiy qo‘llanmasi", "https://www.fonearena.com/blog/481254/dji-mic-mini-2-price-features.html — e’lon qilingan xususiyatlar"]
+  },
+  {
+    "id": 2426,
+    "specs": "2 futli (~77 cm) RGBWW LED trubka, 30 W. Rang harorati 2700–7500K, yashil/pushti tuzatish ±150; CRI 97, TLCI 98. 5600K da 1 m masofada 423 lux. Rejimlar: CCT, HSI va 15 ta effekt; yorqinlik 0–100%. Ichki batareya: to‘liq yorqinlikda ~2 soat 7 daqiqa, 1% da 14 soatgacha; zaryadlash ~2 soat 17 daqiqa. Og‘irligi ~0,85 kg.",
+    "kit": "Bitta chiroqli to‘plam: chiroq, yumshoq sumka, 2 ta xavfsizlik trosi, T12 shaffof qisqich (1/4\"-20 rezbali), 15V quvvat adapteri.",
+    "compat": "Boshqaruv: tugmalar va OLED ekran, Bluetooth (NANLINK ilovasi, iOS/Android), DMX/RDM (metall port), 2.4G pult WS-RC-C2 (alohida sotiladi). O‘rnatish: 1/4\"-20 rezba, T12 o‘lchamdagi aksessuarlar. Tashqi D-Tap batareyadan CB-DT/DC kabel bilan ishlaydi (alohida).",
+    "limits": "BILLZ nomi «pavotube 15 c ll 1 KIT» — PavoTube II 15C bitta chiroqli to‘plam deb olindi; «II» avlodi ekanini qutidan tasdiqlang. Pult va D-Tap kabel to‘plamga kirmaydi.",
+    "sources": ["https://nanliteus.com/products/pavotube-ii-15c-2-foot-rgbww-led-tube-light — Nanlite rasmiy sahifasi", "https://www.bhphotovideo.com/c/product/1736673-REG/nanlite_pt15c_pavotube_ii_15c_2.html — B&H texnik ma’lumoti"]
+  },
+  {
+    "id": 1422,
+    "specs": "Simsiz petlichka mikrofon (2.4 GHz), uzatgich 9 g. 48 kHz / 24-bit, SNR 70 dB, maksimal SPL 115 dB, shovqin pasaytirish. Masofa: ochiq joyda 300 m gacha; to‘siqli joyda kamera versiyasi 40 m, mobil versiya 60 m. Uzatgich bitta zaryadda ~10 soat; zaryad qutisi bilan kamera versiyasi 40 soat, mobil versiya 30 soat. Qutida to‘liq zaryad 1,5 soatdan kam.",
+    "kit": "Versiyaga bog‘liq: Camera (3.5 mm qabul qilgich), Mobile (Lightning yoki USB-C qabul qilgich), Duo (2 ta uzatgich). Barcha versiyada zaryad qutisi bor.",
+    "compat": "Camera versiyasi — 3.5 mm chiqishli qabul qilgich (kamera, noutbuk). Mobile versiyasi — Lightning yoki USB-C qabul qilgich (telefon, planshet).",
+    "limits": "BILLZ nomida versiya (Camera / Mobile, Lightning / USB-C, Duo) ko‘rsatilmagan — moslik shunga bog‘liq, mijozga aytishdan oldin tekshiring.",
+    "sources": ["https://www.hollyland.com/product/lark-m2 — Hollyland rasmiy sahifasi", "https://store.hollyland.com/products/lark-m2 — Hollyland do‘koni"]
+  },
+  {
+    "id": 1647,
+    "specs": "QIHE yoritgich shtativi, maksimal balandligi taxminan 280 cm (model nomidan). Aniq model va ko‘tarish yuki tasdiqlanmagan.",
+    "kit": "",
+    "compat": "Yoritgich va softbox uchun shtativ. Tepadagi rezba turi (1/4\" yoki 3/8\") model bo‘yicha tekshirilsin.",
+    "limits": "BILLZ’da aniq model ko‘rsatilmagan (QIHE’ning 2.8 m li bir nechta modeli bor, masalan J280T, J288S — ko‘tarish yuki har xil). Rasmiy sahifa topilmadi. Sotuvchi qutidan model, ko‘tarish yuki (kg) va yig‘ilgan uzunligini yozib qo‘ysin — shundan keyin tasdiqlanadi.",
+    "sources": []
+  },
+  {
+    "id": 1039,
+    "specs": "90 cm (35,4\") sakkiz qirrali (octa) softbox, tez ochiladigan: montaj plitasi bosilganda ochilib, qulflanadi. 8 ta mustahkam qovurg‘a. Ichki va tashqi diffuzor, «asal katak» grid, qaytargich disk bilan.",
+    "kit": "Softbox, ichki diffuzor, tashqi diffuzor, grid (eggcrate), qaytargich (deflector) disk, sumka.",
+    "compat": "Bowens bayonetli chiroqlar: Neewer CB60 / CB100 / CB120, Aputure 300D II va 120D, Godox SL-60W, SL150W II va boshqa Bowens bayonetli chiroqlar.",
+    "limits": "BILLZ’da aniq model kodi yo‘q (Neewer’da 90 cm li bir nechta variant bor). Chiroqning maksimal quvvati/issiqligi bo‘yicha cheklovni ishlab chiqaruvchi sahifasida tekshiring.",
+    "sources": ["https://neewer.com/products/neewer-65cm-90cm-95cm-quick-release-octagonal-softbox-66605627 — Neewer rasmiy sahifasi", "https://www.bhphotovideo.com/c/product/1678165-REG/neewer_10096354_90cm_8k_quick_release.html — B&H texnik ma’lumoti"]
+  }
+]

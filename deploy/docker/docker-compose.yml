@@ -1,0 +1,48 @@
+# Photobuy sotuv — Contabo serverida izolyatsiyalangan ishga tushirish.
+# Boshqa tizimlar (Odoo ERP, turkishbaby-shop, bot-api) bilan hech narsa baham ko'rilmaydi:
+#   - o'z tarmog'i (sales_default), o'z papkasi (/opt/sales), o'z portlari (8200, 3000)
+#   - portlar faqat 127.0.0.1 ga chiqadi, tashqariga faqat nginx orqali
+#   - RAM va CPU chegaralangan: xato bo'lsa ham serverni to'ldirib ERP ni o'ldirmaydi
+name: sales
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.api
+    image: sales-api:latest
+    container_name: sales-api
+    restart: unless-stopped
+    env_file:
+      - /opt/sales/.env
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8200"
+      DATA_DIR: /data
+      NODE_ENV: production
+    volumes:
+      - /opt/sales/data:/data
+    ports:
+      - "127.0.0.1:8200:8200"
+    mem_limit: 1500m
+    cpus: 2.0
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  ui:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.ui
+    image: sales-ui:latest
+    container_name: sales-ui
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:3000:3000"
+    mem_limit: 600m
+    cpus: 1.0
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }

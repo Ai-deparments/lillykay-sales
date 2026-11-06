@@ -1,0 +1,30 @@
+[Unit]
+Description=Photobuy sotuv — panel (Next.js)
+After=network-online.target sales-web.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sales
+Group=sales
+WorkingDirectory=/opt/sales/ui
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOSTNAME=127.0.0.1
+ExecStart=__NODE__ server.js
+Restart=always
+RestartSec=3
+# RAM kam (3.3 GB) — Nova va sales-web bilan bo‘lishiladi
+MemoryHigh=300M
+MemoryMax=450M
+Nice=5
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=strict
+PrivateTmp=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+
+[Install]
+WantedBy=multi-user.target

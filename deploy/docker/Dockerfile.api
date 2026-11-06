@@ -1,0 +1,32 @@
+# Photobuy sotuv - Node API va AI agentlar (tashqi npm paketlarsiz, node:sqlite)
+FROM node:24-alpine
+
+# ffmpeg - ovozli xabarni wav'ga aylantirish (STT); tzdata - Asia/Tashkent
+# git/ripgrep - Claude Code CLI uchun
+RUN apk add --no-cache ffmpeg tzdata git ripgrep
+
+# Claude OBUNA rejimi (AI_PROVIDER=claude_cli): API kaliti emas, CLAUDE_CODE_OAUTH_TOKEN ishlaydi
+RUN npm i -g @anthropic-ai/claude-code && claude --version
+
+ENV NODE_ENV=production \
+    TZ=Asia/Tashkent \
+    HOST=0.0.0.0 \
+    PORT=8200 \
+    DATA_DIR=/data \
+    HOME=/home/node \
+    CLAUDE_CLI=/usr/local/bin/claude \
+    CLAUDE_CLI_WORKDIR=/data/claude-cli
+
+WORKDIR /app
+COPY . .
+
+# Ma'lumot papkasi - yagona yoziladigan joy (compose'da /opt/sales/data bog'lanadi)
+RUN mkdir -p /data /home/node/.claude && chown -R node:node /data /home/node /app
+
+USER node
+EXPOSE 8200
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -qO- http://127.0.0.1:8200/api/health >/dev/null || exit 1
+
+CMD ["node", "--disable-warning=ExperimentalWarning", "src/server.js"]

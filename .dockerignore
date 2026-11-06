@@ -1,0 +1,17 @@
+# Docker yig'ish konteksti — sirlar, baza va yig'ilgan fayllar kirmaydi
+data/
+backups/
+reklama/
+files/
+photos/
+.git/
+node_modules/
+web/node_modules/
+web/.next/
+*.log
+.env
+.env.*
+*.env
+*.db
+*.db-shm
+*.db-wal

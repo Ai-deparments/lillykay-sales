@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" data-app-width="1280">
+<script src="/pwa.js"></script>
+<title>Photobuy Sotuv Markazi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Unbounded:wght@500;600&display=swap">
+<link rel="stylesheet" href="/app.css">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151B1A" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Photobuy">
+<script src="/theme.js"></script>
+</head>
+<body data-role="">
+<div class="app">
+  <aside class="rail" aria-label="Asosiy menyu">
+    <div class="brand">
+      <div class="brand-mark" data-ic="aperture"></div>
+      <div><div class="brand-name">Photobuy</div><div class="brand-sub">Sotuv markazi</div></div>
+    </div>
+    <nav class="nav">
+      <div class="nav-group">
+        <div class="nav-label">Ish joyi</div>
+        <a class="nav-item" href="#suhbatlar" data-ic="chat">Suhbatlar<span class="nav-badge" id="badgeWait" hidden></span></a>
+        <a class="nav-item" href="#vazifalar" data-ic="refresh">Vazifalar<span class="nav-badge" id="badgeTasks" hidden style="background:var(--ink-2)"></span></a>
+        <a class="nav-item" href="#buyurtmalar" data-ic="card">Buyurtmalar</a>
+        <a class="nav-item" href="#qayta" data-ic="spark">Qayta sotuv</a>
+        <a class="nav-item" href="#tahlil" data-ic="chart">Reja va tahlil</a>
+        <a class="nav-item" href="#katalog" data-ic="book">Bilim bazasi</a>
+        <a class="nav-item seller-only" href="#keshbek" data-ic="card">Keshbek</a>
+        <a class="nav-item seller-only" href="#bot" data-ic="tg">Reklama</a>
+        <a class="nav-item seller-only" href="#jurnal" data-ic="log">Audit jurnali</a>
+      </div>
+      <div class="nav-group lead-only">
+        <div class="nav-label">Boshqaruv</div>
+        <a class="nav-item" href="#agent" data-ic="spark">AI agent</a>
+        <a class="nav-item" href="#sotuvchilar" data-ic="chart">Sotuvchilar</a>
+        <a class="nav-item" href="#keshbek" data-ic="card">Keshbek</a>
+        <a class="nav-item" href="#bot" data-ic="tg">Bot va reklama</a>
+        <a class="nav-item" href="#hisobot" data-ic="book">Hisobot</a>
+        <a class="nav-item" href="#sozlama" data-ic="sliders">Sozlamalar</a>
+        <a class="nav-item" href="#xodimlar" data-ic="users">Xodimlar va filiallar</a>
+        <a class="nav-item" href="#jurnal" data-ic="log">Audit jurnali</a>
+      </div>
+    </nav>
+    <div class="rail-foot">
+      <button class="btn install-btn install-rail" type="button" data-install title="Panelni kompyuterga alohida ilova qilib o‘rnatish"><span data-ic="download"></span>Ilovani yuklab olish</button>
+      <div class="concept-note" id="meBox"></div>
+      <div class="row-actions"><button class="btn sm" type="button" id="btnTg">Telegram ulash</button><a class="btn sm" href="/yoriqnoma">Yo‘riqnoma</a></div>
+      <div class="row-actions"><button class="btn sm" type="button" id="btnTheme" title="Yorug‘ yoki qorong‘i ko‘rinish"></button><button class="btn sm" type="button" id="btnPw">Parol</button><button class="btn sm ghost" type="button" id="btnLogout">Chiqish</button></div>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div><h1 id="scrTitle">Suhbatlar</h1><div class="sub" id="scrSub"></div></div>
+      <div class="top-right"><span id="topStatus"></span><button class="btn sm only-mobile install-btn" type="button" data-install aria-label="Ilovani yuklab olish"><span data-ic="download"></span>Ilova</button><button class="btn sm only-mobile" type="button" id="btnMe" aria-label="Mening hisobim">Men</button></div>
+    </header>
+    <div class="screens">
+      <section class="screen" id="s-suhbatlar">
+        <div class="inbox" id="inbox">
+          <div class="pane list-pane">
+            <div class="list-head">
+              <label class="search"><span data-ic="search"></span><input id="q" type="search" placeholder="Ism, @akkaunt yoki mahsulot" autocomplete="off"></label>
+              <div class="seg" id="chSeg" role="group" aria-label="Kanal">
+                <button type="button" data-ch="tg" aria-pressed="false" title="Faqat Telegram (qayta bosilsa — hammasi)" aria-label="Faqat Telegram"><span data-brand="tg"></span></button>
+                <button type="button" data-ch="ig" aria-pressed="false" title="Faqat Instagram (qayta bosilsa — hammasi)" aria-label="Faqat Instagram"><span data-brand="ig"></span></button>
+              </div>
+              <div class="chips" id="fChips"></div>
+              <div class="sort-note"><span id="sortNote">Navbat: javob kutayotganlar, katta buyurtmalar, kutish vaqti</span><button type="button" class="linkbtn" id="sortBtn">Yangilari yuqorida</button></div>
+            </div>
+            <div class="conv-list" id="convList"></div>
+          </div>
+          <div class="pane thread-pane" id="thread"><div class="empty-state">Suhbatni tanlang.</div></div>
+          <aside class="pane card-pane" id="card" aria-label="Mijoz kartasi"></aside>
+        </div>
+      </section>
+      <section class="screen" id="s-vazifalar" hidden><div class="page" id="tasksPage"></div></section>
+      <section class="screen" id="s-buyurtmalar" hidden><div class="page" id="ordersPage"></div></section>
+      <section class="screen" id="s-qayta" hidden><div class="page" id="resalePage"></div></section>
+      <section class="screen" id="s-tahlil" hidden><div class="page" id="analyticsPage"></div></section>
+      <section class="screen" id="s-katalog" hidden><div class="page" id="catalogPage"></div></section>
+      <section class="screen" id="s-agent" hidden><div class="page" id="agentPage"></div></section>
+      <section class="screen" id="s-sotuvchilar" hidden><div class="page" id="sellersPage"></div></section>
+      <section class="screen" id="s-keshbek" hidden><div class="page" id="cashbackPage"></div></section>
+      <section class="screen" id="s-hisobot" hidden><div class="page" id="reportPage"></div></section>
+      <section class="screen" id="s-bot" hidden><div class="page" id="botPage"></div></section>
+      <section class="screen" id="s-sozlama" hidden><div class="page" id="settingsPage"></div></section>
+      <section class="screen" id="s-xodimlar" hidden><div class="page" id="usersPage"></div></section>
+      <section class="screen" id="s-jurnal" hidden><div class="page" id="auditPage"></div></section>
+    </div>
+  </main>
+</div>
+<div id="modalRoot"></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

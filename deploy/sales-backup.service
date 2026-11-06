@@ -1,0 +1,15 @@
+[Unit]
+Description=Photobuy sotuv — ma’lumotlar bazasi zaxira nusxasi
+
+[Service]
+Type=oneshot
+User=sales
+Group=sales
+WorkingDirectory=/opt/sales/app
+Environment=ENV_FILE=/opt/sales/.env
+ExecStart=__NODE__ --disable-warning=ExperimentalWarning scripts/backup.js
+Nice=10
+NoNewPrivileges=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/opt/sales/data

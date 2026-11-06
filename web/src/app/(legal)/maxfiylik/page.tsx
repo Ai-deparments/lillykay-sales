@@ -1,0 +1,75 @@
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = { title: 'Photobuy — Maxfiylik siyosati / Privacy Policy' };
+
+export default function Page() {
+  return (
+    <main>
+      <h1>Photobuy — Maxfiylik siyosati</h1>
+      <div className="muted">Privacy Policy · Политика конфиденциальности · Kuchga kirgan sana: 2026-10-02</div>
+      <nav><a href="#uz">O‘zbekcha</a><a href="#en">English</a><a href="#ru">Русский</a><a href="/malumot-ochirish">Ma’lumotlarni o‘chirish / Data deletion</a></nav>
+    
+      <section id="uz">
+        <h2>Kim biz</h2>
+        <p>Photobuy — Toshkentdagi foto va video texnika do‘koni (photobuy.uz; manzil: Toshkent, Yunusobod, Bog‘iravon 55). Ushbu siyosat Photobuy’ning Telegram va Instagram orqali mijozlar bilan yozishmalariga hamda sotuv bo‘limi paneliga tegishli.</p>
+        <h2>Qanday ma’lumot olamiz</h2>
+        <ul>
+          <li>Siz bizga yozgan xabarlar (matn, rasm, ovozli xabar) va ularning vaqti;</li>
+          <li>Telegram yoki Instagram’dagi ismingiz va foydalanuvchi nomingiz;</li>
+          <li>O‘zingiz bergan telefon raqami va buyurtma ma’lumotlari (tovar, filial, yetkazish manzili).</li>
+        </ul>
+        <h2>Nima uchun ishlatamiz</h2>
+        <ul>
+          <li>Savolingizga javob berish, tovar narxi va mavjudligini aytish, buyurtmani rasmiylashtirish;</li>
+          <li>Javobni tezlatish uchun avtomatik yordamchi (sun’iy intellekt) javob tayyorlaydi. Buning uchun xabar matni Google Gemini xizmatiga yuboriladi — u ma’lumotni faqat javob tayyorlash uchun qayta ishlaydi;</li>
+          <li>Sotuv bo‘limi ishini tahlil qilish (javob tezligi, buyurtmalar soni).</li>
+        </ul>
+        <p>Ma’lumotlaringizni sotmaymiz va reklama uchun boshqalarga bermaymiz.</p>
+        <h2>Saqlash</h2>
+        <p>Yozishmalar Photobuy serverida saqlanadi va faqat do‘kon xodimlari ko‘radi. Har bir xodim faqat o‘z ishiga tegishli suhbatlarni ko‘radi.</p>
+        <h2>Huquqlaringiz</h2>
+        <p>Yozishmalaringizni ko‘rish, tuzatish yoki butunlay o‘chirishni so‘rashingiz mumkin — <a href="/malumot-ochirish">qanday qilish kerak</a>. Bog‘lanish: Telegram yoki Instagram’da Photobuy akkauntiga yozing.</p>
+      </section>
+    
+      <section id="en">
+        <h2>Who we are</h2>
+        <p>Photobuy is a photo and video equipment store in Tashkent, Uzbekistan (photobuy.uz; address: Bog‘iravon 55, Yunusobod, Tashkent). This policy covers Photobuy’s customer conversations on Telegram and Instagram and the sales team’s internal panel.</p>
+        <h2>Data we collect</h2>
+        <ul>
+          <li>Messages you send us (text, images, voice messages) and their timestamps;</li>
+          <li>Your name and username on Telegram or Instagram;</li>
+          <li>Phone number and order details you choose to share (product, store branch, delivery address).</li>
+        </ul>
+        <h2>How we use it</h2>
+        <ul>
+          <li>To answer your questions, tell you product prices and availability, and process orders;</li>
+          <li>An automated assistant (AI) drafts replies to answer faster. For this, message text is sent to Google Gemini, which processes it only to generate the reply;</li>
+          <li>To measure our sales team’s work (response time, number of orders).</li>
+        </ul>
+        <p>We do not sell your data or share it with third parties for advertising.</p>
+        <h2>Storage</h2>
+        <p>Conversations are stored on Photobuy’s server and are accessible only to store staff, each seeing only the conversations relevant to their work.</p>
+        <h2>Your rights</h2>
+        <p>You can ask to see, correct or completely delete your conversation data — see <a href="/malumot-ochirish">data deletion instructions</a>. Contact: message the Photobuy account on Telegram or Instagram.</p>
+      </section>
+    
+      <section id="ru">
+        <h2>Кто мы</h2>
+        <p>Photobuy — магазин фото- и видеотехники в Ташкенте (photobuy.uz; адрес: Ташкент, Юнусабад, Богиравон 55). Политика относится к перепискам Photobuy с клиентами в Telegram и Instagram и к внутренней панели отдела продаж.</p>
+        <h2>Какие данные мы получаем</h2>
+        <ul>
+          <li>Ваши сообщения (текст, фото, голосовые) и время их отправки;</li>
+          <li>Ваше имя и имя пользователя в Telegram или Instagram;</li>
+          <li>Номер телефона и данные заказа, которые вы сами сообщили.</li>
+        </ul>
+        <h2>Как мы их используем</h2>
+        <ul>
+          <li>Чтобы ответить на вопрос, сообщить цену и наличие товара, оформить заказ;</li>
+          <li>Ответ готовит автоматический помощник (ИИ); для этого текст сообщения передаётся в Google Gemini только для подготовки ответа;</li>
+          <li>Для анализа работы отдела продаж.</li>
+        </ul>
+        <p>Мы не продаём ваши данные и не передаём их третьим лицам для рекламы. Вы можете запросить удаление переписки — <a href="/malumot-ochirish">как это сделать</a>.</p>
+      </section>
+    </main>
+  );
+}
