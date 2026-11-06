@@ -14,6 +14,7 @@ import { hasDemo, simulateClient } from './services/demo.js';
 import { botUsername, telegramRunning } from './channels/telegram.js';
 import { fetchMedia } from './services/media.js';
 import { odooLive, odooStatus, syncOdoo } from './services/odoo.js';
+import { voronka } from './services/voronka.js';
 
 export const api = router();
 const R = api;
@@ -51,6 +52,13 @@ function integrations() {
 
 /* ---------- Odoo CRM (faqat o‘qish): holat va qo‘lda sinxron ---------- */
 R.get('/api/odoo/status', (req, res, u) => { need(u, 'settings'); json(res, odooStatus()); });
+/* Voronka: lid qayerda, nimaga, kim tomonidan tushib qolyapti (hamma xodim ko‘radi — menejer o‘z natijasini ham ko‘rsin) */
+R.get('/api/voronka', (req, res) => {
+  const sp = new URL(req.url, 'http://x').searchParams;
+  const team = sp.get('team') === 'all' ? null : (sp.get('team') ? Number(sp.get('team')) : undefined);
+  const days = [7, 30, 90, 365, 0].includes(Number(sp.get('days'))) ? Number(sp.get('days')) : 30;
+  json(res, voronka({ team, days }));
+});
 R.post('/api/odoo/sync', async (req, res, u) => {
   need(u, 'settings');
   audit('staff', u.name, 'Odoo sinxronini qo‘lda boshladi');

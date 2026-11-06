@@ -11,6 +11,7 @@ import { ThemeButton } from './ThemeButton';
 import { openChatStyleModal, openMeModal, openPasswordModal, openTelegramModal } from './MeModals';
 import { applyChatStyle } from '@/lib/chatStyle';
 import { Inbox } from './inbox/Inbox';
+import { Voronka } from './Voronka';
 import { Catalog } from './Catalog';
 import { Agent } from './Agent';
 import { Users } from './Users';
@@ -70,6 +71,7 @@ export function Shell() {
           <div className="nav-group">
             <div className="nav-label">Ish joyi</div>
             <NavItem href="suhbatlar" ic="chat" route={route}>Suhbatlar<span className="nav-badge" id="badgeWait" hidden={!badges.wait}>{badges.wait || ''}</span></NavItem>
+            <NavItem href="voronka" ic="chart" route={route}>Voronka</NavItem>
             <NavItem href="katalog" ic="book" route={route}>Bilim bazasi</NavItem>
             <NavItem href="jurnal" ic="log" route={route} className="seller-only">Audit jurnali</NavItem>
           </div>
@@ -104,6 +106,7 @@ export function Shell() {
         </header>
         <div className="screens">
           <section className="screen" id="s-suhbatlar" hidden={!act('suhbatlar')}><Inbox active={act('suhbatlar')} /></section>
+          <section className="screen" id="s-voronka" hidden={!act('voronka')}><div className="page" id="voronkaPage"><Voronka active={act('voronka')} /></div></section>
           <section className="screen" id="s-katalog" hidden={!act('katalog')}><div className="page" id="catalogPage"><Catalog active={act('katalog')} /></div></section>
           <section className="screen" id="s-agent" hidden={!act('agent')}><div className="page" id="agentPage"><Agent active={act('agent')} /></div></section>
           <section className="screen" id="s-xodimlar" hidden={!act('xodimlar')}><div className="page" id="usersPage"><Users active={act('xodimlar')} /></div></section>
