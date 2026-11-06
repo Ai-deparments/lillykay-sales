@@ -85,7 +85,7 @@ R.post('/api/nazorat/settings', async (req, res, u) => {
   const b = await readJson(req);
   const patch = {};
   if (Array.isArray(b.stages)) patch.nazorat_stages = b.stages.map(Number).filter(Boolean).join(',');
-  for (const k of ['nazorat_hours', 'nazorat_escalate_hours', 'nazorat_notify']) if (b[k] !== undefined) patch[k] = b[k];
+  for (const k of ['nazorat_hours', 'nazorat_escalate_hours', 'nazorat_max_days', 'nazorat_notify']) if (b[k] !== undefined) patch[k] = b[k];
   json(res, { ok: true, changed: updateSettings(patch, u.name) });
 });
 R.post('/api/nazorat/run', async (req, res, u) => {

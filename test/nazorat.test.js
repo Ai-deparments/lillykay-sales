@@ -52,9 +52,11 @@ test('ro‘yxat: oxirgi harakat izoh bo‘lsa — undan sanaladi; 24 soatdan kam
   lead({ stage: 2, user: 12, stageAt: T - 80 * H });                    // 4: 80 soat — 72, Aziz (panelda yo‘q)
   lead({ stage: 1, stageAt: T - 100 * H });                             // 5: nazorat bosqichi emas
   lead({ stage: 4, stageAt: T - 100 * H });                             // 6: yutilgan
+  const oldLead = lead({ stage: 2, stageAt: T - 70 * 24 * H });         // 7: 70 kun — eskirgan, ro‘yxatga kirmaydi
   const v = nazoratList({ t: T });
   assert.deepEqual(v.items.map(x => [x.id, x.hours, x.level]), [[4, 80, 72], [3, 50, 48], [1, 30, 24]]);
-  assert.deepEqual(v.totals, { over_24: 3, over_48: 2, over_72: 1, no_user: 0, notified: 0 });
+  assert.deepEqual(v.totals, { over_24: 3, over_48: 2, over_72: 1, no_user: 0, notified: 0, old: 1 });
+  assert.ok(!v.items.some(x => x.id === oldLead), 'eskirgan lid ro‘yxatda yo‘q');
   assert.equal(v.items.find(x => x.id === 1).staff, 'Shahzoda');
   assert.equal(v.items.find(x => x.id === 1).staff_linked, true);
   assert.equal(v.items.find(x => x.id === 3).staff_linked, false);

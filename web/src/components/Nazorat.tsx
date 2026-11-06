@@ -11,9 +11,9 @@ interface StageOpt { id: number; name: string; sequence: number; is_won: number 
 interface Item { id: number; name: string; stage: string; user: string | null; user_id: number | null; last_at: number; hours: number; level: number; days: number; last_note: string | null; alerted: number[]; staff: string | null; staff_linked: boolean }
 interface ByUser { name: string; user_id: number | null; staff: string | null; linked: boolean; n: number; over_48: number; over_72: number; max_hours: number }
 interface Data {
-  stages: StageOpt[]; chosen: StageOpt[]; auto: boolean; hours: number; escalate: number; notify: boolean; as_of: number;
+  stages: StageOpt[]; chosen: StageOpt[]; auto: boolean; hours: number; escalate: number; max_days: number; notify: boolean; as_of: number;
   team: number | null; teams: { id: number; name: string; leads: number }[];
-  totals: { over_24: number; over_48: number; over_72: number; no_user: number; notified: number }; by_user: ByUser[]; items: Item[];
+  totals: { over_24: number; over_48: number; over_72: number; no_user: number; notified: number; old: number }; by_user: ByUser[]; items: Item[];
 }
 
 const hoursStr = (h: number) => h >= 48 ? `${Math.floor(h / 24)} kun` : `${h} soat`;
@@ -24,10 +24,11 @@ function SettingsForm({ d, onSaved }: { d: Data; onSaved: () => void }) {
   const [stages, setStages] = useState<number[]>(d.chosen.map(s => s.id));
   const [hours, setHours] = useState(d.hours);
   const [esc, setEsc] = useState(d.escalate);
+  const [maxDays, setMaxDays] = useState(d.max_days);
   const [notify, setNotify] = useState(d.notify);
   const toggle = (id: number) => setStages(xs => xs.includes(id) ? xs.filter(x => x !== id) : [...xs, id]);
   const save = async () => {
-    const r = await api('/api/nazorat/settings', { stages, nazorat_hours: hours, nazorat_escalate_hours: esc, nazorat_notify: notify }).catch(fail);
+    const r = await api('/api/nazorat/settings', { stages, nazorat_hours: hours, nazorat_escalate_hours: esc, nazorat_max_days: maxDays, nazorat_notify: notify }).catch(fail);
     if (r) { toast('Saqlandi'); onSaved(); }
   };
   return (
@@ -38,9 +39,10 @@ function SettingsForm({ d, onSaved }: { d: Data; onSaved: () => void }) {
             <button key={s.id} type="button" className={`btn sm ${stages.includes(s.id) ? 'primary' : 'ghost'}`} aria-pressed={stages.includes(s.id)} onClick={() => toggle(s.id)}>{s.name}</button>))}</div></div>
         <label className="field"><span>Menejerga xabar (soat)</span><input type="number" min={1} max={720} value={hours} onChange={e => setHours(Number(e.target.value))} /></label>
         <label className="field"><span>Rahbarga xabar (soat)</span><input type="number" min={1} max={720} value={esc} onChange={e => setEsc(Number(e.target.value))} /></label>
+        <label className="field"><span>Eskirgan deb hisoblash (kun)</span><input type="number" min={1} max={3650} value={maxDays} onChange={e => setMaxDays(Number(e.target.value))} /></label>
         <label className="field"><span>Telegram xabarlari</span><Select value={notify ? 'true' : 'false'} onChange={e => setNotify(e.target.value === 'true')}><option value="true">yoqilgan</option><option value="false">o‘chiq</option></Select></label>
       </div>
-      <p className="muted" style={{ fontSize: 12.5, margin: '8px 0 0' }}>Xabar menejerga — Odoo’dagi mas’ul panelda shu ism bilan bo‘lsa va Telegram ulagan bo‘lsa; bo‘lmasa yoki muddat o‘tsa — rahbarga. Har lid uchun har daraja (24 / 48 / 72 soat) bir marta, faqat ish vaqtida.</p>
+      <p className="muted" style={{ fontSize: 12.5, margin: '8px 0 0' }}>Xabar menejerga — Odoo’dagi mas’ul panelda shu ism bilan bo‘lsa va Telegram ulagan bo‘lsa; bo‘lmasa yoki muddat o‘tsa — rahbarga. Har lid uchun har daraja (24 / 48 / 72 soat) bir marta, faqat ish vaqtida. «Eskirgan» lidlar (harakatsiz {maxDays} kundan ko‘p) ro‘yxatga va xabarlarga kirmaydi — ular Voronka’da «Qotib qolgan»da ko‘rinadi.</p>
       <div className="row-actions"><button className="btn primary" type="button" onClick={() => { void save(); }}>Saqlash</button></div>
     </div>
   );
@@ -72,7 +74,7 @@ export function Nazorat({ active }: { active: boolean }) {
           <Select value={team || (d.team != null ? String(d.team) : 'all')} onChange={e => setTeam(e.target.value)}>
             {d.teams.map(x => <option key={x.id} value={x.id}>{x.name} ({x.leads})</option>)}<option value="all">Hamma jamoalar</option>
           </Select></label>
-        <span className="muted">Nazorat: {d.chosen.map(s => s.name).join(', ') || 'bosqich tanlanmagan'} · {d.hours} soatdan keyin menejerga, {d.escalate} soatdan keyin rahbarga · {fmtDT(d.as_of)} holati</span>
+        <span className="muted">Nazorat: {[...new Set(d.chosen.map(s => s.name))].join(', ') || 'bosqich tanlanmagan'} · {d.hours} soatdan keyin menejerga, {d.escalate} soatdan keyin rahbarga · eskirgan (harakatsiz {d.max_days} kun+): {t.old} ta chiqarilgan · {fmtDT(d.as_of)} holati</span>
         {isLead ? <span style={{ marginLeft: 'auto' }} className="row-actions"><button className="btn sm" type="button" onClick={() => { void runNow(); }}>Hozir tekshirish</button></span> : null}
       </div>
       {!d.chosen.length ? <div className="banner warn"><div><b>Nazorat bosqichi tanlanmagan.</b> Odoo’dagi bosqich nomlari «Ўчрашув» / «Тижорат таклиф»ga o‘xshamaydi — quyida qo‘lda tanlang.</div></div> : null}

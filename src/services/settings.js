@@ -23,6 +23,7 @@ export const DEFAULTS = {
   nazorat_stages: '',
   nazorat_hours: 24,
   nazorat_escalate_hours: 48,
+  nazorat_max_days: 60,              // shundan eski harakatsiz lid — «eskirgan», ro‘yxat va xabarlarga kirmaydi
   nazorat_notify: true,
   currency: 'UZS'                    // hisob valyutasi: BILLZ summalari shu valyutada (Photobuy — USD)
 };
@@ -41,7 +42,7 @@ const RANGE = {
   T_seconds: [15, 3600], followup_first_hours: [1, 23], followup_second_days: [1, 30],
   big_positions: [2, 100], big_qty: [2, 10000], big_categories: [1, 50], big_amount: [0, 1e12], big_accept_minutes: [1, 120],
   small_max_wait_minutes: [1, 240], assign_accept_minutes: [2, 120], assign_done_minutes: [10, 1440], assign_urgent_minutes: [1, 30], staff_active_minutes: [5, 240],
-  nazorat_hours: [1, 720], nazorat_escalate_hours: [1, 720]
+  nazorat_hours: [1, 720], nazorat_escalate_hours: [1, 720], nazorat_max_days: [1, 3650]
 };
 const badSetting = k => Object.assign(new Error('bad_setting'), { status: 400, code: 'bad_setting', key: k });
 

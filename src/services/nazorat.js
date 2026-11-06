@@ -41,10 +41,10 @@ const teamList = () => all(`SELECT t.id, t.name, (SELECT count(*) FROM odoo_lead
 /* Nazorat ro‘yxati: nazorat bosqichidagi faol lidlar, oxirgi harakatdan beri nazorat_hours dan ko‘p o‘tgan */
 export function nazoratList({ t = now(), team = undefined, s = getSettings() } = {}) {
   const { chosen, stages, auto } = controlStages(s);
-  const base = { stages, chosen, auto, hours: s.nazorat_hours, escalate: s.nazorat_escalate_hours, notify: Boolean(s.nazorat_notify), as_of: t, teams: teamList() };
+  const base = { stages, chosen, auto, hours: s.nazorat_hours, escalate: s.nazorat_escalate_hours, max_days: s.nazorat_max_days, notify: Boolean(s.nazorat_notify), as_of: t, teams: teamList() };
   const stageIds = chosen.map(x => x.id);
   const teamId = team === undefined ? (one(`SELECT t.id FROM odoo_teams t ORDER BY (SELECT count(*) FROM odoo_leads l WHERE l.team_id=t.id) DESC, t.id LIMIT 1`)?.id ?? null) : team;
-  if (!stageIds.length) return { ...base, team: teamId, totals: { over_24: 0, over_48: 0, over_72: 0, no_user: 0, notified: 0 }, by_user: [], items: [] };
+  if (!stageIds.length) return { ...base, team: teamId, totals: { over_24: 0, over_48: 0, over_72: 0, no_user: 0, notified: 0, old: 0 }, by_user: [], items: [] };
   const q = stageIds.map(() => '?').join(',');
   const rows = all(`SELECT l.id, l.name, l.stage_id, s.name stage, l.user_id, u.name user, l.stage_at, l.created_at,
       (SELECT max(m.at) FROM odoo_messages m WHERE m.lead_id=l.id) last_msg_at,
@@ -55,6 +55,7 @@ export function nazoratList({ t = now(), team = undefined, s = getSettings() } =
   const alerts = new Set(all('SELECT lead_id, level FROM nazorat_alerts').map(a => `${a.lead_id}:${a.level}`));
   const staffCache = new Map();
   const staffOf = uid => { if (!staffCache.has(uid)) staffCache.set(uid, staffForOdooUser(uid)); return staffCache.get(uid); };
+  let old = 0;
   const items = rows.map(r => {
     const last = Math.max(r.stage_at || 0, r.last_msg_at || 0, r.last_move_at || 0) || r.created_at || t;
     const hours = Math.floor((t - last) / HOUR);
@@ -62,7 +63,7 @@ export function nazoratList({ t = now(), team = undefined, s = getSettings() } =
     return { id: r.id, name: r.name, stage: r.stage, stage_id: r.stage_id, user: r.user, user_id: r.user_id, last_at: last, hours, level: levelOf(hours),
       days: Math.round(hours / 24 * 10) / 10, last_note: r.last_note ? String(r.last_note).slice(0, 160) : null,
       alerted: LEVELS.filter(l => alerts.has(`${r.id}:${l}`)), staff: staff?.name || null, staff_linked: Boolean(staff?.tg_chat_id) };
-  }).filter(x => x.hours >= s.nazorat_hours).sort((a, b) => b.hours - a.hours);
+  }).filter(x => x.hours >= s.nazorat_hours).filter(x => { if (x.hours > s.nazorat_max_days * 24) { old++; return false; } return true; }).sort((a, b) => b.hours - a.hours);
   const byUser = new Map();
   for (const x of items) {
     const k = x.user || 'Mas’ul yo‘q';
@@ -73,7 +74,7 @@ export function nazoratList({ t = now(), team = undefined, s = getSettings() } =
   return {
     ...base, team: teamId,
     totals: { over_24: items.length, over_48: items.filter(x => x.hours >= 48).length, over_72: items.filter(x => x.hours >= 72).length,
-      no_user: items.filter(x => !x.user_id).length, notified: items.filter(x => x.alerted.length).length },
+      no_user: items.filter(x => !x.user_id).length, notified: items.filter(x => x.alerted.length).length, old },
     by_user: [...byUser.values()].sort((a, b) => b.n - a.n), items
   };
 }
