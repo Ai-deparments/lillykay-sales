@@ -21,3 +21,6 @@ photos/
 node_modules/
 *.log
 .DS_Store
+
+# server-local compose config (ports, PUBLIC_URL, Odoo credentials) — never deployed from git
+deploy/docker/docker-compose.override.yml
