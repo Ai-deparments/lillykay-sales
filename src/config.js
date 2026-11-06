@@ -81,9 +81,13 @@ export const config = {
   /* Mijozning Odoo CRM (faqat o‘qish): JSON-RPC, login + API kalit (kalit parol o‘rnida). Kalit faqat serverda. */
   odooUrl: env('ODOO_URL').replace(/\/$/, ''),
   odooDb: env('ODOO_DB'),
-  odooLogin: env('ODOO_LOGIN', 'admin'),
+  /* ODOO_LOGIN bo‘sh — JSON-2 (bearer kalit, Odoo 19); berilgan — JSON-RPC (login + kalit parol o‘rnida) */
+  odooLogin: env('ODOO_LOGIN'),
   odooKey: env('ODOO_API_KEY'),
-  odooTimeoutMs: Number(env('ODOO_TIMEOUT_MS', 60000)),
+  odooTimeoutMs: Number(env('ODOO_TIMEOUT_MS', 90000)),
+  /* Faqat shu jamoalar lidlari (crm.team id, vergul bilan); bo‘sh — hammasi. Tarix va izohlar — birinchi sinxronda shuncha kun */
+  odooTeams: env('ODOO_TEAMS', '').split(',').map(s => Number(s.trim())).filter(Boolean),
+  odooSinceDays: Number(env('ODOO_SINCE_DAYS', 365)),
 
   /* Instagram Direct (Meta). Token va sirlar faqat .env da; veb-huk imzosi app secret bilan tekshiriladi. */
   igToken: env('IG_TOKEN'),

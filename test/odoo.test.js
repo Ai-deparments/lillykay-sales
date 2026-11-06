@@ -25,21 +25,15 @@ const lead = (id, { stage = 1, user = 10, active = true, write = '2026-11-01 08:
 const applyDomain = (rows, domain) => rows.filter(r => domain.every(([f, op, v]) => {
   if (f === 'field_id.name') return r.field === v;
   if (f === 'field_id.model') return r.model === v;
+  if (f === 'mail_message_id.res_id') { const m = state.messages.find(x => x.id === r.mail_message_id[0]); return m ? (op === 'in' ? v.includes(m.res_id) : m.res_id === v) : false; }
   const x = Array.isArray(r[f]) ? r[f][0] : r[f];
   if (op === '=') return x === v;
   if (op === '>') return String(r[f]) > v;
   if (op === 'in') return v.includes(x);
   return true;
 }));
-globalThis.fetch = async (url, opts = {}) => {
-  const b = JSON.parse(opts.body); const { service, method, args } = b.params;
-  state.calls.push(`${service}.${method}${service === 'object' ? ':' + args[3] + '.' + args[4] : ''}`);
-  const reply = result => ({ ok: true, status: 200, json: async () => ({ jsonrpc: '2.0', id: b.id, result }) });
-  const fail = message => ({ ok: true, status: 200, json: async () => ({ jsonrpc: '2.0', id: b.id, error: { code: 200, message: 'Odoo Server Error', data: { message } } }) });
-  if (service === 'common' && method === 'authenticate') return reply(args[2] === state.key ? 7 : false);
-  if (service === 'common' && method === 'version') return reply({ server_version: '19.0' });
-  const [, uid, key, model, m, a, kw = {}] = args;
-  if (key !== state.key || uid !== 7) return fail('Access Denied');
+const json2 = { calls: [], headers: null };
+function handleModel(model, m, a, kw, reply, fail) {
   const domain = a[0] || [];
   const page = rows => rows.slice(kw.offset || 0, (kw.offset || 0) + (kw.limit || rows.length));
   if (model === 'crm.team') return reply([{ id: 12, name: 'Savdo Sun High Tech' }, { id: 41, name: 'Ish Montajnik' }]);
@@ -52,6 +46,29 @@ globalThis.fetch = async (url, opts = {}) => {
   if (model === 'mail.message' && m === 'read') return reply(state.messages.filter(x => a[0].includes(x.id)));
   if (model === 'mail.message' && m === 'search_read') return reply(page(applyDomain(state.messages, domain)));
   return fail(`unknown ${model}.${m}`);
+}
+globalThis.fetch = async (url, opts = {}) => {
+  const u = String(url);
+  if (u.includes('/json/2/')) {
+    const [, model, m] = u.match(/\/json\/2\/([^/]+)\/([^/?]+)/);
+    json2.calls.push(`${model}.${m}`); json2.headers = opts.headers;
+    const body = JSON.parse(opts.body);
+    if (opts.headers?.Authorization !== `bearer ${state.key}`) return { ok: false, status: 401, text: async () => JSON.stringify({ name: 'werkzeug.exceptions.Unauthorized', message: 'Invalid apikey' }) };
+    const reply = result => ({ ok: true, status: 200, text: async () => JSON.stringify(result) });
+    const fail = message => ({ ok: false, status: 400, text: async () => JSON.stringify({ name: 'odoo.exceptions.UserError', message }) });
+    const a = m === 'read' ? [body.ids] : [body.domain || []];
+    const kw = m === 'read' ? { fields: body.fields } : { fields: body.fields, limit: body.limit, offset: body.offset, order: body.order };
+    return handleModel(model, m, a, kw, reply, fail);
+  }
+  const b = JSON.parse(opts.body); const { service, method, args } = b.params;
+  state.calls.push(`${service}.${method}${service === 'object' ? ':' + args[3] + '.' + args[4] : ''}`);
+  const reply = result => ({ ok: true, status: 200, json: async () => ({ jsonrpc: '2.0', id: b.id, result }) });
+  const fail = message => ({ ok: true, status: 200, json: async () => ({ jsonrpc: '2.0', id: b.id, error: { code: 200, message: 'Odoo Server Error', data: { message } } }) });
+  if (service === 'common' && method === 'authenticate') return reply(args[2] === state.key ? 7 : false);
+  if (service === 'common' && method === 'version') return reply({ server_version: '19.0' });
+  const [, uid, key, model, m, a, kw = {}] = args;
+  if (key !== state.key || uid !== 7) return fail('Access Denied');
+  return handleModel(model, m, a, kw, reply, fail);
 };
 
 const { migrate, one, all, run, kvGet, kvSet } = await import('../src/db.js');
@@ -146,4 +163,27 @@ test('tracking yopiq (oddiy foydalanuvchi): sinxron to‘xtamaydi, bir marta bel
   kvSet('odoo_sync_at', 0); await syncOdoo();
   assert.ok(!state.calls.slice(before).some(c => c.includes('mail.tracking.value')), 'ikkinchi marta so‘ralmaydi');
   globalThis.fetch = origFetch;
+});
+
+test('JSON-2 rejimi (ODOO_LOGIN bo‘sh): bearer kalit, X-Odoo-Database, jamoa filtri; noto‘g‘ri kalit — «kirish rad etildi»', async () => {
+  const { odooMode } = await import('../src/services/odoo.js');
+  config.odooLogin = ''; config.odooTeams = [12];
+  assert.equal(odooMode(), 'json2');
+  run('DELETE FROM odoo_leads'); run('DELETE FROM odoo_stage_log'); run('DELETE FROM odoo_messages');
+  for (const k of ['odoo_wm_leads', 'odoo_wm_stagelog', 'odoo_wm_messages', 'odoo_sync_at', 'odoo_tracking_denied']) run('DELETE FROM kv WHERE k=?', k);
+  state.leads.push({ ...lead(900, { write: '2026-11-04 09:00:00' }), team_id: [41, 'Ish Montajnik'] });
+  const rpcBefore = state.calls.length;
+  const r = await syncOdoo({ force: true, who: 'test' });
+  assert.ok(r.first);
+  assert.equal(json2.headers.Authorization, 'bearer togri-kalit');
+  assert.equal(json2.headers['X-Odoo-Database'], 'sinov-db');
+  assert.ok(json2.calls.includes('crm.lead.search_read'), 'json2 orqali o‘qildi');
+  assert.equal(state.calls.length, rpcBefore, 'jsonrpc chaqirilmadi');
+  assert.equal(one('SELECT count(*) n FROM odoo_leads').n, 5, 'jamoa 41 lidi olinmadi');
+  assert.equal(one('SELECT count(*) n FROM odoo_leads WHERE id=900').n, 0);
+  assert.ok(all('SELECT * FROM odoo_stage_log WHERE source=\'odoo\'').length >= 1, 'tracking birinchi marta lid id’lari bo‘yicha olindi');
+  assert.equal(one('SELECT count(*) n FROM odoo_messages').n, 1);
+  config.odooKey = 'xato';
+  await assert.rejects(() => syncOdoo({ force: true, who: 'test' }), /kirish rad etildi/);
+  config.odooKey = 'togri-kalit';
 });
