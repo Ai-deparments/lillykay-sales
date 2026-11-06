@@ -32,7 +32,8 @@ export const ERR: Record<string, string> = {
   bad_phone: 'Telefon raqami to‘g‘ri emas. Masalan: +998 90 123 45 67', login_taken: 'Bu raqam bilan xodim allaqachon bor.',
   invite_exists: 'Bu raqamga havola allaqachon berilgan — «Kutayotgan takliflar» ro‘yxatiga qarang.', csrf: 'So‘rov rad etildi — sahifani yangilang.', too_many: 'Juda ko‘p urinish — 10 daqiqadan keyin qayta urinib ko‘ring.',
   bad_tg_username: 'Telegram username: 4–32 lotin harf, raqam yoki _ (masalan @hilola_photobuy).', bad_tg_id: 'Telegram ID — faqat raqam (5–15 ta).',
-  tg_taken: 'Bu Telegram username yoki ID boshqa xodimga biriktirilgan.'
+  tg_taken: 'Bu Telegram username yoki ID boshqa xodimga biriktirilgan.',
+  odoo_taken: 'Bu Odoo foydalanuvchisi boshqa xodimga bog‘langan — avval o‘sha xodimdan oling.', bad_odoo_user: 'Bunday Odoo foydalanuvchisi yo‘q — ro‘yxat sinxrondan keyin yangilanadi.'
 };
 
 /** Foydalanuvchiga ko‘rsatiladigan xato matni (app.js dagi `fail` ichidagi matn) */

@@ -1,5 +1,6 @@
 import { one, all } from '../db.js';
 import { now } from '../util.js';
+import { staffForOdooUser } from './nazorat.js';
 
 /*
   Voronka — Odoo nusxasi (services/odoo.js) bo‘yicha sotuv voronkasi tahlili. Mijozning uchta savoli (doska, 2026-11-06):
@@ -98,10 +99,9 @@ export function leadDetail(id, { t = now() } = {}) {
   const history = all(`SELECT g.at, g.author, g.source, fs.name from_stage, ts.name to_stage FROM odoo_stage_log g
     LEFT JOIN odoo_stages fs ON fs.id=g.from_stage LEFT JOIN odoo_stages ts ON ts.id=g.to_stage WHERE g.lead_id=? ORDER BY g.at, g.id`, id);
   const notes = all('SELECT id, at, author, kind, body FROM odoo_messages WHERE lead_id=? ORDER BY at DESC', id);
-  const staff = l.user_id ? (one('SELECT id, name, tg_chat_id FROM users WHERE active=1 AND odoo_user_id=?', l.user_id)
-    || one('SELECT id, name, tg_chat_id FROM users WHERE active=1 AND lower(trim(name))=lower(trim(?))', l.user || '')) : null;
+  const staff = staffForOdooUser(l.user_id);
   let tags = []; try { tags = JSON.parse(l.tags || '[]'); } catch { tags = []; }
   return { ...l, is_won: Boolean(l.is_won), tags,
     status: !l.active ? 'lost' : l.is_won ? 'won' : 'active', days_on_stage: l.active && !l.is_won ? days(t - l.stage_at) : null, age_days: days(t - l.created_at),
-    staff: staff ? { name: staff.name, linked: Boolean(staff.tg_chat_id) } : null, history, notes };
+    staff: staff ? { name: staff.name, linked: Boolean(staff.tg_chat_id), how: staff.how } : null, history, notes };
 }

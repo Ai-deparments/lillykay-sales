@@ -31,6 +31,8 @@ export const currency = () => CUR;
 const num = n => Math.round(n).toLocaleString('ru-RU').replace(/\u00a0/g, ' ');
 export const money = (n, cur = CUR) => n == null ? '—' : cur === 'USD' ? `${num(n)} $` : `${num(n)} so‘m`;
 export const clip = (s, n) => { s = String(s ?? ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+/* Ism solishtirish kaliti: katta-kichik harf (kirill ham), ortiqcha bo‘shliqlar hisobga olinmaydi (SQLite lower() faqat lotin uchun) */
+export const nameKey = s => String(s ?? '').toLowerCase().replace(/\s+/g, ' ').trim();
 export const jparse = (s, d = null) => { try { return s == null ? d : JSON.parse(s); } catch { return d; } };
 
 /* Smena va ish kunlari. dow — 7 belgi (Du…Ya), masalan '1111110'. Vaqt — 'HH:MM' (Toshkent).

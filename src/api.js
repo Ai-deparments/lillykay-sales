@@ -1,7 +1,7 @@
 import { config, aiReady } from './config.js';
 import { aiInfo } from './ai/index.js';
 import { one, all, run, tx, kvGet } from './db.js';
-import { now, code6, token, jparse, clip } from './util.js';
+import { now, code6, token, jparse, clip, nameKey } from './util.js';
 import { router, readJson, json, HttpError, bad } from './core/http.js';
 import { login, logout, currentUser, need, can, convScopeSql, publicUser, hashPassword, checkPassword, normLogin } from './core/auth.js';
 import { audit, recentAudit } from './core/audit.js';
@@ -502,10 +502,64 @@ R.post('/api/knowledge', async (req, res, u) => {
 });
 
 /* ---------- xodimlar va filiallar ---------- */
+/* Odoo foydalanuvchisi ↔ panel xodimi. Taxmin — ism aynan bir xil (bo‘shliq va katta-kichik harfga qaramay) va ikkala tomonda ham yagona bo‘lsa.
+   Bog‘lam Nazorat ogohlantirishlari va lid kartasidagi «Panelda» uchun; ism bo‘yicha zaxira moslik bog‘lam yo‘q joyda ishlaydi. */
+function odooBindings() {
+  const odooUsers = all(`SELECT u.id, u.name, (SELECT count(*) FROM odoo_leads l WHERE l.user_id=u.id) leads FROM odoo_users u ORDER BY leads DESC, u.name`);
+  // Band Odoo foydalanuvchilari — o‘chirilmagan hamma xodim bo‘yicha (faol bo‘lmagani ham bog‘lamni saqlaydi), bindOdoo bilan bir xil o‘lchov
+  const bound = new Set(all('SELECT odoo_user_id FROM users WHERE deleted_at IS NULL AND odoo_user_id IS NOT NULL').map(r => r.odoo_user_id));
+  const staff = all('SELECT id, name, odoo_user_id FROM users WHERE deleted_at IS NULL AND active=1');
+  const byKey = new Map();
+  for (const o of odooUsers) { if (bound.has(o.id)) continue; const k = nameKey(o.name); byKey.set(k, byKey.has(k) ? null : o); }   // null — Odoo’da bir xil ism ikki marta
+  const staffByKey = new Map();
+  for (const s of staff) { if (s.odoo_user_id) continue; const k = nameKey(s.name); staffByKey.set(k, staffByKey.has(k) ? null : s); }
+  const suggestions = {};
+  for (const [k, s] of staffByKey) { const o = byKey.get(k); if (s && o) suggestions[s.id] = o.id; }
+  return { users: odooUsers, suggestions };
+}
 R.get('/api/users', (req, res, u) => {
   need(u, 'users');
-  json(res, { bot: botUsername(), items: all(`SELECT id,login,name,role,branch_id,phone,active,backup_user_id,shift_dow,shift_from,shift_to,tg_username,tg_user_id,
-    (tg_chat_id IS NOT NULL) AS tg_linked, (pass_hash IS NOT NULL) AS has_pass FROM users WHERE deleted_at IS NULL ORDER BY active DESC, name`) });
+  json(res, { bot: botUsername(), odoo: odooBindings(), items: all(`SELECT x.id,x.login,x.name,x.role,x.branch_id,x.phone,x.active,x.backup_user_id,x.shift_dow,x.shift_from,x.shift_to,x.tg_username,x.tg_user_id,
+    (x.tg_chat_id IS NOT NULL) AS tg_linked, (x.pass_hash IS NOT NULL) AS has_pass, x.odoo_user_id, ou.name AS odoo_name
+    FROM users x LEFT JOIN odoo_users ou ON ou.id=x.odoo_user_id WHERE x.deleted_at IS NULL ORDER BY x.active DESC, x.name`) });
+});
+/* Admin akkauntining bog‘lamini faqat admin o‘zgartiradi (Nazorat xabarlari kimga ketishini belgilaydi) — boshqa xodim amallari bilan bir xil qoida */
+function bindOdoo(staffId, odooUserId, u) {
+  const target = one('SELECT id, name, role, odoo_user_id FROM users WHERE id=? AND deleted_at IS NULL', staffId);
+  if (!target) throw new HttpError(404, 'not_found');
+  if (target.role === 'admin' && u.role !== 'admin') throw new HttpError(403, 'forbidden');
+  if (odooUserId != null) {
+    const o = one('SELECT id, name FROM odoo_users WHERE id=?', odooUserId);
+    if (!o) throw bad('bad_odoo_user');
+    if (target.odoo_user_id === odooUserId) return o;
+    if (one('SELECT 1 FROM users WHERE odoo_user_id=? AND id<>? AND deleted_at IS NULL', odooUserId, staffId)) throw new HttpError(409, 'odoo_taken');
+    const prev = target.odoo_user_id ? one('SELECT name FROM odoo_users WHERE id=?', target.odoo_user_id)?.name : null;
+    run('UPDATE users SET odoo_user_id=? WHERE id=?', odooUserId, staffId);
+    audit('staff', u.name, `Odoo bog‘lami: ${target.name} ↔ ${o.name}${prev ? ` (avval: ${prev})` : ''}`, { object: `user:${staffId}` });
+    return o;
+  }
+  if (!target.odoo_user_id) return null;
+  run('UPDATE users SET odoo_user_id=NULL WHERE id=?', staffId);
+  audit('staff', u.name, `Odoo bog‘lami olib tashlandi: ${target.name}`, { object: `user:${staffId}` });
+  return null;
+}
+/* Hamma aniq taxminlarni bir bosishda bog‘lash */
+R.post('/api/users/odoo-automatch', (req, res, u) => {
+  need(u, 'users');
+  const { suggestions } = odooBindings();
+  const names = [];
+  tx(() => { for (const [sid, oid] of Object.entries(suggestions)) names.push(bindOdoo(Number(sid), oid, u).name); });
+  json(res, { ok: true, bound: names.length, names });
+});
+/* odoo_user_id: butun son yoki raqamlardan iborat satr; null / bo‘sh — bog‘lamni olib tashlash */
+const odooIdVal = v => v === null || v === '' || v === undefined ? null : (typeof v === 'number' && Number.isInteger(v)) || /^\d+$/.test(String(v).trim()) ? Number(String(v).trim()) : NaN;
+R.post('/api/users/:id/odoo', async (req, res, u, p) => {
+  need(u, 'users');
+  const b = await readJson(req);
+  const val = odooIdVal(b.odoo_user_id);
+  if (Number.isNaN(val)) throw bad('bad_odoo_user');
+  const o = bindOdoo(Number(p.id), val, u);
+  json(res, { ok: true, odoo_user_id: o?.id ?? null, odoo_name: o?.name ?? null });
 });
 /* Telegram: username (harf, raqam, _ — 4–32) va ID (raqam). Xodim botga «Start» bosganda shular bo‘yicha o‘zi ulanadi. */
 const tgName = v => { const s = String(v || '').trim().replace(/^@/, '').replace(/^https?:\/\/t\.me\//i, ''); return /^[A-Za-z0-9_]{4,32}$/.test(s) ? s : null; };
@@ -615,7 +669,7 @@ R.post('/api/users/:id/delete', (req, res, u, p) => {
   if (['admin', 'rahbar'].includes(target.role) && u.role !== 'admin') throw new HttpError(403, 'forbidden');
   tx(() => {
     run(`UPDATE users SET deleted_at=?, active=0, pass_hash=NULL, login=login||'#'||id,
-         tg_username=NULL, tg_user_id=NULL, tg_chat_id=NULL, backup_user_id=NULL WHERE id=?`, now(), target.id);
+         tg_username=NULL, tg_user_id=NULL, tg_chat_id=NULL, backup_user_id=NULL, odoo_user_id=NULL WHERE id=?`, now(), target.id);
     run('DELETE FROM sessions WHERE user_id=?', target.id);
     run('UPDATE users SET backup_user_id=NULL WHERE backup_user_id=?', target.id);  // zaxira mas’ul bo‘lganlar bo‘shaydi
   });

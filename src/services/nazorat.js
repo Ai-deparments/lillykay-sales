@@ -1,6 +1,6 @@
 import { config } from '../config.js';
 import { one, all, run, kvGet, kvSet } from '../db.js';
-import { now, esc, clip, inWindow } from '../util.js';
+import { now, esc, clip, inWindow, nameKey } from '../util.js';
 import { getSettings } from './settings.js';
 import { audit } from '../core/audit.js';
 import { sendStaff } from '../channels/telegram.js';
@@ -30,10 +30,15 @@ export function controlStages(s = getSettings()) {
 /* Panel xodimi ↔ Odoo foydalanuvchisi: avval aniq bog‘lam (odoo_user_id), bo‘lmasa ism bir xil bo‘lsa */
 export function staffForOdooUser(odooUserId) {
   if (!odooUserId) return null;
-  const byId = one('SELECT * FROM users WHERE active=1 AND odoo_user_id=?', odooUserId);
-  if (byId) return byId;
+  const byId = one('SELECT * FROM users WHERE active=1 AND deleted_at IS NULL AND odoo_user_id=?', odooUserId);
+  if (byId) return { ...byId, how: 'id' };
   const ou = one('SELECT name FROM odoo_users WHERE id=?', odooUserId);
-  return ou ? one('SELECT * FROM users WHERE active=1 AND lower(trim(name))=lower(trim(?))', ou.name) || null : null;
+  if (!ou) return null;
+  // Ism bo‘yicha zaxira: faqat hali hech qaysi Odoo foydalanuvchisiga bog‘lanmagan xodim (bog‘langan xodim boshqa odam).
+  // Solishtirish JS’da (nameKey) — SQLite lower() kirill harflarini tushirmaydi; xodimlar ro‘yxati kichik.
+  const key = nameKey(ou.name);
+  const byName = all('SELECT * FROM users WHERE active=1 AND deleted_at IS NULL AND odoo_user_id IS NULL').find(x => nameKey(x.name) === key);
+  return byName ? { ...byName, how: 'name' } : null;
 }
 const levelOf = h => LEVELS.filter(l => h >= l).pop() || 0;
 const teamList = () => all(`SELECT t.id, t.name, (SELECT count(*) FROM odoo_leads l WHERE l.team_id=t.id) leads FROM odoo_teams t ORDER BY leads DESC, t.id`);
@@ -62,12 +67,12 @@ export function nazoratList({ t = now(), team = undefined, s = getSettings() } =
     const staff = staffOf(r.user_id);
     return { id: r.id, name: r.name, stage: r.stage, stage_id: r.stage_id, user: r.user, user_id: r.user_id, last_at: last, hours, level: levelOf(hours),
       days: Math.round(hours / 24 * 10) / 10, last_note: r.last_note ? String(r.last_note).slice(0, 160) : null,
-      alerted: LEVELS.filter(l => alerts.has(`${r.id}:${l}`)), staff: staff?.name || null, staff_linked: Boolean(staff?.tg_chat_id) };
+      alerted: LEVELS.filter(l => alerts.has(`${r.id}:${l}`)), staff: staff?.name || null, staff_how: staff?.how || null, staff_linked: Boolean(staff?.tg_chat_id) };
   }).filter(x => x.hours >= s.nazorat_hours).filter(x => { if (x.hours > s.nazorat_max_days * 24) { old++; return false; } return true; }).sort((a, b) => b.hours - a.hours);
   const byUser = new Map();
   for (const x of items) {
     const k = x.user || 'Mas’ul yo‘q';
-    const u = byUser.get(k) || { name: k, user_id: x.user_id, staff: x.staff, linked: x.staff_linked, n: 0, over_48: 0, over_72: 0, max_hours: 0 };
+    const u = byUser.get(k) || { name: k, user_id: x.user_id, staff: x.staff, staff_how: x.staff_how, linked: x.staff_linked, n: 0, over_48: 0, over_72: 0, max_hours: 0 };
     u.n++; if (x.hours >= 48) u.over_48++; if (x.hours >= 72) u.over_72++; u.max_hours = Math.max(u.max_hours, x.hours);
     byUser.set(k, u);
   }

@@ -475,6 +475,10 @@ ALTER TABLE odoo_leads ADD COLUMN phone TEXT;
 ALTER TABLE odoo_leads ADD COLUMN email TEXT;
 ALTER TABLE odoo_leads ADD COLUMN city TEXT;
 DELETE FROM kv WHERE k IN ('odoo_wm_leads','odoo_sync_at');
+`,
+`
+/* Bitta Odoo foydalanuvchisi — faqat bitta (o‘chirilmagan) xodimga. Kod tekshiradi, indeks kafolatlaydi. */
+CREATE UNIQUE INDEX users_odoo_user ON users(odoo_user_id) WHERE odoo_user_id IS NOT NULL AND deleted_at IS NULL;
 `
 ];
 

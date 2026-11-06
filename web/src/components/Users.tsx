@@ -14,7 +14,10 @@ const ROLE: Record<string, string> = { admin: 'Administrator', rahbar: 'Sotuv ra
 interface StaffUser {
   id: number; name: string; login: string; role: string; active: number | boolean; has_pass: boolean; tg_linked: boolean; tg_username?: string | null; tg_user_id?: string | number | null;
   branch_id: number | null; backup_user_id?: number | null; phone?: string; shift_dow?: string; shift_from?: string; shift_to?: string;
+  odoo_user_id?: number | null; odoo_name?: string | null;
 }
+/* Odoo foydalanuvchilari (sinxrondan) va ism bo‘yicha taxminlar: panel xodimi id → Odoo foydalanuvchi id */
+interface OdooBind { users: { id: number; name: string; leads: number }[]; suggestions: Record<string, number> }
 interface Invite { id: number; name: string; login: string; role: string; branch_name?: string; kind?: string; expires_at: number; token: string }
 interface BillzStaff { name: string; roles: string[]; branch?: string; checks_90d: number; login?: string; branch_id?: number | null }
 interface Prefill { name?: string; login?: string; branch_id?: number | null; role?: string }
@@ -53,12 +56,13 @@ export function Users({ active }: { active: boolean }) {
   const [bot, setBot] = useState<string | null>(null);
   const [invites, setInvites] = useState<{ items: Invite[]; base: string }>({ items: [], base: '' });
   const [billz, setBillz] = useState<BillzStaff[]>([]);
+  const [odoo, setOdoo] = useState<OdooBind>({ users: [], suggestions: {} });
 
   const load = useCallback(async () => {
     try {
       await reloadBoot();
-      const r = await api<{ items: StaffUser[]; bot: string | null }>('/api/users');
-      setUsers(r.items); setBot(r.bot);
+      const r = await api<{ items: StaffUser[]; bot: string | null; odoo?: OdooBind }>('/api/users');
+      setUsers(r.items); setBot(r.bot); setOdoo(r.odoo || { users: [], suggestions: {} });
       // Kutayotgan takliflar: havola berilgan, lekin xodim hali parol qo‘ymagan
       const inv = await api<{ items: Invite[]; base: string }>('/api/invites').catch(() => ({ items: [] as Invite[], base: '' }));
       setInvites(inv);
@@ -119,6 +123,17 @@ export function Users({ active }: { active: boolean }) {
     openModal({ content: <><h2>Telegram bildirishnomalari</h2>{r.link ? <><p className="lead" style={{ fontSize: 13.5 }}>Xodim shu havolani Telegram’da ochib «Start» bosadi (1 soat amal qiladi):</p><div className="pw-box" style={{ fontSize: 13 }}>{r.link}</div></>
       : <div className="banner warn">Bot hali ulanmagan (token kiritilmagan). Token kiritilgach havola shu yerda chiqadi.</div>}</> });
   };
+  /* Odoo bog‘lami: tanlov darhol saqlanadi; bo‘sh — bog‘lam olib tashlanadi */
+  const bindOdoo = async (u: StaffUser, odooUserId: number | null) => {
+    const r = await api<{ ok: boolean; odoo_name: string | null }>(`/api/users/${u.id}/odoo`, { odoo_user_id: odooUserId }).catch(fail); if (!r) return;
+    toast(r.odoo_name ? `${u.name} ↔ ${r.odoo_name}` : `${u.name}: Odoo bog‘lami olib tashlandi`);
+    await load();
+  };
+  const autoMatch = async () => {
+    const r = await api<{ bound: number; names: string[] }>('/api/users/odoo-automatch', {}).catch(fail); if (!r) return;
+    toast(r.bound ? `${r.bound} ta xodim bog‘landi: ${r.names.join(', ')}` : 'Ism bo‘yicha mos keladigan xodim yo‘q');
+    await load();
+  };
   const branchModal = (x: Partial<Branch>) => openModal({
     content: <BranchForm x={x} />,
     onSubmit: async d => { await api('/api/branches', { ...d, id: x.id, work_dow: dowFrom(d, 'wd') }); toast('Saqlandi'); load(); }
@@ -151,15 +166,34 @@ export function Users({ active }: { active: boolean }) {
   });
 
   const act = users.filter(u => u.active), canIn = act.filter(u => u.has_pass).length, tg = act.filter(u => u.tg_linked).length;
+  const bound = act.filter(u => u.odoo_user_id).length, suggested = Object.keys(odoo.suggestions).length;
+  const odooCell = (u: StaffUser) => {
+    const sug = odoo.suggestions[String(u.id)];
+    const sugName = sug ? odoo.users.find(x => x.id === sug)?.name : null;
+    return (
+      <td style={{ minWidth: 200 }}>
+        <Select value={u.odoo_user_id ?? ''} onChange={e => { void bindOdoo(u, e.target.value ? Number(e.target.value) : null); }} aria-label={`${u.name} — Odoo foydalanuvchisi`}>
+          <option value="">— bog‘lanmagan —</option>
+          {odoo.users.map(x => <option key={x.id} value={x.id}>{x.name}{x.leads ? ` · ${x.leads} lid` : ''}</option>)}
+        </Select>
+        {u.odoo_user_id ? <div className="muted" style={{ fontSize: 12 }}><span className="pill ok">bog‘langan</span>{u.tg_linked ? null : <> · Telegram ulanmagan — xabar rahbarga ketadi</>}</div>
+          : sugName ? <div className="muted" style={{ fontSize: 12 }}><span className="pill warn">taxmin: {sugName}</span> <button className="btn sm" type="button" data-odoo-accept={u.id} onClick={() => { void bindOdoo(u, sug); }}>Bog‘lash</button></div>
+          : <div className="muted" style={{ fontSize: 12 }}>Odoo’da shu ismli menejer topilmadi</div>}
+      </td>
+    );
+  };
   return (
     <>
       <div className="panel"><div className="panel-head"><h2>Filiallar</h2><button className="btn sm" type="button" data-bnew onClick={() => branchModal({})}>Filial qo‘shish</button></div>
         <div className="chips">{b.branches.length ? b.branches.map(x => <button className="chip" type="button" key={x.id} data-bedit={x.id} onClick={() => branchModal(x)}>{x.name}{x.kind === 'ombor' ? ' · ombor' : ''}</button>) : <span className="muted">Filial yo‘q</span>}</div></div>
       <div className="staff-sum"><div><b>{act.length}</b><span>xodim</span></div><div className={canIn < act.length ? 'warn' : ''}><b>{canIn}</b><span>panelga kira oladi</span></div>
         <div className={tg < act.length ? 'warn' : ''}><b>{tg}</b><span>Telegram’ga ulangan — bildirishnoma oladi</span></div>
-        <p className="muted">Xodim ishlashi uchun 2 qadam: <b>1)</b> «Parol berish» — login va parolni unga yuboring; <b>2)</b> «Tahrirlash»da Telegram username kiriting va xodimga {bot ? <a href={`https://t.me/${bot}`} target="_blank" rel="noopener">t.me/{bot}</a> : 'botni'} yuboring — «Start» bossa o‘zi ulanadi va AI topshiriqlarni (rasm, to‘lov, buyurtma) navbat bilan unga beradi.</p></div>
-      <div className="panel"><div className="panel-head"><h2>Xodimlar</h2><button className="btn sm primary" type="button" data-uinvite onClick={() => invite()}>Xodim qo‘shish</button></div>
-        <div className="tbl"><table><thead><tr><th>Ism</th><th>Login (telefon)</th><th>Rol</th><th>Filial</th><th>Smena</th><th>Kirish</th><th>Telegram</th><th></th></tr></thead><tbody>
+        <div className={bound < act.length ? 'warn' : ''}><b>{bound}</b><span>Odoo menejeriga bog‘langan — Nazorat xabari oladi</span></div>
+        <p className="muted">Xodim ishlashi uchun 3 qadam: <b>1)</b> «Kirish havolasi» — login va parolni unga yuboring; <b>2)</b> Telegram: xodim {bot ? <a href={`https://t.me/${bot}`} target="_blank" rel="noopener">t.me/{bot}</a> : 'botda'} «Start» bosadi — bildirishnomalar unga keladi; <b>3)</b> «Odoo» ustunida uning Odoo foydalanuvchisini tanlang — Nazorat ogohlantirishlari va lid kartasidagi «Panelda» shunga qaraydi (bog‘lam yo‘q bo‘lsa ism bir xil bo‘lganda o‘zi topadi).</p></div>
+      <div className="panel"><div className="panel-head"><h2>Xodimlar</h2><button className="btn sm primary" type="button" data-uinvite onClick={() => invite()}>Xodim qo‘shish</button>
+        {suggested ? <button className="btn sm" type="button" data-odoo-auto onClick={() => { void autoMatch(); }} title="Ismi Odoo’dagi bilan aynan bir xil xodimlarni bog‘laydi">Odoo: ism bo‘yicha bog‘lash ({suggested})</button> : null}
+        {!odoo.users.length ? <span className="muted">Odoo foydalanuvchilari hali sinxronlanmagan — «AI agent» bo‘limida Odoo holatini tekshiring</span> : null}</div>
+        <div className="tbl"><table><thead><tr><th>Ism</th><th>Login (telefon)</th><th>Rol</th><th>Filial</th><th>Smena</th><th>Kirish</th><th>Telegram</th><th>Odoo</th><th></th></tr></thead><tbody>
           {users.map(u => (
             <tr key={u.id} style={u.active ? undefined : { opacity: 0.5 }}><td>{u.name}</td><td className="mono">{u.login}</td><td>{ROLE[u.role]}</td>
               <td>{b.branches.find(x => x.id === u.branch_id)?.name || '—'}</td><td className="muted" style={{ fontSize: 12.5 }}>{shiftText(u)}</td>
@@ -168,6 +202,7 @@ export function Users({ active }: { active: boolean }) {
               <td>{u.tg_linked ? <><span className="pill ok">ulangan</span>{u.tg_username ? <div className="muted" style={{ fontSize: 12 }}>@{u.tg_username}</div> : null}</>
                 : u.tg_username || u.tg_user_id ? <><span className="pill warn" title="Xodim botda «Start» bosishi kerak">Start kutilmoqda</span><div className="muted" style={{ fontSize: 12 }}>{u.tg_username ? '@' + u.tg_username : 'ID ' + u.tg_user_id}</div></>
                 : <button className="btn sm" type="button" data-tglink={u.id} onClick={() => tgLink(u)}>Telegram havola</button>}</td>
+              {odooCell(u)}
               <td className="row-actions"><button className="btn sm ghost" type="button" data-uedit={u.id} onClick={() => editUser(u)}>Tahrirlash</button><button className="btn sm ghost" type="button" data-udel={u.id} title="Ro‘yxatdan o‘chiradi — tarix qoladi" onClick={() => delUser(u)}>O‘chirish</button></td></tr>
           ))}
         </tbody></table></div></div>
