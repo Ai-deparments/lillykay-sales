@@ -504,10 +504,15 @@ R.post('/api/knowledge', async (req, res, u) => {
 /* ---------- xodimlar va filiallar ---------- */
 /* Odoo foydalanuvchisi ↔ panel xodimi. Taxmin — ism aynan bir xil (bo‘shliq va katta-kichik harfga qaramay) va ikkala tomonda ham yagona bo‘lsa.
    Bog‘lam Nazorat ogohlantirishlari va lid kartasidagi «Panelda» uchun; ism bo‘yicha zaxira moslik bog‘lam yo‘q joyda ishlaydi. */
+/* Odoo foydalanuvchilari ro‘yxati: lid soni, telefon (Odoo’dan) va undan chiqadigan login, kimga bog‘langan (staff_id), ochiq taklif bormi (invite_id) */
 function odooBindings() {
-  const odooUsers = all(`SELECT u.id, u.name, (SELECT count(*) FROM odoo_leads l WHERE l.user_id=u.id) leads FROM odoo_users u ORDER BY leads DESC, u.name`);
+  const odooUsers = all(`SELECT u.id, u.name, u.phone, (SELECT count(*) FROM odoo_leads l WHERE l.user_id=u.id) leads,
+      (SELECT x.id FROM users x WHERE x.odoo_user_id=u.id AND x.deleted_at IS NULL) staff_id,
+      (SELECT i.id FROM invites i WHERE i.odoo_user_id=u.id AND i.used_at IS NULL AND i.expires_at>? ORDER BY i.id DESC LIMIT 1) invite_id
+    FROM odoo_users u ORDER BY leads DESC, u.name`, now())
+    .map(o => { const login = normLogin(o.phone); return { ...o, login: /^\d{9,15}$/.test(login) ? login : null }; });
   // Band Odoo foydalanuvchilari — o‘chirilmagan hamma xodim bo‘yicha (faol bo‘lmagani ham bog‘lamni saqlaydi), bindOdoo bilan bir xil o‘lchov
-  const bound = new Set(all('SELECT odoo_user_id FROM users WHERE deleted_at IS NULL AND odoo_user_id IS NOT NULL').map(r => r.odoo_user_id));
+  const bound = new Set(odooUsers.filter(o => o.staff_id).map(o => o.id));
   const staff = all('SELECT id, name, odoo_user_id FROM users WHERE deleted_at IS NULL AND active=1');
   const byKey = new Map();
   for (const o of odooUsers) { if (bound.has(o.id)) continue; const k = nameKey(o.name); byKey.set(k, byKey.has(k) ? null : o); }   // null — Odoo’da bir xil ism ikki marta
@@ -760,28 +765,51 @@ const inviteByToken = k => {
 
 R.get('/api/invites', (req, res, u) => {
   need(u, 'users');
-  json(res, { base: config.publicUrl, items: all(`SELECT i.id, i.token, i.login, i.name, i.role, i.phone, i.kind, i.created_by, i.created_at, i.expires_at, b.name AS branch_name
-    FROM invites i LEFT JOIN branches b ON b.id=i.branch_id WHERE i.used_at IS NULL AND i.expires_at>? ORDER BY i.id DESC LIMIT 50`, now()) });
+  json(res, { base: config.publicUrl, items: all(`SELECT i.id, i.token, i.login, i.name, i.role, i.phone, i.kind, i.created_by, i.created_at, i.expires_at, b.name AS branch_name, i.odoo_user_id, ou.name AS odoo_name
+    FROM invites i LEFT JOIN branches b ON b.id=i.branch_id LEFT JOIN odoo_users ou ON ou.id=i.odoo_user_id WHERE i.used_at IS NULL AND i.expires_at>? ORDER BY i.id DESC LIMIT 50`, now()) });
 });
 
+/* Taklif: login — xodimning telefon raqami (eslab qolish oson). odoo_user_id berilsa — qabul qilinganda hisob shu Odoo menejeriga bog‘lanadi. */
+function createInvite({ name, role, branch_id, phone, days, odoo_user_id }, u) {
+  if (!['admin', 'rahbar', 'filial', 'sotuvchi'].includes(role)) throw bad('bad_role');
+  if (['admin', 'rahbar'].includes(role) && u.role !== 'admin') throw new HttpError(403, 'forbidden');
+  const loginName = normLogin(phone);
+  if (!/^\d{9,15}$/.test(loginName)) throw bad('bad_phone');
+  if (!String(name || '').trim()) throw bad('bad_user');
+  const oid = odooIdVal(odoo_user_id);
+  if (Number.isNaN(oid)) throw bad('bad_odoo_user');
+  if (oid != null) {
+    if (!one('SELECT 1 FROM odoo_users WHERE id=?', oid)) throw bad('bad_odoo_user');
+    if (one('SELECT 1 FROM users WHERE odoo_user_id=? AND deleted_at IS NULL', oid)) throw new HttpError(409, 'odoo_taken');
+    if (one('SELECT 1 FROM invites WHERE odoo_user_id=? AND used_at IS NULL AND expires_at>?', oid, now())) throw bad('invite_exists');
+  }
+  if (one('SELECT 1 FROM users WHERE login=? AND deleted_at IS NULL', loginName)) throw bad('login_taken');
+  if (one('SELECT 1 FROM invites WHERE login=? AND used_at IS NULL AND expires_at>?', loginName, now())) throw bad('invite_exists');
+  const d = Math.min(30, Math.max(1, Number(days) || 7));
+  const tok = token(32);
+  const id = Number(run(`INSERT INTO invites(token,login,name,role,branch_id,phone,odoo_user_id,created_by,created_at,expires_at) VALUES(?,?,?,?,?,?,?,?,?,?)`,
+    tok, loginName, clip(name, 80), role, branch_id || null, clip(phone || '', 40) || null, oid, u.name, now(), now() + d * 864e5).lastInsertRowid);
+  audit('staff', u.name, `Taklif havolasi yaratildi: ${clip(name, 80)} (${role})${oid ? ' · Odoo menejeri' : ''}`, { result: `${d} kun amal qiladi` });
+  return { id, token: tok, link: `${config.publicUrl}/taklif?k=${tok}`, login: loginName };
+}
 R.post('/api/invites', async (req, res, u) => {
   need(u, 'users');
   const b = await readJson(req);
-  const role = b.role;
-  if (!['admin', 'rahbar', 'filial', 'sotuvchi'].includes(role)) throw bad('bad_role');
-  if (['admin', 'rahbar'].includes(role) && u.role !== 'admin') throw new HttpError(403, 'forbidden');
-  // Login — xodimning telefon raqami: eslab qolish oson va u baribir raqamini biladi
-  const loginName = normLogin(b.phone);
-  if (!/^\d{9,15}$/.test(loginName)) throw bad('bad_phone');
-  if (!String(b.name || '').trim()) throw bad('bad_user');
-  if (one('SELECT 1 FROM users WHERE login=? AND deleted_at IS NULL', loginName)) throw bad('login_taken');
-  if (one('SELECT 1 FROM invites WHERE login=? AND used_at IS NULL AND expires_at>?', loginName, now())) throw bad('invite_exists');
-  const days = Math.min(30, Math.max(1, Number(b.days) || 7));
-  const tok = token(32);
-  const id = Number(run(`INSERT INTO invites(token,login,name,role,branch_id,phone,created_by,created_at,expires_at) VALUES(?,?,?,?,?,?,?,?,?)`,
-    tok, loginName, clip(b.name, 80), role, b.branch_id || null, clip(b.phone || '', 40) || null, u.name, now(), now() + days * 864e5).lastInsertRowid);
-  audit('staff', u.name, `Taklif havolasi yaratildi: ${clip(b.name, 80)} (${role})`, { result: `${days} kun amal qiladi` });
-  json(res, { ok: true, id, link: `${config.publicUrl}/taklif?k=${tok}` });
+  const r = createInvite(b, u);
+  json(res, { ok: true, id: r.id, link: r.link, login: r.login });
+});
+/* Odoo menejerlarini bir yo‘la taklif qilish: ism va telefon Odoo’dan, rol — sotuvchi. Har biri alohida natija: havola yoki xato kodi (bitta xato qolganlarini to‘xtatmaydi). */
+R.post('/api/invites/odoo-bulk', async (req, res, u) => {
+  need(u, 'users');
+  const b = await readJson(req);
+  const ids = [...new Set((Array.isArray(b.ids) ? b.ids : []).map(odooIdVal).filter(x => Number.isInteger(x)))].slice(0, 100);
+  const items = ids.map(id => {
+    const o = one('SELECT id, name, phone FROM odoo_users WHERE id=?', id);
+    if (!o) return { odoo_user_id: id, name: null, link: null, error: 'bad_odoo_user' };
+    try { const r = createInvite({ name: o.name, role: 'sotuvchi', phone: o.phone, days: b.days, odoo_user_id: id }, u); return { odoo_user_id: id, name: o.name, login: r.login, link: r.link, error: null }; }
+    catch (e) { if (e instanceof HttpError) return { odoo_user_id: id, name: o.name, link: null, error: e.message }; throw e; }
+  });
+  json(res, { ok: true, items, created: items.filter(x => x.link).length });
 });
 
 R.post('/api/invites/:id/revoke', (req, res, u, p) => {
@@ -801,6 +829,15 @@ R.get('/api/invite', (req, res) => {
     branch: i.branch_id ? one('SELECT name FROM branches WHERE id=?', i.branch_id)?.name || null : null });
 });
 
+/* Telegram ulash havolasi (t.me/<bot>?start=link_KOD): xodim «Start» bossa — bildirishnomalar unga keladi. ttlMs — kod qancha amal qiladi. */
+function tgLinkFor(userId, ttlMs) {
+  const code = token(12).replace(/[^A-Za-z0-9]/g, '').slice(0, 14);
+  run('INSERT INTO tg_links(code,user_id,expires_at) VALUES(?,?,?)', code, userId, now() + ttlMs);
+  const bot = botUsername();
+  return { code, bot, link: bot ? `https://t.me/${bot}?start=link_${code}` : null };
+}
+const TG_LINK_AFTER_INVITE = 7 * 864e5;
+
 /* Kirishsiz: xodim o‘z parolini qo‘yadi — hisob shu yerda ochiladi va seans beriladi */
 R.post('/api/invite/accept', async (req, res) => {
   const b = await readJson(req);
@@ -808,7 +845,8 @@ R.post('/api/invite/accept', async (req, res) => {
   if (!i) throw new HttpError(404, 'invite_bad');
   const pw = String(b.password || '');
   if (pw.length < 8) throw bad('weak_password');
-  if (one('SELECT 1 FROM users WHERE login=? AND deleted_at IS NULL', i.login)) throw bad('login_taken');
+  // Login bandligi faqat yangi hisob uchun: parol almashtirishda login o‘sha xodimniki (ilgari bu tekshiruv reset havolasini ham 400 bilan yiqitardi)
+  if (i.kind !== 'reset' && one('SELECT 1 FROM users WHERE login=? AND deleted_at IS NULL', i.login)) throw bad('login_taken');
   const phone = clip(String(b.phone || i.phone || '').trim(), 40) || null;
 
   // Parolni almashtirish: hisob allaqachon bor — yangi parol qo‘yiladi va eski seanslar yopiladi
@@ -822,20 +860,23 @@ R.post('/api/invite/accept', async (req, res) => {
     });
     audit('staff', t.name, 'Xodim havola orqali parolini o‘zgartirdi', { object: `user:${t.id}`, result: `Havolani bergan: ${i.created_by}` });
     login(req, res, t.login, pw);
-    return json(res, { ok: true });
+    // Telegram hali ulanmagan bo‘lsa — shu yerda ulab qo‘ysin (7 kun amal qiladi)
+    return json(res, { ok: true, telegram: t.tg_chat_id ? null : tgLinkFor(t.id, TG_LINK_AFTER_INVITE).link });
   }
 
   const uid = tx(() => {
     // Avval havola yopiladi: ikki marta bosilsa yoki ikki qurilmadan ochilsa — ikkinchi hisob ochilmaydi
     if (!run('UPDATE invites SET used_at=? WHERE id=? AND used_at IS NULL', now(), i.id).changes) throw new HttpError(404, 'invite_bad');
-    const id = Number(run(`INSERT INTO users(login,name,role,branch_id,phone,pass_hash,created_at) VALUES(?,?,?,?,?,?,?)`,
-      i.login, i.name, i.role, i.branch_id || null, phone, hashPassword(pw), now()).lastInsertRowid);
+    // Odoo bog‘lami: taklif berilgandan beri shu menejer boshqa xodimga bog‘lanib qolgan bo‘lsa — bog‘lamsiz ochiladi (keyin Xodimlar’da qo‘lda)
+    const oid = i.odoo_user_id && !one('SELECT 1 FROM users WHERE odoo_user_id=? AND deleted_at IS NULL', i.odoo_user_id) ? i.odoo_user_id : null;
+    const id = Number(run(`INSERT INTO users(login,name,role,branch_id,phone,odoo_user_id,pass_hash,created_at) VALUES(?,?,?,?,?,?,?,?)`,
+      i.login, i.name, i.role, i.branch_id || null, phone, oid, hashPassword(pw), now()).lastInsertRowid);
     run('UPDATE invites SET user_id=? WHERE id=?', id, i.id);
     return id;
   });
   audit('staff', i.name, `Xodim havola orqali hisobini faollashtirdi (${i.role})`, { object: `user:${uid}`, result: `Taklifni bergan: ${i.created_by}` });
   login(req, res, i.login, pw);   // seans ochiladi — xodim darhol panelga kiradi
-  json(res, { ok: true });
+  json(res, { ok: true, telegram: tgLinkFor(uid, TG_LINK_AFTER_INVITE).link });
 });
 
 R.get('/api/users/billz', (req, res, u) => {
@@ -865,10 +906,7 @@ R.get('/api/users/billz', (req, res, u) => {
 R.post('/api/users/:id/tglink', (req, res, u, p) => {
   const target = Number(p.id);
   if (target !== u.id) need(u, 'users');
-  const code = token(12).replace(/[^A-Za-z0-9]/g, '').slice(0, 14);
-  run('INSERT INTO tg_links(code,user_id,expires_at) VALUES(?,?,?)', code, target, now() + 3600e3);
-  const bot = botUsername();
-  json(res, { ok: true, code, link: bot ? `https://t.me/${bot}?start=link_${code}` : null, bot, running: telegramRunning() });
+  json(res, { ok: true, ...tgLinkFor(target, 3600e3), running: telegramRunning() });
 });
 R.post('/api/me/password', async (req, res, u) => {
   const b = await readJson(req);

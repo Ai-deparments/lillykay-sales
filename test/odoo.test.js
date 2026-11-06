@@ -38,7 +38,7 @@ function handleModel(model, m, a, kw, reply, fail) {
   const page = rows => rows.slice(kw.offset || 0, (kw.offset || 0) + (kw.limit || rows.length));
   if (model === 'crm.team') return reply([{ id: 12, name: 'Savdo Sun High Tech' }, { id: 41, name: 'Ish Montajnik' }]);
   if (model === 'crm.stage') return reply([{ id: 1, name: 'Янги', sequence: 1, is_won: false }, { id: 2, name: 'Ўчрашув', sequence: 2, is_won: false }, { id: 3, name: 'Аванс тушди', sequence: 3, is_won: true }]);
-  if (model === 'res.users') return reply([{ id: 10, name: 'Shahzoda' }, { id: 11, name: 'Nodir' }]);
+  if (model === 'res.users') return reply([{ id: 10, name: 'Shahzoda', mobile_phone: false, phone: '+998 90 123 45 67', work_phone: false }, { id: 11, name: 'Nodir', mobile_phone: false, phone: false, work_phone: false }]);
   if (model === 'crm.lost.reason') return reply([{ id: 2, name: 'Qimmat' }]);
   if (model === 'utm.source') return reply([{ id: 3, name: 'Instagram' }]);
   if (model === 'crm.lead' && m === 'search_read') return reply(page(applyDomain(state.leads, domain)));
@@ -108,6 +108,8 @@ test('birinchi sinxron: ma’lumotnomalar, faol va yo‘qotilgan lidlar, bosqich
   assert.deepEqual(all('SELECT name FROM odoo_stages ORDER BY sequence').map(s => s.name), ['Янги', 'Ўчрашув', 'Аванс тушди']);
   assert.equal(one('SELECT is_won FROM odoo_stages WHERE id=3').is_won, 1);
   assert.equal(one('SELECT count(*) n FROM odoo_users').n, 2);
+  assert.equal(one('SELECT phone FROM odoo_users WHERE id=10').phone, '+998 90 123 45 67', 'telefon saqlanadi');
+  assert.equal(one('SELECT phone FROM odoo_users WHERE id=11').phone, null, 'bo‘sh telefon — null');
   assert.equal(one('SELECT count(*) n FROM odoo_leads').n, 3, 'yo‘qotilgan lid ham saqlanadi');
   const lost = one('SELECT * FROM odoo_leads WHERE id=102');
   assert.equal(lost.active, 0); assert.equal(lost.lost_reason_id, 2);

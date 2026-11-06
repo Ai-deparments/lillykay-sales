@@ -31,6 +31,7 @@ export function InviteForm() {
   const [caps, setCaps] = useState(false);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [tgLink, setTgLink] = useState<string | null>(null);   // parol saqlangach — Telegram ulash havolasi (server beradi, 7 kun)
   const pwRef = useRef<HTMLInputElement>(null);
   const pw2Ref = useRef<HTMLInputElement>(null);
 
@@ -64,8 +65,9 @@ export function InviteForm() {
     setBusy(true);
     try {
       const r = await fetch('/api/invite/accept', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ k: key, password: p1 }) });
-      if (r.ok) { location.href = '/'; return; }
       const j = await r.json().catch(() => ({}));
+      // Telegram hali ulanmagan bo‘lsa — avval shuni ulab olsin (Nazorat eslatmalari shu yerga keladi), keyin panelga
+      if (r.ok) { if (j.telegram) setTgLink(String(j.telegram)); else location.href = '/'; return; }
       setErr(ERRORS[j.error as string] || 'Saqlanmadi. Qaytadan urinib ko‘ring.');
     } catch {
       setErr('Aloqa yo‘q. Internetni tekshirib, qayta urinib ko‘ring.');
@@ -74,6 +76,25 @@ export function InviteForm() {
 
   const label = show ? 'Parolni yashirish' : 'Parolni ko‘rsatish';
   const reset = Boolean(inv?.reset);
+  if (tgLink) {
+    return (
+      <div className="login-wrap">
+        <div className="login" id="tgdone">
+          <Brand />
+          <div><h1>Parol saqlandi ✓</h1>
+            <p className="login-sub">Qoldi bitta qadam: Telegram’ni ulang. Shunda 24 soat ichida bog‘lanilmagan lidlar haqida eslatmalar shaxsan sizga keladi.</p></div>
+          <div className="inv-card">
+            <div className="inv-row"><span>1</span><b>Tugmani bosing — Telegram ochiladi</b></div>
+            <div className="inv-row"><span>2</span><b>Botda «Start» ni bosing</b></div>
+            <div className="inv-row"><span>3</span><b>Bo‘ldi — panelga kiring</b></div>
+          </div>
+          <a className="btn primary" id="tgOpen" href={tgLink} target="_blank" rel="noopener" style={{ justifyContent: 'center' }}>Telegram’ni ulash</a>
+          <a className="btn" id="tgSkip" href="/" style={{ justifyContent: 'center' }}>Panelga kirish</a>
+          <p className="muted" style={{ fontSize: 12, margin: 0, lineHeight: 1.5 }}>Havola 7 kun amal qiladi. Keyinroq ulamoqchi bo‘lsangiz — panelda «Telegram havola» tugmasi bor.</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="login-wrap">
       <form className="login" id="f" hidden={!inv} onSubmit={submit}>

@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
-import { api, ApiError } from '@/lib/api';
+import { api, ApiError, ERR } from '@/lib/api';
+import { BRAND } from '@/lib/brand';
 import { fmtDT } from '@/lib/format';
 import { dowFrom, shiftText } from '@/lib/shift';
 import type { Branch } from '@/lib/types';
@@ -17,10 +18,16 @@ interface StaffUser {
   odoo_user_id?: number | null; odoo_name?: string | null;
 }
 /* Odoo foydalanuvchilari (sinxrondan) va ism bo‘yicha taxminlar: panel xodimi id → Odoo foydalanuvchi id */
-interface OdooBind { users: { id: number; name: string; leads: number }[]; suggestions: Record<string, number> }
-interface Invite { id: number; name: string; login: string; role: string; branch_name?: string; kind?: string; expires_at: number; token: string }
+interface OdooUser { id: number; name: string; leads: number; phone: string | null; login: string | null; staff_id: number | null; invite_id: number | null }
+interface OdooBind { users: OdooUser[]; suggestions: Record<string, number> }
+interface Invite { id: number; name: string; login: string; role: string; branch_name?: string; kind?: string; expires_at: number; token: string; odoo_user_id?: number | null; odoo_name?: string | null }
 interface BillzStaff { name: string; roles: string[]; branch?: string; checks_90d: number; login?: string; branch_id?: number | null }
-interface Prefill { name?: string; login?: string; branch_id?: number | null; role?: string }
+interface Prefill { name?: string; login?: string; branch_id?: number | null; role?: string; phone?: string; odoo_user_id?: number }
+interface BulkItem { odoo_user_id: number; name: string | null; login?: string; link: string | null; error: string | null }
+
+/* Xodimga yuboriladigan tayyor xabar: havola + nima qilish kerakligi (nusxalab Telegram’da yuboriladi) */
+const inviteMsg = (name: string, link: string) =>
+  `Assalomu alaykum, ${name}!\n${BRAND.name} sotuv panelida sizga hisob ochildi. Havolani oching, parol qo‘ying va «Telegram’ni ulash» tugmasini bosing — 24 soat ichida bog‘lanilmagan lidlar haqida eslatmalar shu yerga keladi.\n${link}`;
 
 /* Havola ko‘rsatiladigan oyna tarkibi (nusxalash tugmasi bilan) */
 function LinkBox({ title, text, link }: { title?: string; text: React.ReactNode; link: string }) {
@@ -32,6 +39,25 @@ function LinkBox({ title, text, link }: { title?: string; text: React.ReactNode;
       <p className="lead" style={{ fontSize: 13 }}>{text}</p>
       <div className="pw-box" style={{ wordBreak: 'break-all', fontSize: 13 }}>{link}</div>
       <div className="row-actions"><button className="btn primary" type="button" id="invCopy2" onClick={copy}>Havolani nusxalash</button></div>
+    </>
+  );
+}
+
+/* Tayyor xabar oynasi: matn + «Xabarni nusxalash» (havola ichida) */
+function MessageBox({ title, intro, messages }: { title: string; intro: React.ReactNode; messages: { name: string; text: string }[] }) {
+  const { toast } = useApp();
+  const copy = async (text: string, what: string) => { try { await navigator.clipboard.writeText(text); toast(`${what} nusxalandi`); } catch { toast('Qo‘lda nusxalang'); } };
+  return (
+    <>
+      <h2>{title}</h2>
+      <p className="lead" style={{ fontSize: 13 }}>{intro}</p>
+      {messages.map(m => (
+        <div key={m.name} style={{ marginBottom: 10 }}>
+          <div className="pw-box" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 12.5, fontFamily: 'inherit', textAlign: 'left' }}>{m.text}</div>
+          <div className="row-actions" style={{ marginTop: 6 }}><button className="btn sm primary" type="button" data-msgcopy onClick={() => copy(m.text, m.name)}>Xabarni nusxalash</button></div>
+        </div>
+      ))}
+      {messages.length > 1 ? <div className="row-actions"><button className="btn" type="button" data-msgcopyall onClick={() => copy(messages.map(m => m.text).join('\n\n'), 'Hammasi')}>Hammasini bitta matn qilib nusxalash</button></div> : null}
     </>
   );
 }
@@ -57,6 +83,7 @@ export function Users({ active }: { active: boolean }) {
   const [invites, setInvites] = useState<{ items: Invite[]; base: string }>({ items: [], base: '' });
   const [billz, setBillz] = useState<BillzStaff[]>([]);
   const [odoo, setOdoo] = useState<OdooBind>({ users: [], suggestions: {} });
+  const [onlyLeads, setOnlyLeads] = useState(true);   // Odoo menejerlari ro‘yxati: faqat lidi borlar (admin, ombor va h.k. yashiriladi)
 
   const load = useCallback(async () => {
     try {
@@ -85,7 +112,8 @@ export function Users({ active }: { active: boolean }) {
   const invite = (pf: Prefill = {}) => openModal({
     content: <>
       <h2>Havola bilan xodim qo‘shish</h2>
-      <p className="lead" style={{ fontSize: 13 }}>Xodimga havola yuboriladi. U havolani ochib, <b>o‘zi parol qo‘yadi</b> va o‘ziga berilgan lavozimda darhol kiradi — parol sizdan ham, yozishmadan ham o‘tmaydi. Panelga <b>telefon raqami bilan</b> kiradi.</p>
+      <p className="lead" style={{ fontSize: 13 }}>Xodimga havola yuboriladi. U havolani ochib, <b>o‘zi parol qo‘yadi</b>, so‘ng Telegram’ni ulaydi va o‘ziga berilgan lavozimda darhol kiradi — parol sizdan ham, yozishmadan ham o‘tmaydi. Panelga <b>telefon raqami bilan</b> kiradi.</p>
+      {pf.odoo_user_id ? <><input type="hidden" name="odoo_user_id" value={pf.odoo_user_id} /><p className="muted" style={{ fontSize: 12.5 }}>Hisob ochilganda Odoo menejeri <b>{pf.name}</b> ga bog‘lanadi — Nazorat eslatmalari unga keladi.</p></> : null}
       <div className="grid-2">
         <label className="field"><span>Ism familiya</span><input name="name" required maxLength={80} defaultValue={pf.name || ''} /></label>
         <label className="field"><span>Lavozim</span><Select name="role" defaultValue={pf.role || 'sotuvchi'}>
@@ -93,16 +121,29 @@ export function Users({ active }: { active: boolean }) {
           {canAdmin ? <><option value="rahbar">Rahbar</option><option value="admin">Administrator</option></> : null}</Select></label>
         <label className="field"><span>Filial</span><Select name="branch_id" defaultValue={pf.branch_id ?? ''}><option value="">—</option>
           {b.branches.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</Select></label>
-        <label className="field"><span>Telefon raqami — shu login bo‘ladi</span><input name="phone" type="tel" inputMode="tel" required placeholder="+998 90 123 45 67" title="Xodim shu raqam bilan panelga kiradi" /></label>
+        <label className="field"><span>Telefon raqami — shu login bo‘ladi</span><input name="phone" type="tel" inputMode="tel" required placeholder="+998 90 123 45 67" title="Xodim shu raqam bilan panelga kiradi" defaultValue={pf.phone || ''} /></label>
         <label className="field"><span>Havola amal qiladi</span><Select name="days" defaultValue="7"><option value="3">3 kun</option><option value="7">7 kun</option><option value="30">30 kun</option></Select></label>
       </div>
     </>,
     onSubmit: async data => {
       const r = await api<{ link: string }>('/api/invites', data);
       await load();
-      openModal({ content: <LinkBox text={<><b>{data.name}</b> ga shu havolani yuboring. Havola bir marta ishlaydi.</>} link={r.link} /> });
+      openModal({ content: <MessageBox title="Havola tayyor" intro={<><b>{data.name}</b> ga shu xabarni Telegram’da yuboring. Havola bir marta ishlaydi: u parol qo‘yadi, Telegram’ni ulaydi va panelga kiradi.</>} messages={[{ name: String(data.name), text: inviteMsg(String(data.name), r.link) }]} /> });
     }
   });
+  /* Odoo menejerlarini bir yo‘la taklif qilish (telefoni borlar): natija — har biriga tayyor xabar yoki xato */
+  const bulkInvite = async (ids: number[]) => {
+    if (!ids.length) return;
+    if (!confirm(`${ids.length} ta Odoo menejeriga taklif havolasi yaratilsinmi?\n\nRol — sotuvchi, login — Odoo’dagi telefon raqami. Havola 7 kun amal qiladi.`)) return;
+    const r = await api<{ items: BulkItem[]; created: number }>('/api/invites/odoo-bulk', { ids, days: 7 }).catch(fail); if (!r) return;
+    await load();
+    const ok = r.items.filter(x => x.link), bad = r.items.filter(x => !x.link);
+    openModal({ content: <>
+      <MessageBox title={`${ok.length} ta taklif tayyor`} intro={<>Har bir menejerga o‘z xabarini yuboring (yoki hammasini bitta matn qilib guruhga). Havola 7 kun amal qiladi, bir marta ishlaydi.</>}
+        messages={ok.map(x => ({ name: x.name || String(x.odoo_user_id), text: inviteMsg(x.name || '', x.link as string) }))} />
+      {bad.length ? <div className="banner warn" style={{ marginTop: 10 }}>Yaratilmadi: {bad.map(x => `${x.name || x.odoo_user_id} — ${ERR[x.error || ''] || x.error}`).join('; ')}</div> : null}
+    </> });
+  };
   const copyInvite = async (link: string) => {
     try { await navigator.clipboard.writeText(link); toast('Havola nusxalandi'); }
     catch { openModal({ content: <><h2>Havola</h2><div className="pw-box" style={{ wordBreak: 'break-all', fontSize: 13 }}>{link}</div></> }); }
@@ -167,6 +208,9 @@ export function Users({ active }: { active: boolean }) {
 
   const act = users.filter(u => u.active), canIn = act.filter(u => u.has_pass).length, tg = act.filter(u => u.tg_linked).length;
   const bound = act.filter(u => u.odoo_user_id).length, suggested = Object.keys(odoo.suggestions).length;
+  // Odoo menejerlari — panelda hali yo‘q (bog‘lanmagan, ochiq taklifi yo‘q); sukut bo‘yicha faqat lidi borlar
+  const candidates = odoo.users.filter(o => !o.staff_id && !o.invite_id && (!onlyLeads || o.leads > 0));
+  const withPhone = candidates.filter(o => o.login);
   const odooCell = (u: StaffUser) => {
     const sug = odoo.suggestions[String(u.id)];
     const sugName = sug ? odoo.users.find(x => x.id === sug)?.name : null;
@@ -189,7 +233,7 @@ export function Users({ active }: { active: boolean }) {
       <div className="staff-sum"><div><b>{act.length}</b><span>xodim</span></div><div className={canIn < act.length ? 'warn' : ''}><b>{canIn}</b><span>panelga kira oladi</span></div>
         <div className={tg < act.length ? 'warn' : ''}><b>{tg}</b><span>Telegram’ga ulangan — bildirishnoma oladi</span></div>
         <div className={bound < act.length ? 'warn' : ''}><b>{bound}</b><span>Odoo menejeriga bog‘langan — Nazorat xabari oladi</span></div>
-        <p className="muted">Xodim ishlashi uchun 3 qadam: <b>1)</b> «Kirish havolasi» — login va parolni unga yuboring; <b>2)</b> Telegram: xodim {bot ? <a href={`https://t.me/${bot}`} target="_blank" rel="noopener">t.me/{bot}</a> : 'botda'} «Start» bosadi — bildirishnomalar unga keladi; <b>3)</b> «Odoo» ustunida uning Odoo foydalanuvchisini tanlang — Nazorat ogohlantirishlari va lid kartasidagi «Panelda» shunga qaraydi (bog‘lam yo‘q bo‘lsa ism bir xil bo‘lganda o‘zi topadi).</p></div>
+        <p className="muted">Eng qisqa yo‘l: pastdagi <b>«Odoo’dagi menejerlar»</b> ro‘yxatidan «Panelga qo‘shish» — xodimga bitta xabar yuborasiz, u havolani ochib parol qo‘yadi va Telegram’ni ulaydi; Odoo bog‘lami o‘zi qo‘yiladi. Alohida ham mumkin: «Kirish havolasi» (parol), «Telegram havola» (xodim {bot ? <a href={`https://t.me/${bot}`} target="_blank" rel="noopener">t.me/{bot}</a> : 'botda'} «Start» bosadi), «Odoo» ustuni (bog‘lam yo‘q bo‘lsa ism bir xil bo‘lganda o‘zi topadi).</p></div>
       <div className="panel"><div className="panel-head"><h2>Xodimlar</h2><button className="btn sm primary" type="button" data-uinvite onClick={() => invite()}>Xodim qo‘shish</button>
         {suggested ? <button className="btn sm" type="button" data-odoo-auto onClick={() => { void autoMatch(); }} title="Ismi Odoo’dagi bilan aynan bir xil xodimlarni bog‘laydi">Odoo: ism bo‘yicha bog‘lash ({suggested})</button> : null}
         {!odoo.users.length ? <span className="muted">Odoo foydalanuvchilari hali sinxronlanmagan — «AI agent» bo‘limida Odoo holatini tekshiring</span> : null}</div>
@@ -209,12 +253,23 @@ export function Users({ active }: { active: boolean }) {
       {invites.items.length ? <div className="panel"><div className="panel-head"><h2>Kutayotgan takliflar</h2><span className="muted">Havola berilgan — xodim hali parol qo‘ymagan</span></div>
         <div className="tbl"><table><thead><tr><th>Ism</th><th>Login</th><th>Lavozim</th><th>Filial</th><th>Muddati</th><th></th></tr></thead><tbody>
           {invites.items.map(i => (
-            <tr key={i.id}><td>{i.name}{i.kind === 'reset' ? <> <span className="pill warn">parol almashtirish</span></> : null}</td><td className="mono">{i.login}</td><td>{ROLE[i.role]}</td><td>{i.branch_name || '—'}</td>
+            <tr key={i.id}><td>{i.name}{i.kind === 'reset' ? <> <span className="pill warn">parol almashtirish</span></> : null}{i.odoo_name ? <div className="muted" style={{ fontSize: 12 }}>Odoo: {i.odoo_name}</div> : null}</td><td className="mono">{i.login}</td><td>{ROLE[i.role]}</td><td>{i.branch_name || '—'}</td>
               <td className="muted">{fmtDT(i.expires_at)} gacha</td>
-              <td className="row-actions"><button className="btn sm" type="button" data-invcopy onClick={() => copyInvite(`${invites.base}/taklif?k=${i.token}`)}>Havolani nusxalash</button>
+              <td className="row-actions">{i.kind !== 'reset' ? <button className="btn sm primary" type="button" data-invmsg={i.id} onClick={() => openModal({ content: <MessageBox title="Xodimga xabar" intro={<><b>{i.name}</b> ga Telegram’da yuboring.</>} messages={[{ name: i.name, text: inviteMsg(i.name, `${invites.base}/taklif?k=${i.token}`) }]} /> })}>Xabar</button> : null}
+                <button className="btn sm" type="button" data-invcopy onClick={() => copyInvite(`${invites.base}/taklif?k=${i.token}`)}>Havolani nusxalash</button>
                 <button className="btn sm ghost" type="button" data-invdel={i.id} onClick={() => revoke(i.id)}>Bekor qilish</button></td></tr>
           ))}
         </tbody></table></div></div> : null}
+      {odoo.users.length ? <div className="panel"><div className="panel-head"><h2>Odoo’dagi menejerlar</h2><span className="muted">Panelda hali yo‘q — {candidates.length} ta{withPhone.length < candidates.length ? `, ${candidates.length - withPhone.length} tasida Odoo’da telefon yo‘q` : ''}</span>
+        {withPhone.length ? <button className="btn sm primary" type="button" data-odoo-bulk onClick={() => { void bulkInvite(withPhone.map(o => o.id)); }} title="Telefoni borlarning hammasiga taklif havolasi yaratadi">Telefoni borlarni taklif qilish ({withPhone.length})</button> : null}
+        <label className="muted" style={{ fontSize: 12.5, display: 'inline-flex', gap: 6, alignItems: 'center' }}><input type="checkbox" checked={onlyLeads} onChange={e => setOnlyLeads(e.target.checked)} data-odoo-onlyleads /> faqat lidi borlar</label></div>
+        {candidates.length ? <div className="tbl"><table><thead><tr><th>Ism (Odoo)</th><th className="n">Lid</th><th>Telefon (login bo‘ladi)</th><th></th></tr></thead><tbody>
+          {candidates.map(o => (
+            <tr key={o.id}><td>{o.name}</td><td className="n mono">{o.leads}</td>
+              <td>{o.login ? <span className="mono">{o.login}</span> : <span className="pill warn" title="Odoo’da telefon yo‘q yoki noto‘g‘ri — qo‘shishda qo‘lda kiritasiz">telefon yo‘q</span>}{o.phone && !o.login ? <div className="muted" style={{ fontSize: 12 }}>{o.phone}</div> : null}</td>
+              <td><button className="btn sm" type="button" data-odoo-invite={o.id} onClick={() => invite({ name: o.name, phone: o.phone || '', role: 'sotuvchi', odoo_user_id: o.id })}>Panelga qo‘shish</button></td></tr>
+          ))}
+        </tbody></table></div> : <p className="muted" style={{ margin: 0 }}>{onlyLeads ? 'Lidi bor hamma menejer panelda bor yoki taklif kutmoqda.' : 'Hamma Odoo foydalanuvchisi panelda bor yoki taklif kutmoqda.'}</p>}</div> : null}
       {billz.length ? <div className="panel"><div className="panel-head"><h2>BILLZ’dagi xodimlar</h2><span className="muted">Panelda hali yo‘q. Ism BILLZ’dagidek qoladi</span></div>
         <div className="tbl"><table><thead><tr><th>Ism</th><th>BILLZ roli</th><th>Asosiy filial</th><th className="n">Chek, 90 kun</th><th></th></tr></thead><tbody>
           {billz.map((x, i) => (

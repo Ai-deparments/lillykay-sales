@@ -479,6 +479,11 @@ DELETE FROM kv WHERE k IN ('odoo_wm_leads','odoo_sync_at');
 `
 /* Bitta Odoo foydalanuvchisi — faqat bitta (o‘chirilmagan) xodimga. Kod tekshiradi, indeks kafolatlaydi. */
 CREATE UNIQUE INDEX users_odoo_user ON users(odoo_user_id) WHERE odoo_user_id IS NOT NULL AND deleted_at IS NULL;
+`,
+`
+/* Odoo menejerini panelga taklif qilish: telefon Odoo’dan (login bo‘ladi), taklif qabul qilinganda hisob shu Odoo foydalanuvchisiga bog‘lanadi */
+ALTER TABLE odoo_users ADD COLUMN phone TEXT;
+ALTER TABLE invites ADD COLUMN odoo_user_id INTEGER;
 `
 ];
 

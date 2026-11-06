@@ -316,7 +316,7 @@ async function onMessage(m) {
     });
     const u = one('SELECT name FROM users WHERE id=?', row.user_id);
     audit('staff', u.name, 'Telegram bildirishnomalari ulandi');
-    return tg('sendMessage', { chat_id: m.chat.id, parse_mode: 'HTML', text: `Salom, ${esc(u.name)}! Bildirishnomalar shu chatga keladi: AI javoblari, katta buyurtmalar, ertalabki topshirish.` });
+    return tg('sendMessage', { chat_id: m.chat.id, parse_mode: 'HTML', text: `Salom, ${esc(u.name)}! Bildirishnomalar shu chatga keladi: Nazorat eslatmalari (24 soat ichida bog‘lanilmagan lidlar), AI javoblari, katta buyurtmalar.` });
   }
   // Instagram ulash yordamchisi: https://t.me/<bot>?start=meta
   if (/^\/start\s+meta$/.test(text)) return metaStart(tg, m.chat.id);

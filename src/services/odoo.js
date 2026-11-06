@@ -103,14 +103,16 @@ const sinceStamp = () => stamp(now() - config.odooSinceDays * DAY);
 async function syncRefs() {
   const teams = await allRows('crm.team', [], ['name']);
   const stages = await allRows('crm.stage', [], ['name', 'sequence', 'is_won'], 'sequence, id');
-  const users = await allRows('res.users', [['share', '=', false]], ['name']);
+  // Telefon — panelga taklif qilishda login bo‘ladi: avval shaxsiy (hr), keyin kontakt, keyin ish telefoni
+  const users = (await allRows('res.users', [['share', '=', false]], ['name', 'mobile_phone', 'phone', 'work_phone']))
+    .map(u => ({ ...u, phone: [u.mobile_phone, u.phone, u.work_phone].map(x => String(x || '').trim()).find(Boolean) || null }));
   const lost = await allRows('crm.lost.reason', [], ['name']);
   const sources = await allRows('utm.source', [], ['name']);
   tx(() => {
     for (const t of teams) run('INSERT INTO odoo_teams(id,name) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name', t.id, t.name);
     for (const s of stages) run('INSERT INTO odoo_stages(id,name,sequence,is_won) VALUES(?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, sequence=excluded.sequence, is_won=excluded.is_won',
       s.id, s.name, s.sequence, s.is_won ? 1 : 0);
-    for (const u of users) run('INSERT INTO odoo_users(id,name) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name', u.id, u.name);
+    for (const u of users) run('INSERT INTO odoo_users(id,name,phone) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, phone=excluded.phone', u.id, u.name, u.phone);
     for (const r of lost) run('INSERT INTO odoo_lost_reasons(id,name) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name', r.id, r.name);
     for (const r of sources) run('INSERT INTO odoo_sources(id,name) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name', r.id, r.name);
   });
