@@ -1,0 +1,215 @@
+/* B varianti — AI agent (#agentPage), Bilim bazasi (#catalogPage) va Audit jurnali (#auditPage) ekranlari.
+   Faqat shu ekranlarning qoidalari; umumiy komponentlar — ../b.css. Manba: design-demo-b/{agent,bilim,audit}.html.
+   Tamoyil: tekis panellar, sovuq neytral ranglar, radius 6px, raqamlar mono, bezak yo‘q. Id-selektor — app.css/dropdown.css dan
+   keyin yuklanadigan qoidalarni yengish uchun. Jonli xarita (AgentFlow) — ../agentflow.css da. */
+@media screen {
+
+/* ======================================================================
+   UMUMIY: panel ichidagi «nima bu» qatori, jadval va etak — chetdan chetga
+   ====================================================================== */
+#agentPage .panel,#catalogPage .panel,#auditPage .panel{gap:12px}
+#agentPage .panel-head,#catalogPage .panel-head,#auditPage .panel-head{align-items:center;gap:8px 12px}
+#agentPage .panel-head h2,#catalogPage .panel-head h2,#auditPage .panel-head h2{font-size:15px;font-weight:600}
+#agentPage .panel-head .muted,#catalogPage .panel-head .muted,#auditPage .panel-head .sub{font-size:12.5px;color:var(--ink-3)}
+#agentPage .panel > .panel-help,#catalogPage .panel > .panel-help,#auditPage .panel > .panel-help{margin:-12px -16px 0;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:8px 16px}
+#agentPage .panel > .panel-head:first-child,#catalogPage .panel > .panel-head:first-child,#auditPage .panel > .panel-head:first-child{margin:-14px -16px 0;padding:12px 16px;border-bottom:1px solid var(--line)}
+#agentPage .panel > .panel-head:first-child + .panel-help,#catalogPage .panel > .panel-head:first-child + .panel-help,#auditPage .panel > .panel-head:first-child + .panel-help{margin-top:-12px}
+#agentPage .panel > .panel-head:first-child:last-child{margin-bottom:-14px;border-bottom:0}
+#agentPage .panel-foot,#catalogPage .panel-foot,#auditPage .panel-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--ink-3);border-top:1px solid var(--line);margin:0 -16px -14px;padding:10px 16px}
+#agentPage .panel-foot .right,#catalogPage .panel-foot .right,#auditPage .panel-foot .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+#agentPage .lead,#catalogPage .lead,#auditPage .lead{font-size:13.5px;color:var(--ink-2);max-width:80ch;line-height:1.55}
+#agentPage .lead b,#catalogPage .lead b{color:var(--ink)}
+#agentPage .banner,#catalogPage .note,#agentPage .note{font-size:13px;line-height:1.5}
+
+/* ======================================================================
+   AI AGENT
+   ====================================================================== */
+/* ---- umumiy holat paneli: nom · holat belgisi · izoh · «hammasini» tugmasi ---- */
+#agentPage .panel-head .btn.danger{background:var(--surface);border-color:var(--line-2);color:var(--bad)}
+#agentPage .panel-head .btn.danger:hover{background:var(--bad-soft);border-color:#FECACA}
+
+/* ---- kanal kartasi: tekis panel, o‘chirilgani chapdan qizil chiziq ---- */
+#agentPage .agent-card{padding:0;gap:0}
+#agentPage .agent-card.off{border-left:1px solid var(--line);box-shadow:inset 3px 0 0 var(--bad),var(--shadow)}
+#agentPage .agent-top{padding:12px 16px;border-bottom:1px solid var(--line);align-items:center;gap:10px 16px}
+#agentPage .agent-card.off .agent-top{border-bottom:0}
+#agentPage .set-name{gap:10px;font-size:14px;font-weight:600;color:var(--ink);align-items:flex-start}
+#agentPage .set-name .brand-ic,#agentPage .set-name .ic{width:22px;height:22px;flex:none;margin-top:1px}
+#agentPage .set-name > div{min-width:0}
+#agentPage .set-sub{font-size:12.5px;color:var(--ink-2);font-weight:400;margin-top:2px}
+#agentPage .demo-tag{font-size:11px;letter-spacing:.03em;text-transform:none;color:var(--ink-2);border:1px solid var(--line-2);background:var(--surface-3);border-radius:4px;padding:0 6px;font-weight:500;vertical-align:1px}
+
+/* yoqish/to‘xtatish: B tugmasi + aylana dastak (yashil = ishlayapti) */
+#agentPage .switch{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--radius);padding:4px 12px 4px 5px;min-height:34px;font-weight:500;font-size:13px;color:var(--ok)}
+#agentPage .switch:hover{background:var(--surface-2)}
+#agentPage .switch span{width:34px;height:20px;border-radius:10px;background:var(--line-2);transition:none}
+#agentPage .switch span::after{box-shadow:none;transition:none;width:16px;height:16px}
+#agentPage .switch[aria-checked="true"] span{background:var(--ok)}
+#agentPage .switch[aria-checked="true"] span::after{left:16px}
+#agentPage .switch[aria-checked="false"]{color:var(--bad)}
+
+/* bosqich / avtojavob: forma maydoni kabi — sarlavha, segment, izoh */
+#agentPage .agent-opts{margin:0;padding:14px 16px;gap:14px 24px;grid-template-columns:repeat(2,minmax(0,1fr))}
+#agentPage .agent-opts .lbl{font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--ink-2);font-weight:600;margin-bottom:6px}
+#agentPage .agent-opts .seg{overflow:hidden}
+#agentPage .agent-opts .seg button{min-height:34px}
+#agentPage .agent-opts .hint{font-size:12px;color:var(--ink-3);margin-top:6px}
+
+/* bugungi raqamlar: 4 katak, chiziq bilan ajratilgan, mono qiymat */
+#agentPage .agent-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin:0;padding:0;border-top:1px solid var(--line);background:var(--surface-2)}
+#agentPage .agent-stats span{display:flex;flex-direction:column;gap:2px;padding:10px 16px;min-width:0;font-size:11.5px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--ink-3)}
+#agentPage .agent-stats span + span{border-left:1px solid var(--line)}
+#agentPage .agent-stats b{font:600 18px/1.2 var(--f-mono);color:var(--ink);letter-spacing:0;text-transform:none}
+
+/* ---- umumiy qoidalar: nom → qiymat qatorlari ---- */
+#agentPage .set-list{display:flex;flex-direction:column}
+#agentPage .set-row{grid-template-columns:220px minmax(0,1fr);gap:6px 16px;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px}
+#agentPage .set-row:first-child{border-top:0;padding-top:0}
+#agentPage .set-row:last-child{padding-bottom:0}
+#agentPage .set-row .set-name{font-size:13.5px;font-weight:500;color:var(--ink-2)}
+#agentPage .set-row > b.mono{font-weight:600;color:var(--ink);font-size:13.5px}
+#agentPage .set-row > .pill{justify-self:start}
+
+/* ---- AI hisobi ---- */
+#agentPage .ai-real .btn .ic{width:15px;height:15px}
+#agentPage .panel-warn{border-color:var(--line)}
+#agentPage .panel-warn .banner{margin:0}
+
+/* ======================================================================
+   BILIM BAZASI
+   ====================================================================== */
+#catalogPage .tabs{gap:0;border-bottom:1px solid var(--line-2);margin:0 0 2px}
+#catalogPage .tabs button{padding:8px 14px;font-size:13.5px;font-weight:500;color:var(--ink-2);border-bottom:2px solid transparent;margin-bottom:-1px}
+#catalogPage .tabs button:hover{color:var(--ink)}
+#catalogPage .tabs button[aria-selected="true"]{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+
+/* ---- filtr qatori (b.css .filters): qidiruv, 3 tanlov, «Yangi karta» ---- */
+#catalogPage .prod-filters{gap:8px 10px}
+#catalogPage .prod-filters .search{height:34px;border-radius:var(--radius);border:1px solid var(--line-2);background:var(--surface);padding:0 10px;gap:8px;color:var(--ink-3)}
+#catalogPage .prod-filters .search:focus-within{border-color:transparent;outline:2px solid var(--primary);outline-offset:0}
+#catalogPage .prod-filters .search .ic{width:15px;height:15px}
+#catalogPage .prod-filters .search input{font-size:13px;color:var(--ink)}
+#catalogPage .prod-filters .field{gap:0}
+#catalogPage .prod-filters .btn.primary{margin-left:auto}
+#catalogPage .dd{--dd-h:34px;--dd-r:var(--radius);--dd-pr:var(--radius);--dd-or:4px;--dd-bg:var(--surface);--dd-ring:var(--primary-soft);--dd-line-h:var(--ink-3);font-size:13px}
+#catalogPage .dd-trigger{padding:0 10px}
+#catalogPage .dd-panel{backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:var(--shadow-2)}
+#catalogPage .field .dd{--dd-h:34px}
+#catalogPage .prod-count{font-size:12.5px;color:var(--ink-3)}
+#catalogPage .prod-count b{color:var(--ink)}
+
+/* ---- sotuvchi savoli: kiritish + tugma + javob ---- */
+#catalogPage #askQ{min-height:36px;border:1px solid var(--line-2);border-radius:var(--radius);padding:7px 10px;background:var(--surface);color:var(--ink);font:inherit}
+#catalogPage #askQ:focus{outline:2px solid var(--primary);outline-offset:0;border-color:transparent}
+#catalogPage #askOut{margin:0}
+
+/* ---- mahsulot kartalari: tekis, radius 6px, soyasiz ---- */
+#catalogPage .prod-list{gap:12px}
+#catalogPage .prod{border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow);padding:14px 16px;gap:8px;font-size:13px}
+#catalogPage .prod h3{font-size:14px;font-weight:600;color:var(--ink);margin:0}
+#catalogPage .prod .meta{gap:6px}
+#catalogPage .prod > .mono{font-size:13.5px;font-weight:600;color:var(--ink)}
+#catalogPage .prod > .mono .muted{font-weight:400}
+#catalogPage .prod p{font-size:13px;line-height:1.5}
+#catalogPage .prod-img{border-radius:var(--radius);border:1px solid var(--line)}
+#catalogPage .prod .row-actions{padding-top:10px;border-top:1px solid var(--line);margin-top:2px}
+#catalogPage .prod .row-actions .btn.ghost{color:var(--bad)}
+#catalogPage .btn.ai{background:var(--surface);border-color:var(--line-2);color:var(--primary)}
+#catalogPage .btn.ai:hover{background:var(--primary-soft)}
+
+/* ---- tasdiqlangan javoblar: qatorlar (savol · javob · holat · manba · amal) ---- */
+#catalogPage .panel .field{gap:5px}
+#catalogPage .field textarea{min-height:70px;font:inherit;line-height:1.45;resize:vertical}
+#catalogPage .ans-list{gap:0}
+#catalogPage .panel > .ans-list{margin:-12px -16px -14px}
+#catalogPage .ans{border:0;border-top:1px solid var(--line);border-radius:0;padding:12px 16px;gap:5px;background:var(--surface)}
+#catalogPage .ans-list .ans:first-child{border-top:0}
+#catalogPage .ans-list .ans:nth-child(even){background:var(--surface-2)}
+#catalogPage .ans.off{opacity:1;color:var(--ink-3)}
+#catalogPage .ans.off .ans-q,#catalogPage .ans.off .ans-a{color:var(--ink-3)}
+#catalogPage .ans-q{font-size:13.5px;font-weight:600;color:var(--ink)}
+#catalogPage .ans-q .mono{font-weight:500;font-size:12px}
+#catalogPage .ans-a{font-size:13.5px;color:var(--ink-2);line-height:1.5}
+#catalogPage .ans-meta{font-size:12.5px;color:var(--ink-3);gap:6px 8px;margin-top:2px}
+#catalogPage .ans-meta .pill{margin-right:4px}
+#catalogPage .ans-meta .row-actions{gap:4px}
+#catalogPage .panel > .ans-list > .muted{padding:14px 16px;font-size:13.5px}
+#catalogPage details.panel{padding:0;gap:0}
+#catalogPage details.panel > summary{cursor:pointer;padding:12px 16px;font-size:14px;font-weight:600;color:var(--ink);list-style:none;display:flex;align-items:center;gap:8px}
+#catalogPage details.panel > summary::-webkit-details-marker{display:none}
+#catalogPage details.panel > summary::before{content:"";width:6px;height:6px;border-right:1.6px solid var(--ink-3);border-bottom:1.6px solid var(--ink-3);transform:rotate(-45deg);margin:0 4px 0 2px;flex:none}
+#catalogPage details.panel[open] > summary{border-bottom:1px solid var(--line)}
+#catalogPage details.panel[open] > summary::before{transform:rotate(45deg) translate(-1px,-1px)}
+#catalogPage details.panel > .ans-list{margin:0}
+
+/* ---- do‘kon ma’lumoti: shablon tugmalari, qoralama eslatmasi, bo‘lim panellari ---- */
+#catalogPage .kn-tpl{gap:6px}
+#catalogPage .panel.off{opacity:1;background:var(--surface-2)}
+#catalogPage .panel.off h2,#catalogPage .panel.off .kn-body{color:var(--ink-3)}
+#catalogPage .kn-body{font-size:13.5px;line-height:1.55;color:var(--ink);border:1px solid var(--line-2);border-radius:var(--radius);padding:12px 16px;background:var(--surface);max-width:none}
+#catalogPage .panel.off .kn-body{border-color:var(--line)}
+#catalogPage .kn-check{border-radius:4px;border:1px solid #FDE68A;background:var(--warn-soft);color:var(--warn);font-size:12.5px}
+#catalogPage .panel > .muted{font-size:13.5px}
+
+/* ======================================================================
+   AUDIT JURNALI
+   ====================================================================== */
+#auditPage .audit-filters{gap:8px 12px}
+#auditPage .audit-filters .lbl{font-size:12.5px;color:var(--ink-3);font-weight:500;letter-spacing:0;text-transform:none}
+#auditPage .audit-filters .chips{gap:0;border:1px solid var(--line-2);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+#auditPage .audit-filters .chip{border:0;border-radius:0;min-height:32px;padding:6px 12px;font-size:13px;color:var(--ink-2);background:transparent;transition:none}
+#auditPage .audit-filters .chip + .chip{border-left:1px solid var(--line)}
+#auditPage .audit-filters .chip:hover{background:var(--surface-2);color:var(--ink)}
+#auditPage .audit-filters .chip[aria-pressed="true"]{background:var(--primary);color:#fff;font-weight:500}
+#auditPage .audit-filters .chip:active{transform:none}
+#auditPage .audit-filters a.btn{text-decoration:none}
+
+#auditPage .audit-panel > .tbl{margin:-12px -16px}
+#auditPage .tbl table{font-size:13px}
+#auditPage .tbl th{padding:9px 12px;backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--surface-3)}
+#auditPage .tbl th:first-child,#auditPage .tbl td:first-child{padding-left:16px}
+#auditPage .tbl th:last-child,#auditPage .tbl td:last-child{padding-right:16px}
+#auditPage .tbl td{padding:9px 12px;vertical-align:top}
+#auditPage .tbl tbody tr:last-child td{border-bottom:0}
+#auditPage .tbl tbody tr:hover td{background:var(--surface-2)}
+#auditPage .tbl td.mono{font-size:12.5px;white-space:nowrap;color:var(--ink-2);font-variant-numeric:tabular-nums}
+#auditPage .tbl td.who{font-weight:500;white-space:nowrap;color:var(--ink)}
+#auditPage .tbl td:nth-child(5),#auditPage .tbl td:nth-child(6){color:var(--ink-2)}
+#auditPage .tbl td .linkish{color:var(--primary)}
+#auditPage .panel-foot .mono{font-size:12.5px}
+
+/* ======================================================================
+   MOBIL: jadval gorizontal aylanadi, ustunlar bittaga yig‘iladi
+   ====================================================================== */
+@media (max-width:980px){
+  #agentPage .set-row{grid-template-columns:minmax(0,1fr)}
+  #agentPage .agent-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #agentPage .agent-stats span:nth-child(3){border-left:0}
+  #agentPage .agent-stats span:nth-child(n+3){border-top:1px solid var(--line)}
+}
+@media (max-width:820px){
+  #agentPage .panel > .panel-head:first-child{margin:-14px -16px 0;padding:12px 16px}
+  #agentPage .panel-head .btn{margin-left:0!important;width:100%;justify-content:center}
+  #agentPage .agent-opts{grid-template-columns:minmax(0,1fr)}
+  #agentPage .agent-opts .seg{display:flex}
+  #agentPage .agent-opts .seg button{flex:1}
+  #agentPage .agent-top .switch{width:100%;justify-content:flex-start}
+  #agentPage .ai-real{margin-left:0!important;width:100%}
+  #agentPage .ai-real .btn{width:100%;justify-content:center}
+  #catalogPage .tabs{overflow-x:auto;scrollbar-width:none}
+  #catalogPage .tabs button{white-space:nowrap}
+  #catalogPage .prod-filters .search{flex:1 1 100%;max-width:none!important}
+  #catalogPage .prod-filters .field{flex:1 1 100%;min-width:0!important}
+  #catalogPage .prod-filters .btn.primary{margin-left:0;flex:1 1 100%;justify-content:center}
+  #catalogPage .prod-list{grid-template-columns:minmax(0,1fr)}
+  #catalogPage .ans-meta .row-actions{margin-left:0!important;width:100%}
+  #auditPage .audit-filters .chips{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  #auditPage .audit-filters .chip + .chip{border-left:0}
+  #auditPage .audit-filters .chip:nth-child(even){border-left:1px solid var(--line)}
+  #auditPage .audit-filters .chip:nth-child(n+3){border-top:1px solid var(--line)}
+  #auditPage .audit-filters > .row-actions{margin-left:0!important;width:100%}
+  #auditPage .audit-filters > .row-actions .btn{flex:1;justify-content:center}
+  #auditPage .tbl{overflow-x:auto}
+  #auditPage .tbl table{min-width:760px}
+}
+}

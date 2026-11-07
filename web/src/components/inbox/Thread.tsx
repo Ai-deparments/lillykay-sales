@@ -175,7 +175,7 @@ export function Thread({ d, isLead, role, menuOpen, onMenu, onAct, onMode, compo
         <div className="thread-actions" id="thActions">
           {c.archived ? <>
             <span className="pill">Arxiv</span>{manage}{cardBtn}
-          </> : <div className="glass-pill">
+          </> : <div className="glass-pill row-actions">
             {c.taken_by ? <><span className="gp-state" title={`Suhbat ${c.taken_by} da — AI to‘xtagan`}>{c.taken_by}</span><button className="gp-btn" type="button" data-act="release" onClick={() => onAct('release')}>AI’ga qaytarish</button></>
               : <button className="gp-btn primary" type="button" data-act="take" onClick={() => onAct('take')}>O‘zim olaman</button>}
             <span className="menu-wrap"><button className="gp-dots" type="button" data-act="menu" title="Boshqa amallar" aria-label="Boshqa amallar" aria-haspopup="true" aria-expanded={menuOpen} onClick={onMenu}><Icon name="more" /></button>

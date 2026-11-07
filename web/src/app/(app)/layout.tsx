@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import '../app.css';
-import '../glass.css';
 import '../dropdown.css';
 import '../agentflow.css';
+import '../b.css';            /* B skin — dropdown/agentflow dan KEYIN: ularning ko‘rinishini ham bosib o‘tadi */
+import '../screens/index.css';
 
 export const metadata: Metadata = {
   title: 'Sun HighTech · Sotuv markazi',
@@ -27,7 +28,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     <>
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Unbounded:wght@500;600&display=swap" precedence="default" />
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" precedence="default" />
       <script src="/pwa.js" />
       {children}
     </>

@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { isUnauthorized, errorText } from '@/lib/api';
 import { useInterval } from '@/lib/hooks';
 import { Brand, Icon } from '@/components/ui';
+import { PageHead } from '@/components/Shell';
 import { useApp } from '@/components/AppContext';
 import type { Heat } from '@/lib/types';
 import { CustomerCard } from './CustomerCard';
@@ -344,6 +345,8 @@ export function Inbox({ active }: { active: boolean }) {
   };
 
   return (
+    <div className={`inbox-wrap${openThread ? ' open-thread' : ''}`}>
+    <PageHead route="suhbatlar" />
     <div className={`inbox${openThread ? ' open-thread' : ''}${showCard ? ' show-card' : ''}`} id="inbox" onClick={onRootClick}>
       <div className="pane list-pane">
         <div className="list-head">
@@ -375,6 +378,7 @@ export function Inbox({ active }: { active: boolean }) {
       <aside className="pane card-pane" id="card" aria-label="Mijoz kartasi">
         {detail ? <CustomerCard d={detail} stages={boot.stages} onAct={act} onHeat={onHeat} onStage={onStage} /> : null}
       </aside>
+    </div>
     </div>
   );
 }

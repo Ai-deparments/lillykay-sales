@@ -1,0 +1,80 @@
+/* B varianti — kirish (/login) va taklif (/taklif) sahifalari: markazdagi karta, yuqorida brend chizig‘i, animatsiyasiz.
+   Namuna: design-demo-b/login.html, taklif.html. Umumiy tokenlar va .btn — ../b.css. */
+
+.login-wrap{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 16px;background:var(--bg);overflow:visible}
+.login-wrap::before{content:none}
+.login.auth{width:100%;max-width:440px;background:var(--surface);border:1px solid var(--line-2);border-top:4px solid var(--brand);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px 32px;display:flex;flex-direction:column;gap:18px;backdrop-filter:none;-webkit-backdrop-filter:none}
+.login.auth.shake{animation:none}
+.login.auth.leaving{opacity:1;transform:none;filter:none}
+.login-wrap .copy{margin:16px 0 0;font-size:12px;color:var(--ink-3);text-align:center}
+
+/* brend: belgi + nom, pastida chiziq */
+.login .login-brand{gap:10px;border-bottom:1px solid var(--line);padding:0 0 16px!important}
+.login .brand-mark{width:34px;height:34px;border-radius:8px;overflow:hidden;background:var(--brand)}
+.login .brand-mark svg{width:100%;height:100%;display:block}
+.login .brand-name{color:var(--ink);font-size:14px;line-height:1.15}
+.login .brand-sub{color:var(--ink-3);font-size:11.5px}
+
+.login h1{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em;font-family:var(--f-body)}
+.login .login-sub{margin:6px 0 0;color:var(--ink-2);font-size:13.5px;line-height:1.5}
+
+/* maydonlar: yorliq tepada, guruh (prefiks + kiritish + ko‘zcha) bitta ramkada */
+.login .field{gap:5px}
+.login .field > span{color:var(--ink-2);font-weight:600;font-size:12.5px}
+.login .field > .group{display:flex;align-items:stretch;border:1px solid var(--line-2);border-radius:var(--radius);background:var(--surface);position:relative;font-weight:400;font-size:14px;color:var(--ink)}
+.login .field > .group:focus-within{outline:2px solid var(--primary);border-color:transparent}
+.login .group input{border:0;border-radius:0;min-height:40px;flex:1;min-width:0;background:transparent;padding:7px 10px}
+.login .group input:focus{outline:none;border-color:transparent}
+.login .prefix{display:flex;align-items:center;padding:0 12px;background:var(--surface-3);border-right:1px solid var(--line-2);border-radius:var(--radius) 0 0 var(--radius);font:500 13.5px var(--f-mono);color:var(--ink-2);flex:none}
+.login .pw-row input{padding-right:10px}
+.login .pw-eye{position:static;transform:none;width:44px;height:auto;border:0;border-left:1px solid var(--line-2);background:var(--surface-2);color:var(--ink-3);border-radius:0 var(--radius) var(--radius) 0;display:grid;place-items:center;flex:none;transition:none}
+.login .pw-eye:hover{color:var(--ink);background:var(--surface-3)}
+.login .pw-eye[aria-pressed="true"]{color:var(--primary)}
+.login .pw-eye .ic{width:18px;height:18px}
+.login .field > .pw-hint{margin:0;font-size:12px;font-weight:400;color:var(--ink-3)}
+.login .field > .pw-hint.weak{color:var(--warn)}
+.login .field > .pw-hint.mid{color:var(--ink-2)}
+.login .field > .pw-hint.good{color:var(--ok)}
+.login .field input:not(.group input){min-height:40px}
+
+/* ogohlantirishlar: chap chiziqli, tekis */
+.login .caps{border-radius:var(--radius);background:var(--surface);border:1px solid var(--line-2);border-left:4px solid var(--brand);color:var(--ink);padding:8px 12px}
+.login .err:empty{display:none}
+.login .err:not(:empty){border-radius:var(--radius);background:var(--surface);border:1px solid var(--line-2);border-left:4px solid var(--bad);color:var(--ink);padding:8px 12px;line-height:1.45}
+.login .banner{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--line-2);border-left-width:4px;background:var(--surface);font-size:13px;color:var(--ink)}
+.login .banner.ok{border-left-color:var(--ok)}
+.login .banner .ic{width:16px;height:16px;flex:none;margin-top:2px;color:var(--ok)}
+.login .banner p{margin:0}
+
+.login .btn{text-decoration:none}
+.login .btn.block{min-height:42px;justify-content:center}
+.login .btn .ic{width:15px;height:15px;flex:none}
+.login .spin{display:none}
+.login .help{font-size:12px;color:var(--ink-3);margin:0;line-height:1.5}
+.login .help a{color:var(--primary)}
+
+/* «Parolni unutdingizmi?» — markazdagi havola, ochilsa yo‘riqnoma */
+.login .forgot{border-top:0;padding-top:0;margin-top:0;text-align:center}
+.login .forgot summary{display:inline;font-size:13px;color:var(--primary);font-weight:500;text-decoration:underline;text-underline-offset:2px}
+.login .forgot summary::after{content:none}
+.login .forgot summary .muted{display:inline-block;color:var(--ink-2);font-weight:400;text-decoration:none}
+.login .forgot-body{text-align:left;margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.login .forgot-body .mono{background:var(--surface-3);border-radius:4px}
+
+/* taklif: hisob ma’lumotlari (savol → javob qatorlari) va Telegram qadamlari */
+.login .inv-card{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:0;gap:0}
+.login .inv-row{display:grid;grid-template-columns:130px minmax(0,1fr);gap:12px;align-items:baseline;padding:9px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.login .inv-row:first-child{border-top:0}
+.login .inv-row span{color:var(--ink-3)}
+.login .inv-row b{text-align:left;font-weight:500;color:var(--ink)}
+.login .inv-steps{list-style:none;margin:0;padding:0;border:1px solid var(--line-2);border-radius:var(--radius)}
+.login .inv-steps li{display:flex;align-items:center;gap:12px;padding:11px 14px;font-size:13.5px;color:var(--ink)}
+.login .inv-steps li + li{border-top:1px solid var(--line)}
+.login .inv-steps .num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:var(--accent-ink);display:grid;place-items:center;font:600 12px var(--f-mono);flex:none}
+.login .auth-actions{display:grid;gap:8px}
+
+@media (max-width:480px){
+  .login-wrap{justify-content:flex-start;padding:24px 16px}
+  .login.auth{padding:22px 18px}
+  .login .inv-row{grid-template-columns:110px minmax(0,1fr)}
+}

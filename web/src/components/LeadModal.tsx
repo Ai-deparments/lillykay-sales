@@ -26,35 +26,46 @@ function LeadCard({ id }: { id: number }) {
   const { fail } = useApp();
   const [d, setD] = useState<DetailResp | null>(null);
   useEffect(() => { api<DetailResp>(`/api/voronka/lead/${id}`).then(setD).catch(fail); }, [id, fail]);
-  if (!d) return <p className="muted">Yuklanmoqda…</p>;
+  if (!d) return <p className="muted lm-loading">Yuklanmoqda…</p>;
   const [stL, stC] = STATUS_L[d.status];
+  const stuck = d.status === 'active' && d.days_on_stage != null && d.days_on_stage >= 1;
+  const unlinked = !!d.user && !(d.staff && d.staff.linked);
   return (
-    <>
-      <h2>{d.name} <span className={`pill ${stC}`}>{stL}</span></h2>
+    <div className="lm">
+      <div className="lm-head">
+        <h2>{d.name} <span className={`pill ${stC}`}>{stL}</span>{d.stage && d.days_on_stage != null ? <span className={`pill ${d.days_on_stage >= 3 ? 'bad' : d.days_on_stage >= 1 ? 'warn' : ''}`}>{d.stage} · {dayStr(d.days_on_stage)}</span> : null}</h2>
+        <button className="btn ghost lm-x" type="button" data-close aria-label="Yopish">×</button>
+      </div>
+      <div className="lm-help">Ma’lumot Odoo’dan, faqat o‘qish uchun. O‘zgartirish — Odoo’da.</div>
+      {stuck ? <div className={`notice${d.days_on_stage != null && d.days_on_stage >= 3 ? ' bad' : ''}`}><div>Bu lid <b>{dayStr(d.days_on_stage)}</b> bir bosqichda harakatsiz.{unlinked ? <> Menejer {d.user} Telegram’ga ulanmagan — eslatma olmaydi.</> : null}</div></div> : null}
       <div className="grid-2e">
-        <div><h3 style={{ margin: '0 0 6px' }}>Mijoz</h3><dl className="kv">
+        <div className="lm-block"><h3 className="section-title">Mijoz</h3><dl className="kv">
           <Row k="Kompaniya" v={d.partner} /><Row k="Kontakt" v={d.contact} />
-          <Row k="Telefon" v={d.phone ? <a href={`tel:${d.phone}`}>{d.phone}</a> : null} /><Row k="Email" v={d.email} /><Row k="Shahar" v={d.city} />
+          <Row k="Telefon" v={d.phone ? <a className="mono" href={`tel:${d.phone}`}>{d.phone}</a> : null} /><Row k="Email" v={d.email} /><Row k="Shahar" v={d.city} />
           <Row k="Manba" v={d.source} /><Row k="Teglar" v={d.tags.length ? `${d.tags.length} ta` : null} /></dl></div>
-        <div><h3 style={{ margin: '0 0 6px' }}>Sotuv</h3><dl className="kv">
+        <div className="lm-block"><h3 className="section-title">Sotuv</h3><dl className="kv">
           <Row k="Jamoa" v={d.team} /><Row k="Mas’ul (Odoo)" v={d.user || <span className="pill bad">mas’ul yo‘q</span>} />
           <Row k="Panelda" v={d.user ? (d.staff ? <span className={`pill ${d.staff.linked ? 'ok' : 'warn'}`}>{d.staff.name}{d.staff.linked ? ' · Telegram' : ' · Telegram ulanmagan'}</span> : <span className="pill warn">ulanmagan</span>) : null} />
           <Row k="Bosqich" v={d.stage} /><Row k="Bosqichda" v={d.days_on_stage != null ? dayStr(d.days_on_stage) : null} />
-          <Row k="Kelgan" v={fmtDT(d.created_at)} /><Row k="Yopilgan" v={d.closed_at ? fmtDT(d.closed_at) : null} />
-          <Row k="Ehtimol" v={d.probability ? `${Math.round(d.probability)} %` : null} /><Row k="Kutilayotgan summa" v={d.expected_revenue ? money(d.expected_revenue) : null} />
+          <Row k="Kelgan" v={<span className="mono">{fmtDT(d.created_at)}</span>} /><Row k="Yopilgan" v={d.closed_at ? <span className="mono">{fmtDT(d.closed_at)}</span> : null} />
+          <Row k="Ehtimol" v={d.probability ? <span className="mono">{Math.round(d.probability)} %</span> : null} /><Row k="Kutilayotgan summa" v={d.expected_revenue ? <span className="mono">{money(d.expected_revenue)}</span> : null} />
           <Row k="Yo‘qotish sababi" v={d.status === 'lost' ? (d.reason || <span className="pill warn">sabab ko‘rsatilmagan</span>) : null} /></dl></div>
       </div>
-      <h3 style={{ margin: '8px 0 4px' }}>Bosqich tarixi</h3>
-      {d.history.length ? <div className="prof-notes">{d.history.map((h, i) => (
-        <div className="prof-note" key={i}><span className="mono muted">{fmtDT(h.at)}</span><span>{h.from_stage ? <>{h.from_stage} → </> : null}<b>{h.to_stage || '—'}</b></span>
-          {h.author ? <span className="muted">· {h.author}</span> : null}{h.source === 'snapshot' ? <span className="pill" title="Kuzatuv boshlangandagi holat">kirish</span> : null}</div>))}</div>
-        : <p className="muted" style={{ margin: 0 }}>Tarix yo‘q.</p>}
-      <h3 style={{ margin: '8px 0 4px' }}>Izohlar ({d.notes.length})</h3>
-      {d.notes.length ? <div className="prof-notes" style={{ maxHeight: 320 }}>{d.notes.map(n => (
-        <div className="prof-note" key={n.id} style={{ display: 'block' }}><div><span className="mono muted">{fmtDT(n.at)}</span> <b>{n.author || '—'}</b>{n.kind === 'email' ? <span className="pill"> email</span> : null}</div>
-          <div style={{ whiteSpace: 'pre-wrap', marginTop: 2 }}>{n.body}</div></div>))}</div>
-        : <p className="muted" style={{ margin: 0 }}>Odoo’da izoh yo‘q — menejer uchrashuvdan keyin hech narsa yozmagan.</p>}
-    </>
+      <div>
+        <h3 className="section-title">Bosqich tarixi</h3>
+        {d.history.length ? <div className="prof-notes lm-timeline">{d.history.map((h, i) => (
+          <div className="prof-note" key={i}><span className="tl-dot"></span><time>{fmtDT(h.at)}</time><span className="tl-text"><span>{h.from_stage ? <>{h.from_stage} → </> : null}<b>{h.to_stage || '—'}</b></span>
+            {h.author ? <span className="tl-who">· {h.author}</span> : null}{h.source === 'snapshot' ? <span className="tl-who" title="Kuzatuv boshlangandagi holat">· kirish</span> : null}</span></div>))}</div>
+          : <p className="empty">Tarix yo‘q.</p>}
+      </div>
+      <div>
+        <h3 className="section-title">Izohlar ({d.notes.length})</h3>
+        {d.notes.length ? <div className="prof-notes lm-comments">{d.notes.map(n => (
+          <div className="prof-note" key={n.id}><div className="c-meta"><b>{n.author || '—'}</b><time>{fmtDT(n.at)}</time>{n.kind === 'email' ? <span className="pill">email</span> : null}</div>
+            <p>{n.body}</p></div>))}</div>
+          : <p className="empty">Odoo’da izoh yo‘q — menejer uchrashuvdan keyin hech narsa yozmagan.</p>}
+      </div>
+    </div>
   );
 }
 
@@ -82,13 +93,14 @@ export function LeadsDrill({ drill, team, days, onClose }: { drill: Drill; team:
   }, [drill, team, days, fail]);
   return (
     <div className="panel" id="drillPanel" style={{ borderColor: 'var(--accent)' }}>
-      <div className="panel-head"><h2>{KIND_L[drill.kind]}: {drill.label}</h2><span className="muted">{items ? `${items.length} ta lid · satrga bosing — to‘liq karta` : 'yuklanmoqda…'}</span>
+      <div className="panel-head"><h2>{KIND_L[drill.kind]}: {drill.label}</h2><span className="sub">{items ? `${items.length} ta lid` : 'yuklanmoqda…'}</span>
         <button className="btn sm ghost" type="button" style={{ marginLeft: 'auto' }} onClick={onClose}>Yopish ×</button></div>
+      <div className="panel-help">Tanlangan filtr bo‘yicha lidlar (faol va yo‘qotilgan). Satrga bosilsa — lidning to‘liq kartasi.</div>
       {items && !items.length ? <p className="muted" style={{ margin: 0 }}>Bu filtrda lid yo‘q.</p> : items ? <div className="tbl"><table>
         <thead><tr><th>Lid</th><th>Mijoz · telefon</th><th>Bosqich</th><th>Mas’ul</th><th>Holat</th><th className="n">Bosqichda</th><th className="n">Kelganiga</th><th>Oxirgi izoh</th></tr></thead><tbody>
           {items.map(x => { const [sl, sc] = STATUS_L[x.status]; return (
-            <tr key={x.id} style={{ cursor: 'pointer' }} onClick={() => openLead(x.id)}>
-              <td><b>{x.name}</b>{x.source ? <div className="muted" style={{ fontSize: 12 }}>{x.source}</div> : null}</td>
+            <tr key={x.id} role="button" style={{ cursor: 'pointer' }} onClick={() => openLead(x.id)}>
+              <td className="who"><b>{x.name}</b>{x.source ? <div className="muted" style={{ fontSize: 12 }}>{x.source}</div> : null}</td>
               <td>{x.partner || x.contact || <span className="muted">—</span>}{x.phone ? <div className="mono" style={{ fontSize: 12 }}>{x.phone}</div> : null}{x.city ? <div className="muted" style={{ fontSize: 12 }}>{x.city}</div> : null}</td>
               <td>{x.stage || '—'}</td><td>{x.user || <span className="pill bad">mas’ul yo‘q</span>}</td>
               <td><span className={`pill ${sc}`}>{sl}</span>{x.status === 'lost' ? <div className="muted" style={{ fontSize: 12 }}>{x.reason || 'sabab ko‘rsatilmagan'}</div> : null}</td>

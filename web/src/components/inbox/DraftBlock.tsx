@@ -58,6 +58,7 @@ export function DraftBlock({ d, role, onAct }: { d: ConvDetail; role: string; on
     : 'AI javobi tayyor';
   return (
     <div className="draft" id="draft">
+      <div className="draft-lbl"><svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8" /></svg>AI qoralama · {ROLL_L[e.rollout as Rollout]}</div>
       <div className="draft-head">
         {due ? <Ring due={due} T={e.T} /> : null}
         <div><div className="draft-title">{title}</div><div className="draft-sub">Rejim: {MODE_L[e.mode as Mode]}{e.mode === 'kechiksa' ? ` · T = ${e.T} s` : ''}{e.night ? ' · tungi vaqt' : ''} · bosqich: {ROLL_L[e.rollout as Rollout]}</div></div>
@@ -66,9 +67,9 @@ export function DraftBlock({ d, role, onAct }: { d: ConvDetail; role: string; on
       <div className="draft-body">{dr.text}</div>
       {dr.sources.length ? <div className="src">{dr.sources.slice(0, 3).map((s, i) => <span key={i}>{s}</span>)}{dr.sources.length > 3 ? <span className="muted">… yana {dr.sources.length - 3} ta manba</span> : null}</div> : null}
       <div className="draft-actions">
-        {e.rollout !== 'kuzatish' ? <button className="btn sm ai" type="button" onClick={() => onAct('approve', dr.id)}>Hozir yuborish</button> : null}
-        <button className="btn sm" type="button" onClick={() => onAct('edit', dr.id)}>Tahrirlab o‘zim yuboraman</button>
-        <button className="btn sm ghost" type="button" onClick={() => onAct('cancelDraft', dr.id)}>Bekor qilish</button>
+        {e.rollout !== 'kuzatish' ? <button className="btn sm primary" type="button" onClick={() => onAct('approve', dr.id)}>Yuborish</button> : null}
+        <button className="btn sm" type="button" title="Matn yozish maydoniga tushadi — o‘zingiz tahrirlab yuborasiz" onClick={() => onAct('edit', dr.id)}>Tahrirlash</button>
+        <button className="btn sm ghost" type="button" onClick={() => onAct('cancelDraft', dr.id)}>Rad etish</button>
         {role !== 'sotuvchi' ? <button className="btn sm ghost" type="button" onClick={() => onAct('teach', dr.id)} title="To‘g‘ri javobni yozing — agent keyingi safar shunday javob beradi">O‘rgatish</button> : null}
         <span style={{ marginLeft: 'auto' }} className="row-actions"><span className="muted" style={{ fontSize: 12 }}>Baho:</span>
           <button className={`btn sm ${dr.rating === 'good' ? 'primary' : ''}`} type="button" onClick={() => onAct('rate', dr.id, 'good')}>Yaxshi</button>

@@ -60,18 +60,20 @@ export function LoginForm() {
 
   return (
     <div className="login-wrap">
-      <form className={`login${shake ? ' shake' : ''}${leaving ? ' leaving' : ''}`} id="f" onSubmit={submit} onAnimationEnd={e => { if (e.animationName === 'lg-shake') setShake(false); }}>
+      <form className={`login auth${shake ? ' shake' : ''}${leaving ? ' leaving' : ''}`} id="f" onSubmit={submit} onAnimationEnd={e => { if (e.animationName === 'lg-shake') setShake(false); }}>
         <div className="brand login-brand" style={{ padding: 0 }}>
           <div className="brand-mark sun" dangerouslySetInnerHTML={{ __html: LOGO_SVG }} />
           <div><div className="brand-name">{BRAND.name}</div><div className="brand-sub">{BRAND.tag}</div></div>
         </div>
         <div>
-          <h1>Kirish</h1>
-          <p className="login-sub">Telefon raqamingiz — loginingiz. Parolni o‘zingiz qo‘ygansiz.</p>
+          <h1>Tizimga kirish</h1>
+          <p className="login-sub">Login — telefon raqamingiz. Parolni rahbar bergan havola orqali o‘zingiz qo‘ygansiz.</p>
         </div>
-        <label className="field"><span>Telefon raqamingiz</span><input ref={loginRef} id="login" name="login" type="tel" inputMode="tel" autoComplete="username tel" placeholder="+998 90 123 45 67" autoCapitalize="none" spellCheck={false} required autoFocus onKeyDown={checkCaps} onKeyUp={checkCaps} onBlur={() => setCaps(false)} /></label>
+        <label className="field"><span>Telefon raqamingiz</span>
+          <span className="group"><span className="prefix mono">+998</span><input ref={loginRef} id="login" name="login" type="tel" inputMode="tel" autoComplete="username tel" placeholder="90 123 45 67" autoCapitalize="none" spellCheck={false} required autoFocus onKeyDown={checkCaps} onKeyUp={checkCaps} onBlur={() => setCaps(false)} /></span>
+        </label>
         <label className="field"><span>Parol</span>
-          <span className="pw-row">
+          <span className="pw-row group">
             <input ref={pwRef} id="password" name="password" type={show ? 'text' : 'password'} autoComplete="current-password" required onKeyDown={checkCaps} onKeyUp={checkCaps} onBlur={() => setCaps(false)} />
             <button className="pw-eye" type="button" id="eye" aria-pressed={show} aria-label={label} title={label} onClick={toggle}>
               <svg className="ic ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -84,9 +86,9 @@ export function LoginForm() {
           Caps Lock yoqilgan — parol katta harflarda yozilyapti
         </div>
         <div className="err" id="err" role="alert">{err}</div>
-        <button className="btn primary" type="submit" style={{ justifyContent: 'center' }} disabled={busy}>{busy || leaving ? <><span className="spin" aria-hidden="true" />Tekshirilmoqda…</> : 'Kirish'}</button>
+        <button className="btn primary block" type="submit" disabled={busy}>{busy || leaving ? <><span className="spin" aria-hidden="true" />Tekshirilmoqda…</> : 'Kirish'}</button>
         <details className="forgot">
-          <summary>Parolni unutdingizmi?</summary>
+          <summary>Parolni unutdingizmi?<span className="muted"> Rahbaringizdan yangi havola so‘rang.</span></summary>
           <div className="forgot-body">
             <p>Parolni o‘zi tiklaydigan havola yo‘q — yangi parolni <b>rahbaringiz</b> beradi. Shunday qiling:</p>
             <ol>
@@ -94,10 +96,11 @@ export function LoginForm() {
               <li>U paneldan <b>Xodimlar va filiallar</b> bo‘limini ochadi va sizning qatoringizdagi <b>«Parolni o‘zgartirish»</b> tugmasini bosadi.</li>
               <li>Sizga havola keladi. Havolani ochib, <b>yangi parolni o‘zingiz</b> qo‘yasiz — uni hech kim, hatto rahbaringiz ham ko‘rmaydi.</li>
             </ol>
-            <p className="muted">Login — ishga qabul qilinganda bergan telefon raqamingiz. Uni <span className="mono">+998 90 123 45 67</span> yoki <span className="mono">901234567</span> ko‘rinishida yozsangiz ham bo‘ladi. Qaysi raqam ekanini bilmasangiz, rahbaringiz aytadi.</p>
+            <p className="muted">Login — ishga qabul qilinganda bergan telefon raqamingiz. Uni <span className="mono">90 123 45 67</span>, <span className="mono">+998 90 123 45 67</span> yoki <span className="mono">901234567</span> ko‘rinishida yozsangiz ham bo‘ladi. Qaysi raqam ekanini bilmasangiz, rahbaringiz aytadi.</p>
           </div>
         </details>
       </form>
+      <p className="copy">{BRAND.name} · {new Date().getFullYear()} · Ma’lumotlar faqat kompaniya ichida</p>
     </div>
   );
 }

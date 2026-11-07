@@ -161,7 +161,7 @@ export function Catalog({ active }: { active: boolean }) {
       <div className={`ans${a.active ? '' : ' off'}`} key={a.id}>
         <div className="ans-q"><span className="muted mono">#{a.id}</span> {a.question}</div>
         <div className="ans-a">{a.answer}</div>
-        <div className="ans-meta muted">{SRC_L[a.source] || a.source} · {a.author || '—'} · {fmtDT(a.updated_at || a.created_at)}
+        <div className="ans-meta muted"><span className={`pill ${a.active ? 'ok' : ''}`}>{a.active ? 'faol' : 'o‘chiq'}</span>{SRC_L[a.source] || a.source} · {a.author || '—'} · <span className="mono">{fmtDT(a.updated_at || a.created_at)}</span>
           {canEdit ? <span className="row-actions" style={{ marginLeft: 'auto' }}><button className="btn sm ghost" type="button" onClick={() => editAns(a)}>Tahrirlash</button>
             <button className="btn sm ghost" type="button" onClick={() => toggle(a)}>{a.active ? 'O‘chirish' : 'Qayta yoqish'}</button></span> : null}</div>
       </div>
@@ -217,8 +217,8 @@ export function Catalog({ active }: { active: boolean }) {
         <div className="ans-list">{items.map(k => {
           const draft = !k.active && /^Yozishmalardan/.test(k.author || '');
           return (
-            <div className={`panel${k.active || draft ? '' : ' off'}`} key={k.id}><div className="panel-head"><h2>{k.title}</h2>{k.active ? null : draft ? <span className="pill acc">Qoralama · tasdiq kutmoqda</span> : <span className="pill">o‘chirilgan</span>}
-              <span className="muted" style={{ marginLeft: 'auto' }}>{k.author || '—'} · {fmtDT(k.updated_at)}</span>{canEdit && draft ? <button className="btn sm primary" type="button" onClick={e => approve(k, e.currentTarget)}>Tasdiqlash</button> : null}{canEdit ? <button className="btn sm ghost" type="button" onClick={() => editKn(k)}>Tahrirlash</button> : null}</div>
+            <div className={`panel${k.active || draft ? '' : ' off'}`} key={k.id}><div className="panel-head"><h2>{k.title}</h2>{k.active ? <span className="pill ok">faol</span> : draft ? <span className="pill acc">Qoralama · tasdiq kutmoqda</span> : <span className="pill">o‘chirilgan</span>}
+              <span className="muted" style={{ marginLeft: 'auto' }}>{k.author || '—'} · <span className="mono">{fmtDT(k.updated_at)}</span></span>{canEdit && draft ? <button className="btn sm primary" type="button" onClick={e => approve(k, e.currentTarget)}>Tasdiqlash</button> : null}{canEdit ? <button className="btn sm ghost" type="button" onClick={() => editKn(k)}>Tahrirlash</button> : null}</div>
               <div className="kn-body">{k.body.split('\n').map((l, i) => <Fragment key={i}>{i ? '\n' : ''}{/^\s*\[tekshiring/i.test(l) ? <span className="kn-check">{l}</span> : l}</Fragment>)}</div></div>
           );
         })}{items.length ? null : <div className="panel muted">Hali bo‘lim yo‘q — yuqoridagi tugmalardan birini bosib boshlang.</div>}</div>
@@ -288,7 +288,7 @@ export function Catalog({ active }: { active: boolean }) {
             ? <>{(askOut.res.text || '').split('\n').map((l, i) => <Fragment key={i}>{i ? <br /> : null}{l}</Fragment>)}{askOut.res.sources?.length ? <><br /><span className="muted" style={{ fontSize: 12 }}>Manba: {askOut.res.sources.join(' · ')}</span></> : null}</>
             : askOut?.res ? <span className="muted">Javob bo‘lmadi: {askOut.res.why || 'xato'}</span> : null}
         </div></div>
-      <div className="row-actions" style={{ flexWrap: 'wrap' }}><label className="search" style={{ flex: 1, minWidth: 220, maxWidth: 420 }}><span><Icon name="search" /></span><input id="prodQ" type="search" value={qInput} onChange={e => setQInput(e.target.value)} placeholder="Model, brend, toifa yoki shtrixkod" /></label>
+      <div className="row-actions filters prod-filters"><label className="search" style={{ flex: 1, minWidth: 220, maxWidth: 420 }}><span><Icon name="search" /></span><input id="prodQ" type="search" value={qInput} onChange={e => setQInput(e.target.value)} placeholder="Model, brend, toifa yoki shtrixkod" /></label>
         <label className="field" style={{ minWidth: 190 }}><span className="sr-only">Holat</span><Select id="pfStatus" aria-label="Karta holati bo‘yicha filtr" value={status} onChange={e => { setStatus(e.target.value); setLimit(60); }}>
           {[['all', 'Barcha kartalar'], ['queue', 'Tekshirish navbati'], ['draft', 'Tasdiqlanmagan'], ['verified', 'Tasdiqlangan']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}</Select></label>
         <label className="field" style={{ minWidth: 170 }}><span className="sr-only">Qoldiq</span><Select id="pfStock" aria-label="Qoldiq bo‘yicha filtr" value={stock} onChange={e => { setStock(e.target.value); setLimit(60); }}>
@@ -297,7 +297,7 @@ export function Catalog({ active }: { active: boolean }) {
           {branches.map(b => <option key={b.id} value={b.name}>{b.name}{b.kind === 'ombor' ? ' (ombor)' : ''}</option>)}</Select></label>
         {canEdit ? <button className="btn primary" type="button" data-pnew onClick={() => editProduct()}>Yangi karta</button> : null}</div>
       {r ? <>
-        <div className="muted" style={{ fontSize: 13 }}>{r.total} ta tovar{r.total > r.items.length ? ` · ${r.items.length} tasi ko‘rsatilgan` : ''} · tasdiqlangan karta: <b style={{ color: 'var(--ink)' }}>{r.verified}</b> / 60 (qabul sinovi Q3){status === 'queue' ? ' · navbat: omborda bor, tasdiqlanmagan, 90 kunda ko‘p sotilgani oldin' : ''}</div>
+        <div className="muted prod-count" style={{ fontSize: 13 }}>{r.total} ta tovar{r.total > r.items.length ? ` · ${r.items.length} tasi ko‘rsatilgan` : ''} · tasdiqlangan karta: <b style={{ color: 'var(--ink)' }}>{r.verified}</b> / 60 (qabul sinovi Q3){status === 'queue' ? ' · navbat: omborda bor, tasdiqlanmagan, 90 kunda ko‘p sotilgani oldin' : ''}</div>
         <div className="prod-list">{r.items.length ? r.items.map(p => (
           <article className="prod" key={p.id}>
             <div className="meta"><span className={`pill ${p.status === 'verified' ? 'ok' : 'warn'}`}>{p.status === 'verified' ? 'tasdiqlangan' : 'tasdiqlanmagan'}</span><span className="pill">{p.category || 'toifa yo‘q'}</span></div>

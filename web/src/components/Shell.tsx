@@ -20,6 +20,12 @@ import { Audit } from './Audit';
 
 export const ROLE_L: Record<string, string> = { admin: 'Administrator', rahbar: 'Sotuv rahbari', filial: 'Filial rahbari', sotuvchi: 'Sotuvchi' };
 
+/** B: har sahifa boshida nom + bir qatorlik «bu sahifa nima uchun» (SCREENS dagi matn) */
+export function PageHead({ route, children }: { route: string; children?: ReactNode }) {
+  const [title, desc] = SCREENS[route] || ['', ''];
+  return <div className="page-head"><div><h1>{title}</h1>{desc ? <p className="desc">{desc}</p> : null}</div>{children ? <div className="actions">{children}</div> : null}</div>;
+}
+
 function NavItem({ href, ic, route, children, className = '' }: { href: string; ic: string; route: string; children: ReactNode; className?: string }) {
   return <a className={`nav-item ${className}`.trim()} href={`#${href}`} data-ic={ic} aria-current={route === href ? 'page' : undefined}><Icon name={ic} />{children}</a>;
 }
@@ -103,17 +109,18 @@ export function Shell() {
       </aside>
       <main className="main">
         <header className="topbar">
-          <div><h1 id="scrTitle">{scr}</h1><div className="sub" id="scrSub">{sub}</div></div>
+          {/* B: topbarda yo‘l (Sotuv › Bo‘lim); sahifa nomi va tushuntirish — ekranning o‘zida (.page-head) */}
+          <div><h1 id="scrTitle"><span className="crumb">Sotuv</span><svg className="crumb-sep" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg><span>{scr}</span></h1><div className="sub" id="scrSub">{sub}</div></div>
           <div className="top-right"><TopStatus /><ThemeButton compact /><button className="btn sm only-mobile install-btn" type="button" data-install aria-label="Ilovani yuklab olish"><span data-ic="download"><Icon name="download" /></span>Ilova</button><button className="btn sm only-mobile" type="button" id="btnMe" aria-label="Mening hisobim" onClick={() => openMeModal(app, { logout })}>Men</button></div>
         </header>
         <div className="screens">
           <section className="screen" id="s-suhbatlar" hidden={!act('suhbatlar')}><Inbox active={act('suhbatlar')} /></section>
-          <section className="screen" id="s-voronka" hidden={!act('voronka')}><div className="page" id="voronkaPage"><Voronka active={act('voronka')} /></div></section>
-          <section className="screen" id="s-nazorat" hidden={!act('nazorat')}><div className="page" id="nazoratPage"><Nazorat active={act('nazorat')} /></div></section>
-          <section className="screen" id="s-katalog" hidden={!act('katalog')}><div className="page" id="catalogPage"><Catalog active={act('katalog')} /></div></section>
-          <section className="screen" id="s-agent" hidden={!act('agent')}><div className="page" id="agentPage"><Agent active={act('agent')} /></div></section>
-          <section className="screen" id="s-xodimlar" hidden={!act('xodimlar')}><div className="page" id="usersPage"><Users active={act('xodimlar')} /></div></section>
-          <section className="screen" id="s-jurnal" hidden={!act('jurnal')}><div className="page" id="auditPage"><Audit active={act('jurnal')} /></div></section>
+          <section className="screen" id="s-voronka" hidden={!act('voronka')}><div className="page" id="voronkaPage"><PageHead route="voronka" /><Voronka active={act('voronka')} /></div></section>
+          <section className="screen" id="s-nazorat" hidden={!act('nazorat')}><div className="page" id="nazoratPage"><PageHead route="nazorat" /><Nazorat active={act('nazorat')} /></div></section>
+          <section className="screen" id="s-katalog" hidden={!act('katalog')}><div className="page" id="catalogPage"><PageHead route="katalog" /><Catalog active={act('katalog')} /></div></section>
+          <section className="screen" id="s-agent" hidden={!act('agent')}><div className="page" id="agentPage"><PageHead route="agent" /><Agent active={act('agent')} /></div></section>
+          <section className="screen" id="s-xodimlar" hidden={!act('xodimlar')}><div className="page" id="usersPage"><PageHead route="xodimlar" /><Users active={act('xodimlar')} /></div></section>
+          <section className="screen" id="s-jurnal" hidden={!act('jurnal')}><div className="page" id="auditPage"><PageHead route="jurnal" /><Audit active={act('jurnal')} /></div></section>
         </div>
       </main>
     </div>

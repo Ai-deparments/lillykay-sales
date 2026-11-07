@@ -1,0 +1,7 @@
+/* Ekranlarga xos B-qoidalari. Har fayl — bitta ekran (agentlar bir-birining fayliga tegmaydi). */
+@import './b-inbox.css';
+@import './b-voronka.css';
+@import './b-nazorat.css';
+@import './b-users.css';
+@import './b-agent.css';
+@import './b-auth.css';

@@ -76,32 +76,37 @@ export function InviteForm() {
 
   const label = show ? 'Parolni yashirish' : 'Parolni ko‘rsatish';
   const reset = Boolean(inv?.reset);
+  const copy = <p className="copy">{BRAND.name} · {new Date().getFullYear()} · Ma’lumotlar faqat kompaniya ichida</p>;
   if (tgLink) {
     return (
       <div className="login-wrap">
-        <div className="login" id="tgdone">
+        <div className="login auth" id="tgdone">
           <Brand />
-          <div><h1>Parol saqlandi ✓</h1>
-            <p className="login-sub">Qoldi bitta qadam: Telegram’ni ulang. Shunda 24 soat ichida bog‘lanilmagan lidlar haqida eslatmalar shaxsan sizga keladi.</p></div>
-          <div className="inv-card">
-            <div className="inv-row"><span>1</span><b>Tugmani bosing — Telegram ochiladi</b></div>
-            <div className="inv-row"><span>2</span><b>Botda «Start» ni bosing</b></div>
-            <div className="inv-row"><span>3</span><b>Bo‘ldi — panelga kiring</b></div>
+          <div className="banner ok" role="status"><svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><p>Parol saqlandi. Hisobingiz faol.</p></div>
+          <div><h1>Telegram’ni ulang</h1>
+            <p className="login-sub">Shunda 24 soat ichida bog‘lanilmagan lidlar haqida eslatmalar shaxsan sizga keladi. Bu 1 daqiqa oladi.</p></div>
+          <ol className="inv-steps">
+            <li><span className="num">1</span><span>Tugmani bosing — Telegram ochiladi</span></li>
+            <li><span className="num">2</span><span>Botda «Start» ni bosing</span></li>
+            <li><span className="num">3</span><span>Tayyor — panelga kiring</span></li>
+          </ol>
+          <div className="auth-actions">
+            <a className="btn primary block" id="tgOpen" href={tgLink} target="_blank" rel="noopener"><svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>Telegram’ni ulash</a>
+            <a className="btn block" id="tgSkip" href="/">Keyinroq — panelga kirish</a>
           </div>
-          <a className="btn primary" id="tgOpen" href={tgLink} target="_blank" rel="noopener" style={{ justifyContent: 'center' }}>Telegram’ni ulash</a>
-          <a className="btn" id="tgSkip" href="/" style={{ justifyContent: 'center' }}>Panelga kirish</a>
-          <p className="muted" style={{ fontSize: 12, margin: 0, lineHeight: 1.5 }}>Havola 7 kun amal qiladi. Keyinroq ulamoqchi bo‘lsangiz — panelda «Telegram havola» tugmasi bor.</p>
+          <p className="help">Havola 7 kun amal qiladi. Keyinroq ulamoqchi bo‘lsangiz — panelda «Telegram havola» tugmasi bor.</p>
         </div>
+        {copy}
       </div>
     );
   }
   return (
     <div className="login-wrap">
-      <form className="login" id="f" hidden={!inv} onSubmit={submit}>
+      <form className="login auth" id="f" hidden={!inv} onSubmit={submit}>
         <Brand />
         <div>
           <h1 id="hello">{inv ? (reset ? 'Yangi parol' : `Salom, ${inv.name.split(' ')[0]}!`) : 'Xush kelibsiz'}</h1>
-          <p className="login-sub">{reset && inv ? `${inv.name} — yangi parol o‘ylab toping. Eski parol va boshqa qurilmalardagi kirishlar bekor bo‘ladi.` : 'Parol o‘ylab toping — shundan keyin panelga kirasiz'}</p>
+          <p className="login-sub">{reset && inv ? `${inv.name} — yangi parol o‘ylab toping. Eski parol va boshqa qurilmalardagi kirishlar bekor bo‘ladi.` : 'Parol o‘ylab toping — shundan keyin panelga kirasiz.'}</p>
         </div>
 
         <div className="inv-card">
@@ -112,7 +117,7 @@ export function InviteForm() {
         </div>
 
         <label className="field"><span>Parol o‘ylab toping</span>
-          <span className="pw-row">
+          <span className="pw-row group">
             <input ref={pwRef} id="password" name="password" type={show ? 'text' : 'password'} autoComplete="new-password" minLength={8} required
               value={pw} onChange={e => setPw(e.target.value)} onKeyDown={checkCaps} onKeyUp={checkCaps} onBlur={() => setCaps(false)} />
             <button className="pw-eye" type="button" id="eye" aria-pressed={show} aria-label={label} title={label} onClick={() => { setShow(s => !s); pwRef.current?.focus(); }}>
@@ -120,8 +125,8 @@ export function InviteForm() {
               <svg className="ic ic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9.9 5.8A9.8 9.8 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3.2 3.9M6.4 7.7A17 17 0 0 0 2.5 12S6 18.5 12 18.5c1.2 0 2.3-.2 3.3-.6"/><path d="m3.5 3.5 17 17"/></svg>
             </button>
           </span>
+          <span className={hintCls} id="hint">{hint}</span>
         </label>
-        <div className={hintCls} id="hint">{hint}</div>
 
         <label className="field"><span>Parolni takrorlang</span><input ref={pw2Ref} id="password2" type="password" autoComplete="new-password" minLength={8} required onKeyDown={checkCaps} onKeyUp={checkCaps} onBlur={() => setCaps(false)} /></label>
 
@@ -130,16 +135,19 @@ export function InviteForm() {
           Caps Lock yoqilgan
         </div>
         <div className="err" id="err" role="alert">{err}</div>
-        <button className="btn primary" type="submit" style={{ justifyContent: 'center' }} disabled={busy}>{busy ? 'Saqlanmoqda…' : reset ? 'Yangi parolni saqlash' : 'Parolni saqlab, kirish'}</button>
-        <p className="muted" style={{ fontSize: 12, margin: 0, lineHeight: 1.5 }}>Parolni hech kimga aytmang. Havola bir marta ishlaydi — kirgandan keyin u yopiladi.</p>
+        <button className="btn primary block" type="submit" disabled={busy}>{busy ? 'Saqlanmoqda…' : reset ? 'Yangi parolni saqlash' : 'Parolni saqlab, kirish'}</button>
+        <p className="help">Parolni hech kimga aytmang. Havola bir marta ishlaydi — kirgandan keyin u yopiladi.</p>
       </form>
 
-      <div className="login" id="bad" hidden={bad === null}>
+      <div className="login auth" id="bad" hidden={bad === null}>
         <Brand />
-        <h1>Havola ishlamaydi</h1>
-        <p className="login-sub" id="badWhy">{bad || 'Havolaning muddati o‘tgan yoki u allaqachon ishlatilgan.'}</p>
-        <p className="muted" style={{ fontSize: 12.5, lineHeight: 1.6, margin: 0 }}>Rahbaringizdan yangi havola so‘rang. Hisobingiz allaqachon ochilgan bo‘lsa, <a href="/login">kirish sahifasiga</a> o‘ting.</p>
+        <div>
+          <h1>Havola ishlamaydi</h1>
+          <p className="login-sub" id="badWhy">{bad || 'Havolaning muddati o‘tgan yoki u allaqachon ishlatilgan.'}</p>
+        </div>
+        <p className="help">Rahbaringizdan yangi havola so‘rang. Hisobingiz allaqachon ochilgan bo‘lsa, <a href="/login">kirish sahifasiga</a> o‘ting.</p>
       </div>
+      {copy}
     </div>
   );
 }

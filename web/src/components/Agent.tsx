@@ -162,7 +162,7 @@ export function Agent({ active }: { active: boolean }) {
         <span className={`pill ${ai.state === 'ok' ? 'ok' : 'warn'}`}>{ai.state === 'ok' ? 'AI ulangan' : 'AI ulanmagan'}</span>
         <span className="muted">{ai.detail || ''}</span>
         {live.length ? <button className={`btn sm ${anyOn ? 'danger' : 'primary'}`} type="button" id={anyOn ? 'agAllOff' : 'agAllOn'} style={{ marginLeft: 'auto' }} disabled={busy} onClick={allSwitch}>{anyOn ? 'Hammasini to‘xtatish' : 'Hammasini yoqish'}</button> : null}</div>
-        <p className="lead" style={{ fontSize: 13, margin: 0 }}>To‘xtatilgan kanalda mijoz xabarlari panelga kelaveradi, lekin AI javob ham, qoralama ham yozmaydi (AI xarajati yo‘q) — suhbatni sotuvchi olib boradi.</p></div>
+        <div className="panel-help">To‘xtatilgan kanalda mijoz xabarlari panelga kelaveradi, lekin AI javob ham, qoralama ham yozmaydi (AI xarajati yo‘q) — suhbatni sotuvchi olib boradi.</div></div>
       {r.accounts.length ? r.accounts.map(a => (
         <div className={`panel agent-card${a.ai_enabled ? '' : ' off'}`} key={a.id}>
           <div className="agent-top">
@@ -178,7 +178,11 @@ export function Agent({ active }: { active: boolean }) {
         </div>
       )) : <div className="banner warn"><div><b>Hali kanal ulanmagan.</b> Telegram yoki Instagram ulangach shu yerda chiqadi.</div></div>}
       <div className="panel"><div className="panel-head"><h2>Umumiy qoidalar</h2></div>
-        <p className="lead" style={{ fontSize: 13, margin: 0 }}>Kechikish T = <b>{T} s</b> · tungi avtojavob: <b>{r.settings.night_autoreply ? 'yoqilgan' : 'o‘chiq'}</b> · ish vaqti {r.settings.work_from}–{r.settings.work_to}.</p></div>
+        <div className="set-list">
+          <div className="set-row"><div className="set-name">Kechikish T</div><b className="mono">{T} s</b></div>
+          <div className="set-row"><div className="set-name">Tungi avtojavob</div><span className={`pill ${r.settings.night_autoreply ? 'ok' : ''}`}>{r.settings.night_autoreply ? 'yoqilgan' : 'o‘chiq'}</span></div>
+          <div className="set-row"><div className="set-name">Ish vaqti</div><b className="mono">{r.settings.work_from}–{r.settings.work_to}</b></div>
+        </div></div>
       {use ? <UsagePanel x={use} /> : null}
     </>
   );

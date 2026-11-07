@@ -1,0 +1,218 @@
+/* Sun HighTech — B varianti («jiddiy, korporativ»), 2026-11-07. design-demo-b/design.css dan ko‘chirildi.
+   Qatlam: app.css dagi joylashuv qoidalari qoladi, bu fayl faqat KO‘RINISHNI almashtiradi (tokenlar, qobiq, umumiy komponentlar).
+   Ekranlarga xos qoidalar — screens/b-*.css fayllarida. Shisha (glass.css) butunlay olib tashlandi.
+   Tamoyil: har blok nima ekanini bir qatorda tushuntiradi; bezak yo‘q; sovuq neytral ranglar; jadval — asosiy element;
+   brend rangi (quyosh) faqat belgi: logo, faol bo‘lim, bildirishnoma. */
+@media screen {
+html:root, html:root:not([data-theme="dark"]) {
+  --bg:#F3F4F6; --surface:#FFFFFF; --surface-2:#F9FAFB; --surface-3:#EEF0F3; --sunk:#EEF0F3;
+  --line:#E2E6EA; --line-2:#CBD2DA;
+  --ink:#0F172A; --ink-2:#334155; --ink-3:#64748B;
+  --brand:#E8900C; --brand-ink:#9A5B00; --brand-soft:#FDF3E3;
+  --primary:#1E3A8A; --primary-hover:#172E6E; --primary-soft:#E8EDF8;
+  --accent:var(--primary); --accent-hover:var(--primary-hover); --accent-ink:#FFFFFF; --accent-soft:var(--primary-soft);
+  --ok:#15803D; --ok-soft:#DCFCE7; --warn:#92400E; --warn-soft:#FEF3C7; --bad:#B91C1C; --bad-soft:#FEE2E2; --info:#1D4ED8; --info-soft:#DBEAFE;
+  --ai:#1D4ED8; --ai-ink:#FFFFFF; --ai-soft:#DBEAFE; --ai-line:#BFDBFE;
+  --ai-msg:#DBEAFE; --ai-msg-line:#BFDBFE; --ai-msg-ink:#1D4ED8;
+  --seller-msg:#DCFCE7; --seller-line:#BBF7D0; --seller-ink:#15803D;
+  --wb-cold:#2563EB; --wb-mid:#B45309; --wb-hot:#B91C1C;
+  --scrim:rgba(15,23,42,.5);
+  --radius:6px; --shadow:0 1px 2px rgba(15,23,42,.06); --shadow-1:0 1px 2px rgba(15,23,42,.06); --shadow-2:0 10px 30px rgba(15,23,42,.14);
+  --side-bg:#0F172A; --side-ink:#CBD5E1; --side-muted:#94A3B8; --side-line:rgba(255,255,255,.12);
+  --f-display:'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-body:'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono:'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  color-scheme:light;
+}
+/* Qorong‘i mavzu — o‘sha B, lekin to‘q ko‘k yuzalar (mavzu tugmasi saqlanadi) */
+html:root[data-theme="dark"] {
+  --bg:#0B1220; --surface:#111A2E; --surface-2:#162035; --surface-3:#1B2740; --sunk:#1B2740;
+  --line:#243049; --line-2:#334259;
+  --ink:#E5EAF3; --ink-2:#B6C0D2; --ink-3:#7F8CA3;
+  --brand:#F2A02C; --brand-ink:#F2C470; --brand-soft:#3A2A10;
+  --primary:#8FB0FF; --primary-hover:#A9C2FF; --primary-soft:#1C2B52;
+  --accent:var(--primary); --accent-hover:var(--primary-hover); --accent-ink:#0B1220; --accent-soft:var(--primary-soft);
+  --ok:#5BD08C; --ok-soft:#113425; --warn:#F3C06B; --warn-soft:#3A2A10; --bad:#F38686; --bad-soft:#3F1A1A; --info:#8FB0FF; --info-soft:#1C2B52;
+  --ai:#8FB0FF; --ai-ink:#0B1220; --ai-soft:#1C2B52; --ai-line:#2F4474;
+  --ai-msg:#1C2B52; --ai-msg-line:#2F4474; --ai-msg-ink:#A9C2FF;
+  --seller-msg:#113425; --seller-line:#1E5A3A; --seller-ink:#7DDBA4;
+  --scrim:rgba(0,0,0,.6);
+  --shadow:0 1px 2px rgba(0,0,0,.3); --shadow-1:0 1px 2px rgba(0,0,0,.3); --shadow-2:0 10px 30px rgba(0,0,0,.5);
+  --side-bg:#070C17; --side-ink:#CBD5E1; --side-muted:#7F8CA3; --side-line:rgba(255,255,255,.1);
+  color-scheme:dark;
+}
+
+body{font:14px/1.5 var(--f-body);background:var(--bg);color:var(--ink)}
+a{color:var(--primary)}
+.mono{letter-spacing:0}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+h2,h3,.brand-name,.topbar h1,.kpi .v,.strip .n,.split .big,.steps li::before,.login h1{font-family:var(--f-body);letter-spacing:-.01em}
+
+/* ---------- qobiq: to‘q sayd-bar, oq topbar ---------- */
+.app{grid-template-columns:224px minmax(0,1fr)}
+.rail{background:var(--side-bg);color:var(--side-ink);border-right:0;padding:16px 12px;gap:20px}
+.brand{padding:4px 8px 12px;border-bottom:1px solid var(--side-line)}
+.brand-mark{border-radius:8px;background:var(--brand);color:#fff}
+.brand-name{color:#fff;font-size:14px;line-height:1.15}
+.brand-sub{color:var(--side-muted)}
+.nav{gap:18px}
+.nav-label{color:var(--side-muted);letter-spacing:.06em;font-size:11px;padding:0 8px 6px}
+.nav-item{color:var(--side-ink);border-radius:6px;padding:8px 10px;gap:10px;min-height:38px}
+.nav-item:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav-item[aria-current="page"]{background:rgba(255,255,255,.12);color:#fff;box-shadow:inset 3px 0 0 var(--brand)}
+.nav-item .ic{opacity:.9}
+.nav-badge{background:var(--brand);color:#fff;border-radius:10px;min-width:20px;text-align:center}
+.rail-foot{border-top:1px solid var(--side-line);padding:12px 4px 0;gap:8px;position:relative}
+.profile-btn{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:4px 4px;border-radius:6px;cursor:pointer;color:#fff;text-align:left}
+.profile-btn:hover{background:rgba(255,255,255,.06)}
+.me-ava{background:#334155;color:#fff;font-family:var(--f-mono);font-weight:600;border:0}
+.me-txt b{color:#fff;font-weight:600}
+.me-txt span{color:var(--side-muted);font-size:12px}
+.pm-chev{color:var(--side-muted);margin-left:auto;flex:none}
+.profile-menu{position:absolute;left:0;right:0;bottom:calc(100% + 6px);background:var(--surface);border:1px solid var(--line-2);border-radius:8px;box-shadow:var(--shadow-2);padding:6px;display:flex;flex-direction:column;gap:2px;z-index:30;color:var(--ink)}
+.pm-item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;background:none;border-radius:6px;cursor:pointer;color:var(--ink);font-size:13px;font-weight:500;text-align:left;text-decoration:none}
+.pm-item:hover{background:var(--surface-2)}
+.pm-item .ic{width:16px;height:16px;color:var(--ink-3)}
+.pm-item.danger,.pm-item.danger .ic{color:var(--bad)}
+.pm-ok{margin-left:auto;font-size:11.5px;color:var(--ok)}
+.pm-sep{height:1px;background:var(--line);margin:4px 0}
+.install-rail{background:rgba(255,255,255,.08);color:#fff;border-color:transparent}
+.install-rail:hover{background:rgba(255,255,255,.14)}
+
+.main{background:var(--bg)}
+.topbar{min-height:56px;padding:0 24px;gap:14px;border-bottom:1px solid var(--line);background:var(--surface);align-items:center}
+.topbar h1{font-size:13px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px}
+.topbar h1 .crumb{color:var(--ink-3);font-weight:400}
+.topbar h1 .crumb-sep{width:14px;height:14px;color:var(--ink-3)}
+.topbar .sub{display:none}
+.top-right{gap:8px}
+.status-chip{border-radius:4px;background:var(--surface);border:1px solid var(--line);color:var(--ink-2);padding:4px 9px;font-size:12px}
+.status-chip .dot{width:7px;height:7px}
+.demo-chip{border-radius:4px;border-style:solid;border-color:var(--line-2);color:var(--ink-2)}
+#btnTheme{border-radius:var(--radius)}
+
+/* Sahifa sarlavhasi: nom + bir qatorlik tushuntirish (B: .page-head) */
+.page-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.page-head h1{margin:0;font-size:22px;font-weight:600;letter-spacing:-.01em;font-family:var(--f-body)}
+.page-head .desc{color:var(--ink-2);margin:4px 0 0;max-width:72ch;font-size:14px}
+.page-head .actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.screen{padding:20px 24px 48px}
+.page{gap:16px;max-width:1280px;margin:0}
+.lead{color:var(--ink-2);font-size:13.5px}
+.sec{gap:12px}
+h2{font-size:15px;font-weight:600}
+h3{font-size:13.5px;font-weight:600}
+
+/* ---------- panellar, KPI, jadval ---------- */
+.panel{border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow);padding:14px 16px;gap:12px;background:var(--surface)}
+.panel-head{gap:8px 12px;align-items:center}
+.panel-head h2{font-size:15px}
+.panel-help{padding:8px 12px;font-size:12.5px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:4px;margin:-2px 0 2px}
+.kpi{border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;gap:4px;border:1px solid var(--line);background:var(--surface)}
+.kpi .lbl,.lbl{font-size:12px;color:var(--ink-2);font-weight:600;letter-spacing:.03em}
+.kpi .v{font:600 28px/1.15 var(--f-mono);letter-spacing:0}
+.kpi .v small{font-family:var(--f-body);color:var(--ink-3)}
+.kpi .s{color:var(--ink-3)}
+.kpi .v.bad{color:var(--bad)} .kpi .v.ok{color:var(--ok)} .kpi .v.warn{color:var(--warn)}
+.strip{border-radius:var(--radius);box-shadow:var(--shadow)}
+.strip .n{font:600 22px/1.15 var(--f-mono);letter-spacing:0}
+.tbl table{font-size:13.5px}
+.tbl th{font-size:12px;letter-spacing:0;text-transform:none;color:var(--ink-2);background:var(--surface-3);border-bottom:1px solid var(--line-2);padding:9px 12px;position:sticky;top:0;z-index:1}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--line)}
+.tbl tbody tr:nth-child(even) td{background:var(--surface-2)}
+.tbl tbody tr.row:hover td,.tbl tbody tr[role="button"]:hover td{background:var(--primary-soft);cursor:pointer}
+.tbl td.n{font-family:var(--f-mono)}
+.tbl th.n{font-family:var(--f-body)}
+.tbl td.who{font-weight:500;white-space:nowrap}
+.bar .track{height:8px;border-radius:2px;background:var(--line);width:auto;flex:1;min-width:64px}
+.bar .fill{background:var(--primary);border-radius:0}
+.bar.low .fill{background:var(--brand)}
+.bar b{font-family:var(--f-mono);font-weight:500}
+.rail2{border-radius:2px;background:var(--line)} .rail2 .fill{background:var(--primary);border-radius:0}
+.tabs button{color:var(--ink-3)} .tabs button[aria-selected="true"]{color:var(--primary);border-bottom-color:var(--primary)}
+.task,.rows,.ans,.prod,.int,.split > div,.checks > div,.modes > div,.steps li,.arch-col,.arch-box,.phone,.preview,.inv-card{border-radius:var(--radius)}
+.task.overdue{box-shadow:inset 3px 0 0 var(--brand);border-color:var(--line)}
+.insight{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--primary);border-radius:var(--radius)}
+.insight .who{color:var(--primary)}
+.banner,.note{border-radius:var(--radius);background:var(--surface);border:1px solid var(--line-2);border-left-width:4px;border-left-color:var(--primary);color:var(--ink)}
+.banner.warn{background:var(--surface);border-left-color:var(--brand)} .banner.bad{background:var(--surface);border-left-color:var(--bad)} .banner.ai{background:var(--surface);border-left-color:var(--ai)} .banner.ok{background:var(--surface);border-left-color:var(--ok)}
+.banner .ic{width:16px;height:16px;flex:none;margin-top:2px;color:var(--ink-3)}
+.note{border-left-color:var(--line-2);color:var(--ink-2)}
+.formula{border-radius:var(--radius)}
+
+/* ---------- belgilar, tugmalar, boshqaruv ---------- */
+.pill{border-radius:4px;border:1px solid var(--line-2);background:var(--surface-3);color:var(--ink-2);font-size:12px;line-height:20px;padding:0 8px;font-weight:500}
+.pill.ok{background:var(--ok-soft);border-color:#BBF7D0;color:var(--ok)}
+.pill.bad{background:var(--bad-soft);border-color:#FECACA;color:var(--bad)}
+.pill.warn{background:var(--warn-soft);border-color:#FDE68A;color:var(--warn)}
+.pill.ai,.pill.acc{background:var(--info-soft);border-color:#BFDBFE;color:var(--info)}
+.pill.sel{background:var(--seller-msg);border-color:var(--seller-line);color:var(--seller-ink)}
+.pill.brand{background:var(--brand-soft);border-color:#FCD9A0;color:var(--brand-ink)}
+html:root[data-theme="dark"] .pill.ok,html:root[data-theme="dark"] .pill.bad,html:root[data-theme="dark"] .pill.warn,html:root[data-theme="dark"] .pill.ai,html:root[data-theme="dark"] .pill.acc,html:root[data-theme="dark"] .pill.brand{border-color:transparent}
+.dot{border-radius:50%}
+.btn{border-radius:var(--radius);border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-weight:500;font-size:13px;min-height:34px;padding:6px 12px;box-shadow:none}
+.btn:hover{background:var(--surface-2)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:var(--accent-ink)}   /* qorong‘ida --accent-ink to‘q: och ko‘kda oq matn o‘qilmasdi */
+.btn.primary:hover{background:var(--primary-hover);border-color:var(--primary-hover)}
+.btn.ai{background:var(--primary);border-color:var(--primary);color:var(--accent-ink)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--primary)}
+.btn.ghost:hover{background:var(--primary-soft)}
+.btn.sm{min-height:28px;padding:3px 9px;font-size:12.5px}
+.btn.icon{min-height:32px;padding:5px}
+.btn.danger{color:var(--bad)}
+.btn.block{width:100%;justify-content:center;min-height:42px}
+.linkbtn,.linkish{color:var(--primary);text-decoration-color:color-mix(in srgb,var(--primary) 40%,transparent)}
+.seg{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--radius);padding:0;gap:0;overflow:hidden}
+.seg button{border-radius:0;padding:6px 12px;min-height:32px;color:var(--ink-2);font-size:13px}
+.seg button + button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--primary);color:var(--accent-ink);box-shadow:none;font-weight:500}
+.chip{border-radius:4px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);font-size:12.5px;min-height:26px}
+.chip[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:var(--accent-ink)}
+.chip .c{font-family:var(--f-mono)}
+.filters{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 14px;gap:8px 12px}
+.filters select,.field select,select.input{border-radius:var(--radius)}
+.field > span{color:var(--ink-2);font-weight:600;font-size:12.5px}
+.input,.field input,.field select,.field textarea{border-radius:var(--radius);border:1px solid var(--line-2);min-height:36px;padding:7px 10px;background:var(--surface)}
+.input:focus,.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--primary);outline-offset:0;border-color:transparent}
+.tag-test,.hyp,.kn-check,.demo-tag{border-radius:4px}
+.menu{border-radius:8px;box-shadow:var(--shadow-2)} .menu button{border-radius:6px}
+/* Ochiladigan ro‘yxat (dropdown.css) — B: 36 px, 6 px radius, shishasiz panel, ko‘k fokus halqasi */
+.dd{--dd-h:36px;--dd-r:var(--radius);--dd-pr:8px;--dd-or:4px;--dd-bg:var(--surface);--dd-panel:var(--surface);--dd-line:var(--line-2);
+  --dd-hover:var(--primary-soft);--dd-acc:var(--primary);--dd-acc-fg:var(--primary);--dd-acc-tint:var(--primary-soft);--dd-ring:var(--primary-soft);--dd-shadow:var(--shadow-2)}
+.dd .dd-panel{backdrop-filter:none;-webkit-backdrop-filter:none}
+.filters .dd-wrap{width:auto;min-width:220px}
+
+/* ---------- modal, drawer, toast ---------- */
+.modal{border-radius:8px;border:0;box-shadow:var(--shadow-2);width:min(780px,100%);padding:20px 22px;gap:14px}
+.modal > h2{font-size:17px;font-weight:600;margin:-20px -22px 0;padding:14px 22px;border-bottom:1px solid var(--line)}
+.drawer{border-left:1px solid var(--line);box-shadow:var(--shadow-2)}
+.toast{border-radius:6px;background:var(--ink);color:#fff;box-shadow:var(--shadow-2)}
+.toast.ai{background:var(--primary);color:#fff}
+.empty-state{color:var(--ink-3)}
+
+/* ---------- profil rasmlari (mijoz): rasm to‘liq ko‘rinsin, kanal belgisi burchakda ---------- */
+.avatar{background:#334155;color:#fff;font-family:var(--f-mono);font-weight:600;border:0;font-size:13px}
+.avatar .ava-img{object-fit:cover;background:var(--surface-3)}
+.avatar .ch{background:var(--surface);border:1px solid var(--line)}
+.state-dot{border-radius:50%}
+
+/* ---------- kirish va taklif sahifalari ---------- */
+.login-wrap{background:var(--bg)}
+.login{border-radius:8px;border:1px solid var(--line);box-shadow:var(--shadow);padding:26px 28px}
+.login h1{font-size:20px;font-weight:600}
+.login > *{animation:none!important;opacity:1!important}
+.login-install{color:var(--primary)}
+
+/* ---------- mobil: qobiq pastki tab-bar (app.css) — to‘q fonda ---------- */
+@media (max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}   /* app.css dagi mobil qoida qaytariladi (yuqoridagi 224px ustunni bosib o‘tadi) */
+  .rail{background:var(--side-bg);border-top:1px solid var(--side-line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+  .nav-item{color:var(--side-muted)} .nav-item[aria-current="page"]{color:#fff;background:transparent;box-shadow:inset 0 3px 0 var(--brand)}
+  .topbar{padding:8px 14px;min-height:48px}
+  .topbar h1{font-size:14px}
+  .screen{padding:14px 14px 40px}
+  .page-head h1{font-size:19px}
+  .page-head .desc{font-size:13px}
+  .modal{border-radius:0;width:100%;height:100dvh;max-height:100dvh}
+}
+}

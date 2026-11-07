@@ -14,25 +14,25 @@ export async function openTelegramModal(app: AppCtx): Promise<void> {
   const r = await api<{ link?: string }>(`/api/users/${boot.me.id}/tglink`, {}).catch(fail);
   if (!r) return;
   openModal({
-    content: <>
+    content: <div className="usr-modal">
       <h2>Telegram bildirishnomalari</h2>
-      {boot.me.tg_linked ? <div className="banner ai">Telegram allaqachon ulangan. Qayta ulasangiz, yangi chat ishlatiladi.</div> : null}
+      {boot.me.tg_linked ? <div className="banner ai"><p>Telegram allaqachon ulangan. Qayta ulasangiz, yangi chat ishlatiladi.</p></div> : null}
       {r.link
         ? <><p className="lead" style={{ fontSize: '13.5px' }}>Havolani telefoningizda oching va <b>Start</b> bosing (1 soat amal qiladi):</p>
             <a className="pw-box" style={{ fontSize: 13, display: 'block', wordBreak: 'break-all' }} href={r.link} target="_blank" rel="noopener">{r.link}</a></>
-        : <div className="banner warn">Bot hali ulanmagan — administrator bot tokenini kiritishi kerak.</div>}
-    </>
+        : <div className="banner warn"><p>Bot hali ulanmagan — administrator bot tokenini kiritishi kerak.</p></div>}
+    </div>
   });
 }
 
 /** «Parol» (app.js #btnPw) */
 export function openPasswordModal(app: AppCtx): void {
   app.openModal({
-    content: <>
+    content: <div className="usr-modal">
       <h2>Parolni o‘zgartirish</h2>
       <label className="field"><span>Joriy parol</span><input type="password" name="current" id="pw_cur" autoComplete="current-password" required /></label>
       <label className="field"><span>Yangi parol (kamida 8 belgi)</span><input type="password" name="password" id="pw_new" autoComplete="new-password" minLength={8} required /></label>
-    </>,
+    </div>,
     onSubmit: async d => { await api('/api/me/password', { current: d.current, password: d.password }); app.toast('Parol o‘zgardi'); }
   });
 }
@@ -42,17 +42,17 @@ export function openMeModal(app: AppCtx, h: { logout: () => void }): void {
   const me = app.boot.me;
   const pick = (fn: () => void) => () => { app.closeModal(); fn(); };
   app.openModal({
-    content: <>
+    content: <div className="usr-modal">
       <h2>{me.name}</h2>
       <p className="lead" style={{ fontSize: '13.5px' }}>{ROLE[me.role]}{me.tg_linked ? ' · Telegram ulangan' : ' · Telegram ulanmagan'}</p>
-      <button className="btn install-btn install-rail" type="button" data-me="app" data-install><Icon name="download" />Ilovani yuklab olish</button>
+      <button className="btn install-btn install-rail me-install" type="button" data-me="app" data-install><Icon name="download" />Ilovani yuklab olish</button>
       <div className="row-actions">
         <button className="btn" type="button" data-me="tg" onClick={pick(() => { void openTelegramModal(app); })}>Telegram ulash</button>
         <button className="btn" type="button" data-me="pw" onClick={pick(() => openPasswordModal(app))}>Parol</button>
         <a className="btn ghost" href="/yoriqnoma">Yo‘riqnoma</a>
-        <button className="btn ghost" type="button" data-me="out" onClick={pick(h.logout)}>Chiqish</button>
+        <button className="btn ghost danger" type="button" data-me="out" onClick={pick(h.logout)}>Chiqish</button>
       </div>
-    </>
+    </div>
   });
 }
 
@@ -67,7 +67,7 @@ function ChatStyleForm() {
     <label className="cs-color"><span>{label}</span><input type="color" value={st[key] || DEF[key]} onChange={e => upd({ [key]: e.target.value })} /></label>
   );
   return (
-    <>
+    <div className="usr-modal">
       <h2>Chat ko‘rinishi</h2>
       <div className="cs-preview" aria-hidden="true">
         <div className="msg c"><div className="txt">Salom! Narxi qancha?</div><div className="msg-meta"><span className="mono">10:21</span></div></div>
@@ -81,7 +81,7 @@ function ChatStyleForm() {
       <label className="cs-range"><span>Chegara qalinligi: <b>{st.borderW ?? 1} px</b></span><input type="range" min={0} max={3} step={1} value={st.borderW ?? 1} onChange={e => upd({ borderW: Number(e.target.value) })} /></label>
       <label className="cs-range"><span>Burchaklar: <b>{st.radius ?? 14} px</b></span><input type="range" min={4} max={24} step={2} value={st.radius ?? 14} onChange={e => upd({ radius: Number(e.target.value) })} /></label>
       <div className="row-actions"><button className="btn ghost" type="button" onClick={() => pick({})}>Asl holiga qaytarish</button></div>
-    </>
+    </div>
   );
 }
 export function openChatStyleModal(app: AppCtx): void { app.openModal({ content: <ChatStyleForm /> }); }

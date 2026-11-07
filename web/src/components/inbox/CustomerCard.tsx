@@ -47,8 +47,8 @@ export function CustomerCard({ d, stages, onAct, onHeat, onStage }: { d: ConvDet
       {c.big_order ? <div className="card-sec"><div className="sec-title">Katta buyurtma {c.big_accepted ? <span className="pill ok">qabul qilingan</span> : <span className="pill warn">qabul kutilmoqda</span>}</div>
         {(o.items || []).length ? <dl className="kv">{o.items!.map((i, n) => <Fragment key={n}><dt>{i.name}</dt><dd>{Number(i.qty) || 1} · {String(i.status || '').replace('_', ' ')}{i.note ? ' — ' + i.note : ''}</dd></Fragment>)}</dl> : <div className="why">Uzun ro‘yxat aniqlandi — AI tahlili yo‘q.</div>}
         {o.estimated_total ? <div className="why">Taxminiy summa: <b>{money(o.estimated_total)}</b> <span className="pill warn">taxmin</span></div> : null}</div> : null}
-      {d.tasks.length ? <div className="card-sec"><div className="sec-title">Ochiq vazifalar</div>{d.tasks.map(t =>
-        <div className="row-actions" style={{ justifyContent: 'space-between' }} key={t.id}><span style={{ fontSize: 13 }}>{t.title}{t.body ? <><br /><span className="muted">{t.body}</span></> : null}</span><button className="btn sm" type="button" data-act="taskDone" onClick={() => onAct('taskDone', t.id)}>Bajarildi</button></div>)}</div> : null}
+      {d.tasks.length ? <div className="card-sec"><div className="sec-title">Keyingi qadam <span className="muted">ochiq vazifalar</span></div>{d.tasks.map(t =>
+        <div className="task-note" key={t.id}><span>{t.title}{t.body ? <><br /><span className="muted">{t.body}</span></> : null}</span><button className="btn sm" type="button" data-act="taskDone" onClick={() => onAct('taskDone', t.id)}>Bajarildi</button></div>)}</div> : null}
       {cu.verified ? <>
         <div className="card-sec"><div className="sec-title">Keshbek <span className="muted">{cu.cashback ? cu.cashback.source + ' · ' + fmtDT(Date.parse(cu.cashback.synced_at)) : ''}</span></div>
           {cu.cashback ? <div className="cash"><span className="v">{cash(cu.cashback.amount)}</span>{cu.cashback.stale ? <span className="pill warn">eskirgan</span> : null}</div> : <div className="why">Ma’lumot yetarli emas — BILLZ’da keshbek topilmadi.</div>}</div>
