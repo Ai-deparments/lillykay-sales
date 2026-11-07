@@ -34,6 +34,7 @@ Undan oldin ham, keyin ham hech narsa yozilmaydi (izoh, markdown, \`\`\` yo'q):
   yakuniy javob:         {"text":"<javob matni>"}
 
 Bir vaqtda bir nechta vosita kerak bo'lsa — hammasini bitta "tool_calls" ro'yxatiga yozing.
+__ONESHOT__
 Suhbatda [VOSITA NATIJASI] — bu tizim ma'lumoti, odam yozgani emas.
 Javobni yozishdan oldin yaxshilab o'ylang: ma'lumot yetarlimi, aniqmi, foydalimi.
 
@@ -145,11 +146,18 @@ function runCli(system, prompt, { allowTools = '', timeoutMs = 180000, model } =
   });
 }
 
+/* oneShotTools — natijasi modelga kerak bo'lmagan «yozuvchi» vositalar (karta, topshiriq, eslatma): model ularni yakuniy
+   matn bilan BITTA JSONda yuboradi, ikkinchi CLI jarayoni ochilmaydi. Har jarayon ~7 s (2026-11-07 o'lchov: oddiy javob 7 s,
+   update_card bilan 13–17 s) — shuning uchun kiritildi. Natija kerak vositalar (search_catalog) avvalgidek aylanma bilan. */
+const ONESHOT_NOTE = `Natijasi sizga kerak bo'lmagan vositalar — __LIST__ — uchun ikkinchi qadam KERAK EMAS: ularni va yakuniy javobni
+BITTA JSONda yuboring: {"tool_calls":[...],"text":"<javob matni>"}. Bu tezroq. Natija kerak vositalarda (masalan search_catalog) "text" yozmang.`;
+
 export async function runAgent({
   system, userContent, attachments = [], tools = [], serverTools = [],
-  handlers = {}, maxTurns = 8, maxTokens = 8000, effort, model, finalTool = null
+  handlers = {}, maxTurns = 8, maxTokens = 8000, effort, model, finalTool = null, oneShotTools = []
 } = {}) {
   void maxTokens; void effort;                       // CLI bularni qabul qilmaydi
+  const oneShot = new Set(oneShotTools.filter(n => handlers[n]));
   const tmp = mkdtempSync(join(workdir(), 'ish-'));
   try {
     // Rasmlar: CLI faylni o'qiy oladi — vaqtinchalik faylga yozamiz
@@ -166,7 +174,9 @@ export async function runAgent({
     const allow = [wantsWeb ? 'WebSearch,WebFetch' : '', files.length ? 'Read' : ''].filter(Boolean).join(',');
 
     const spec = JSON.stringify(tools.map(t => ({ name: t.name, description: t.description, input_schema: t.input_schema })), null, 1);
-    const sysFull = [system, SIZ_HAQINGIZDA, PROTOCOL.replace('__TOOLS__', spec || '[]')].join('\n\n');
+    const protocol = PROTOCOL.replace('__TOOLS__', spec || '[]')
+      .replace('__ONESHOT__', oneShot.size ? ONESHOT_NOTE.replace('__LIST__', [...oneShot].join(', ')) : '');
+    const sysFull = [system, SIZ_HAQINGIZDA, protocol].join('\n\n');
 
     let first = userContent;
     if (files.length) first = `${userContent}\n\n[Mijoz rasm yubordi. Avval Read vositasi bilan o'qing: ${files.join(', ')}]`;
@@ -187,6 +197,17 @@ export async function runAgent({
         const text = typeof obj?.text === 'string' ? obj.text : (obj ? '' : r.text.trim());
         if (!text) throw new AiError('bad_format', 'model javobini tushunib bo‘lmadi');
         return { text: text.trim(), stop: 'end_turn', model: r.model, toolLog, usage };
+      }
+
+      // Yozuvchi vositalar + yakuniy matn bitta JSONda — vositalar bajariladi, matn qaytadi, ikkinchi jarayon ochilmaydi
+      const finalText = typeof obj?.text === 'string' ? obj.text.trim() : '';
+      if (finalText && calls.every(c => oneShot.has(c.name))) {
+        for (const c of calls) {
+          const t0 = Date.now();
+          try { await handlers[c.name](c.input || {}); toolLog.push({ name: c.name, input: c.input, turn, ms: Date.now() - t0, oneShot: true }); }
+          catch (e) { toolLog.push({ name: c.name, input: c.input, error: true, turn, ms: Date.now() - t0, oneShot: true }); }
+        }
+        return { text: finalText, stop: 'end_turn', model: r.model, toolLog, usage };
       }
 
       // Yakuniy vosita chaqirildi — uni bajarib to‘xtaymiz (CLI majburlay olmaydi, lekin ikkinchi progon ketmaydi)

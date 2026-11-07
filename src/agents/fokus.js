@@ -715,7 +715,9 @@ export async function fokusDraft({ conv, acct, mode = 'reply', evalExclude = nul
     const STRONG = config.geminiStrongModel && config.geminiStrongModel !== config.geminiModel ? config.geminiStrongModel : null;
     const lastClient = all(`SELECT text FROM messages WHERE conversation_id=? AND author='client' ORDER BY id DESC LIMIT 3`, conv.id).map(m => m.text).reverse().join('\n');
     let strongUsed = Boolean(STRONG) && mode === 'reply' && needsStrong({ attachments: attachments.length, text: lastClient });
-    const ask = (extra = '', model = strongUsed ? STRONG : null) => runAgent({ system: kb ? `${SYSTEM}\n\n${kb}` : SYSTEM, userContent: userContent + extra, attachments, tools: TOOLS, handlers, maxTurns: 6, model });   // 6-qadamda vositalar o‘chadi — yig‘ilgani bilan javob yoziladi (ilgari 10: uzun zanjirlar qimmat)
+    // oneShotTools: karta/topshiriq/eslatma/katta buyurtma natijasi modelga kerak emas — CLI rejimida yakuniy matn bilan bir qadamda ketadi (tezlik)
+    const ask = (extra = '', model = strongUsed ? STRONG : null) => runAgent({ system: kb ? `${SYSTEM}\n\n${kb}` : SYSTEM, userContent: userContent + extra, attachments, tools: TOOLS, handlers, maxTurns: 6, model,
+      oneShotTools: ['update_card', 'handoff_to_seller', 'flag_big_order', 'set_reminder'] });   // 6-qadamda vositalar o‘chadi — yig‘ilgani bilan javob yoziladi (ilgari 10: uzun zanjirlar qimmat)
     const clean = t => tidyTone(stripToolText(t, out.sources), out.sources);
     let r = await ask();
     let text = clean(r.text);
