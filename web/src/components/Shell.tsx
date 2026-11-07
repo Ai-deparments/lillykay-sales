@@ -19,6 +19,7 @@ import { Users } from './Users';
 import { Audit } from './Audit';
 import { Tahlil } from './Tahlil';
 import { Yordamchi } from './Yordamchi';
+import { Kpi } from './Kpi';
 
 export const ROLE_L: Record<string, string> = { admin: 'Administrator', rahbar: 'Sotuv rahbari', filial: 'Filial rahbari', sotuvchi: 'Sotuvchi' };
 
@@ -82,6 +83,7 @@ export function Shell() {
             <NavItem href="suhbatlar" ic="chat" route={route}>Suhbatlar<span className="nav-badge" id="badgeWait" hidden={!badges.wait}>{badges.wait || ''}</span></NavItem>
             <NavItem href="voronka" ic="chart" route={route}>Voronka</NavItem>
             <NavItem href="nazorat" ic="refresh" route={route}>Nazorat</NavItem>
+            <NavItem href="kpi" ic="chart" route={route}>KPI</NavItem>
             <NavItem href="katalog" ic="book" route={route}>Bilim bazasi</NavItem>
             <NavItem href="jurnal" ic="log" route={route} className="seller-only">Audit jurnali</NavItem>
           </div>
@@ -121,6 +123,7 @@ export function Shell() {
           <section className="screen" id="s-suhbatlar" hidden={!act('suhbatlar')}><Inbox active={act('suhbatlar')} /></section>
           <section className="screen" id="s-voronka" hidden={!act('voronka')}><div className="page" id="voronkaPage"><PageHead route="voronka" /><Voronka active={act('voronka')} /></div></section>
           <section className="screen" id="s-nazorat" hidden={!act('nazorat')}><div className="page" id="nazoratPage"><PageHead route="nazorat" /><Nazorat active={act('nazorat')} /></div></section>
+          <section className="screen" id="s-kpi" hidden={!act('kpi')}><div className="page" id="kpiPage"><Kpi active={act('kpi')} /></div></section>
           <section className="screen" id="s-katalog" hidden={!act('katalog')}><div className="page" id="catalogPage"><PageHead route="katalog" /><Catalog active={act('katalog')} /></div></section>
           <section className="screen" id="s-tahlil" hidden={!act('tahlil')}><div className="page" id="tahlilPage"><Tahlil active={act('tahlil')} /></div></section>
           <section className="screen" id="s-yordamchi" hidden={!act('yordamchi')}><div className="page" id="yordamchiPage"><Yordamchi active={act('yordamchi')} /></div></section>

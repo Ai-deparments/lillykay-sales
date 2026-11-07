@@ -17,6 +17,7 @@ import { followups } from './services/taqib.js';
 import { odooTick } from './services/odoo.js';
 import { nazoratJob } from './services/nazorat.js';
 import { tahlilJob } from './services/tahlil.js';
+import { kpiJob } from './services/kpi.js';
 import { pairsJob } from './services/uslub.js';
 import { webImageJob } from './services/webimage.js';
 import { cleanupJob } from './services/tozalash.js';
@@ -106,6 +107,7 @@ server.listen(config.port, config.host, () => {
     odooTick();
     nazoratJob().catch(e => console.error('nazorat', e));
     tahlilJob().catch(e => console.error('tahlil', e));   // Tahlil AI xulosasi: avval so‘ralganlari eskirsa (1 soat) ish vaqtida yangilanadi
+    kpiJob().catch(e => console.error('kpi', e));         // KPI hisoboti HR’ga — havola sozlangan bo‘lsa, kuniga bir marta
     followups().catch(e => console.error('followups', e));
     try { pairsJob(); } catch (e) { console.error('uslub', e); }
     try { retryAfterOutage(); } catch (e) { console.error('retry', e); }

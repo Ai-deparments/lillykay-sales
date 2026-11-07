@@ -48,6 +48,7 @@ export const SCREENS: Record<string, [string, string]> = {
   suhbatlar: ['Suhbatlar', 'Telegram va Instagram — bitta navbat'],
   voronka: ['Voronka', 'Lid qayerda, nimaga, kim tomonidan tushib qolyapti — Odoo CRM'],
   nazorat: ['Nazorat 24 soat', 'Qimirlamay qolgan lidlar, menejerga va rahbarga xabar'],
+  kpi: ['KPI', 'Menejerlarning kunlik va oylik rejasi: uchrashuv, tijorat taklifi, shartnoma — Odoo’dan avtomatik, to‘lov hisobi bilan'],
   katalog: ['Bilim bazasi', 'Mahsulot kartalari — agent faqat shu yerdan gapiradi'],
   tahlil: ['Tahlil', 'Rahbar uchun uchta savol: bugun nima bo‘ldi, qayerda yo‘qotyapmiz, kimga e’tibor kerak — Odoo CRM, har soatda yangilanadi'],
   yordamchi: ['AI yordamchi', 'Sotuv raqamlari bo‘yicha savol-javob: lidlar, sotuvlar, menejerlar — faqat ish bo‘yicha'],

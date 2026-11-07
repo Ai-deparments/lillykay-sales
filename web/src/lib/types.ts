@@ -67,6 +67,60 @@ export interface TahlilData {
   stages: TahlilStage[]; stages_note: string; sources: TahlilSource[]; managers: TahlilManager[]; ai: TahlilAi; xulosa: TahlilXulosa;
 }
 
+/* ---------- KPI (menejerlar rejasi): GET /api/kpi?month=YYYY-MM · GET/POST /api/kpi/settings ---------- */
+/** Bo‘lim savdosi nimadan sanaladi: yutilgan lid (`won`) yoki shartnoma bosqichi (`contract`) */
+export type KpiCriterion = 'won' | 'contract';
+export interface KpiStageRef { id: number; name: string }
+/** Backend bosqichlarni nomidan topadi; topilmasa null — ekranda ogohlantirish */
+export interface KpiStages { meeting: KpiStageRef | null; offer: KpiStageRef | null; contract: KpiStageRef | null; won: KpiStageRef | null }
+/** Bitta KPI qoidasi: kunlik va oylik reja, to‘lov uchun eng kam foiz, to‘lov summasi (services/kpi.js DEFAULTS) */
+export interface KpiRule { day: number; month: number; pct: number; pay: number }
+/** Haftalik pog‘ona: hajm chegarasi (so‘m) va bonus */
+export interface KpiTier { from: number; bonus: number }
+export interface KpiSalesRules {
+  week_tiers: KpiTier[]; week_pct: number;
+  month_plan: number; month_pct: number; month_bonus: number;
+  quarter_plan: number; quarter_pct: number; quarter_bonus: number;
+}
+/** kv `kpi:settings` — backend `merge(DEFAULTS, saved)` bilan to‘liq qaytaradi; `hr_webhook_url` faqat rahbar/admin’ga keladi */
+export interface KpiSettings {
+  fixed: number;
+  meetings: KpiRule; offers: KpiRule; contracts: KpiRule;
+  transport: { per: number; max: number };
+  /** Ish kunlari Du..Ya, «1111110» = Du–Sha */
+  work_dow: string;
+  sales: KpiSalesRules;
+  /** Qo‘lda tanlangan Odoo bosqich id’lari; null — nomidan avtomatik */
+  stages: { meeting: number | null; offer: number | null; contract: number | null };
+  sales_criterion: KpiCriterion;
+  hr_webhook_url?: string;
+}
+export interface KpiStageRow { id: number; name: string; sequence: number; is_won: number }
+/** GET /api/kpi/settings (rahbar): sozlamalar, topilgan bosqichlar va Odoo bosqichlari ro‘yxati (qo‘lda tanlash uchun) */
+export interface KpiSettingsResp { settings: KpiSettings; detected: KpiStages; stages: KpiStageRow[] }
+/** POST /api/kpi/settings → o‘zgargan kalitlar ro‘yxati va yangi sozlamalar */
+export interface KpiSettingsSaved { ok: true; changed: string[]; settings: KpiSettings }
+/** Bitta ko‘rsatkich (uchrashuv / taklif / shartnoma): oy fakt-reja, bugungi kungacha reja (`mtd_plan`), bugun, to‘lov; `pct` null — reja 0 */
+export interface KpiMetric { state: 'ok' | 'sozlanmagan'; fact: number; plan: number; mtd_plan: number; today_fact: number; today_plan: number; pct: number | null; ok: boolean; pay: number }
+export interface KpiManager {
+  user_id: number; name: string; is_me: boolean; staff_user_id: number | null;
+  meetings: KpiMetric; offers: KpiMetric; contracts: KpiMetric;
+  transport: { meetings: number; per: number; pay: number };
+  kpi_pay: number; fixed: number; total: number;
+}
+export interface KpiSalesPeriod { volume: number; plan: number; pct: number | null; ok: boolean; bonus: number }
+/** `tier` — erishilgan pog‘onaning chegarasi (`settings.sales.week_tiers[].from`), null — pog‘onaga yetmagan */
+export interface KpiSalesWeek { from: string; to: string; volume: number; tier: number | null; bonus: number }
+export interface KpiSales {
+  criterion: KpiCriterion; month: KpiSalesPeriod; weeks: KpiSalesWeek[];
+  quarter: KpiSalesPeriod & { from: string; to: string };
+}
+export interface KpiData {
+  month: string; today: string; team: { id: number; name: string } | null;
+  workdays: { total: number; elapsed: number };
+  stages: KpiStages; settings: KpiSettings; managers: KpiManager[]; sales: KpiSales; note: string;
+}
+
 /* ---------- AI yordamchi (GET/POST/DELETE /api/yordamchi) ---------- */
 export type YordamchiRole = 'user' | 'ai';
 /** Tarixdagi bitta xabar; `tools` — AI javobi uchun ishlatilgan ma’lumot manbalari (faqat POST javobida keladi, UI da saqlanadi) */

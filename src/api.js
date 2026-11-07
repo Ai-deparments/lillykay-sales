@@ -19,6 +19,7 @@ import { nazoratList, nazoratJob } from './services/nazorat.js';
 import { sababStatus, sababGenerate } from './services/sabab.js';
 import * as yordamchi from './services/yordamchi.js';
 import { tahlil, xulosaRefresh, PERIODS as TAHLIL_PERIODS } from './services/tahlil.js';
+import { kpiMonth, kpiSettings, saveKpiSettings, detectStages } from './services/kpi.js';
 
 export const api = router();
 const R = api;
@@ -99,6 +100,21 @@ R.post('/api/tahlil/xulosa', async (req, res, u) => {
     console.error('[tahlil] AI xatosi', e.code, String(e.detail || '').slice(0, 300));
     json(res, { ok: false, error: e.code, why: AI_WHY[e.code] || (String(e.code).startsWith('budget_') && e.detail) || `AI xatosi: ${e.code}` }, 502);
   }
+});
+/* KPI — reja/fakt va oylik hisob (services/kpi.js): hamma xodim ko‘radi, sotuvchi/filial — faqat o‘z qatori (users.odoo_user_id);
+   oy — YYYY-MM (bo‘lmasa joriy), jamoa — voronka kabi. Sozlamalar — rahbar/admin; o‘qishda Odoo bosqichlari ro‘yxati ham (tanlash uchun) */
+R.get('/api/kpi', (req, res, u) => {
+  const sp = new URL(req.url, 'http://x').searchParams;
+  json(res, kpiMonth({ month: sp.get('month') || undefined, team: voronkaArgs(sp).team, user: u }));
+});
+R.get('/api/kpi/settings', (req, res, u) => {
+  need(u, 'settings');
+  json(res, { settings: kpiSettings(), detected: detectStages({}), stages: all('SELECT id, name, sequence, is_won FROM odoo_stages ORDER BY sequence, id') });
+});
+R.post('/api/kpi/settings', async (req, res, u) => {
+  need(u, 'settings');
+  const changed = saveKpiSettings(await readJson(req), u.name);
+  json(res, { ok: true, changed, settings: kpiSettings() });
 });
 /* AI yordamchi — rahbar/admin ish chati (faqat sotuv ma’lumotlari; rol tekshiruvi xizmatning o‘zida — 403). AI xatosi — 502 va sabab */
 R.get('/api/yordamchi', (req, res, u) => json(res, { messages: yordamchi.history({ user: u }) }));
