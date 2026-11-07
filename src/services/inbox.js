@@ -432,7 +432,7 @@ export function applyCard(convId, card, by) {
   // Telefon birinchi marta kelganda — lid Google jadvalga. Reklama izohidan kelgan mijoz shu yerda qayd etiladi.
   if (f.phone && !c.phone) {
     import('./jadval.js').then(m => m.sendLead(convId, {
-      channel: c.channel, phone: f.phone,
+      channel: account(c.account_id)?.channel, phone: f.phone,   // conversations da channel yo‘q — akkauntdan (ilgari «kanal» ustuni bo‘sh ketardi)
       name: card.name || c.display_name || c.handle || '',
       region: card.region, object_type: card.object_type,
       budget: f.budget || c.budget, asked: f.asked || c.asked, purpose: f.purpose || c.purpose,
