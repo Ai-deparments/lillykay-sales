@@ -2,8 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import '../app.css';
 import '../dropdown.css';
-import '../agentflow.css';
-import '../b.css';            /* B skin — dropdown/agentflow dan KEYIN: ularning ko‘rinishini ham bosib o‘tadi */
+import '../b.css';            /* B skin — dropdown.css dan KEYIN: uning ko‘rinishini ham bosib o‘tadi */
 import '../screens/index.css';
 
 export const metadata: Metadata = {

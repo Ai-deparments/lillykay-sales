@@ -4,7 +4,6 @@ import { api } from '@/lib/api';
 import { num, usd } from '@/lib/format';
 import { Brand, Icon } from './ui';
 import { useApp } from './AppContext';
-import { AgentFlow } from './AgentFlow';
 
 export const MODE_L: Record<string, string> = { doim: 'Doim', kechiksa: 'Kechiksa', ochiq: 'O‘chiq' };
 export const ROLL_L: Record<string, string> = { kuzatish: 'Kuzatish', tasdiq: 'Tasdiq bilan', avto: 'Avtomatik' };
@@ -157,7 +156,6 @@ export function Agent({ active }: { active: boolean }) {
   // Tartib: avval agentlarni boshqarish (kanallar), keyin umumiy qoidalar, eng pastda AI sarfi va balans
   return (
     <>
-      {active ? <AgentFlow /> : null}
       <div className="panel"><div className="panel-head"><h2>AI agent</h2>
         <span className={`pill ${ai.state === 'ok' ? 'ok' : 'warn'}`}>{ai.state === 'ok' ? 'AI ulangan' : 'AI ulanmagan'}</span>
         <span className="muted">{ai.detail || ''}</span>
