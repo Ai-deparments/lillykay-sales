@@ -18,7 +18,7 @@ function autoGrow(t: HTMLTextAreaElement) { t.style.height = 'auto'; t.style.hei
 
 /** Suhbatlar bo‘limi: ro‘yxat + ochiq suhbat + mijoz kartasi (app.js «SUHBATLAR») */
 export function Inbox({ active }: { active: boolean }) {
-  const { boot, isLead, toast, fail, openModal, closeModal, hash, navigate, syncClock, setBadge } = useApp();
+  const { boot, isLead, toast, alert, fail, openModal, closeModal, hash, navigate, syncClock, setBadge } = useApp();
   const me = boot.me;
 
   const [list, setList] = useState<Conv[]>([]);
@@ -222,7 +222,7 @@ export function Inbox({ active }: { active: boolean }) {
       const r = await (editId
         ? api<{ ok?: boolean; why?: string }>(`/api/messages/${editId}/edit`, { text })
         : api<{ ok?: boolean; why?: string }>(`/api/conversations/${id}/send`, { text, reply_to: replyTo })).catch(e => ({ ok: false, why: errorText(e) }));
-      if (!r.ok) { toast(r.why || 'Yuborilmadi'); return false; }
+      if (!r.ok) { alert('Xabar yuborilmadi', r.why || 'Sabab noma’lum — kanal holatini tekshiring', 'bad'); return false; }
       t.value = ''; autoGrow(t); typing(false);
       await openConv(id);
       return true;
@@ -231,12 +231,12 @@ export function Inbox({ active }: { active: boolean }) {
   /* Fayl / rasm / ovoz: brauzerda base64 ga o‘tkazilib JSON bilan yuboriladi (15 MB gacha) */
   const sendFile = async (file: Blob, o: { name?: string; voice?: boolean; caption?: string; replyTo?: number | null } = {}): Promise<boolean> => {
     const id = selRef.current; if (id == null) return false;
-    if (file.size > 15e6) { toast('Fayl 15 MB dan katta'); return false; }
+    if (file.size > 15e6) { alert('Fayl yuborilmadi', 'Fayl 15 MB dan katta', 'bad'); return false; }
     try {
       const data: string = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result)); fr.onerror = () => rej(fr.error); fr.readAsDataURL(file); });
       const r = await api<{ ok?: boolean; why?: string }>(`/api/conversations/${id}/file`, { name: o.name || (file as File).name || 'fayl', type: file.type, data, voice: o.voice, caption: o.caption, reply_to: o.replyTo })
         .catch(e => ({ ok: false, why: errorText(e) }));
-      if (!r.ok) { toast(r.why || 'Yuborilmadi'); return false; }
+      if (!r.ok) { alert('Xabar yuborilmadi', r.why || 'Sabab noma’lum — kanal holatini tekshiring', 'bad'); return false; }
       await openConv(id);
       return true;
     } catch (e) { fail(e); return false; }
@@ -265,11 +265,11 @@ export function Inbox({ active }: { active: boolean }) {
       if (name === 'delmsg') {
         if (!confirm('Xabar o‘chiriladi (Telegram’da mijozda ham). Qaytarib bo‘lmaydi. Davom etasizmi?')) return;
         const r = await api<{ ok?: boolean; why?: string }>(`/api/messages/${aid}/delete`, {}).catch(e => ({ ok: false, why: errorText(e) }));
-        if (!r.ok) return toast(r.why || 'O‘chirilmadi');
+        if (!r.ok) return alert('O‘chirilmadi', r.why || 'Sabab noma’lum', 'bad');
       }
       if (name === 'take') { await api(`/api/conversations/${id}/take`, {}); toast('Suhbat sizda. AI to‘xtadi.'); }
       if (name === 'release') { await api(`/api/conversations/${id}/release`, {}); toast('Suhbat AI’ga qaytarildi.'); }
-      if (name === 'approve') { const r = await api<{ ok?: boolean; why?: string }>(`/api/drafts/${aid}/approve`, {}); if (!r.ok) return toast(r.why || 'Yuborilmadi'); toast('Yuborildi', 'ai'); }
+      if (name === 'approve') { const r = await api<{ ok?: boolean; why?: string }>(`/api/drafts/${aid}/approve`, {}); if (!r.ok) return alert('AI javobi yuborilmadi', r.why || 'Sabab noma’lum', 'bad'); toast('Yuborildi', 'ai'); }
       if (name === 'cancelDraft') { await api(`/api/drafts/${aid}/cancel`, {}); }
       if (name === 'rate') { await api(`/api/drafts/${aid}/rate`, { rating: extra }); toast('Baho saqlandi'); }
       if (name === 'teach') {

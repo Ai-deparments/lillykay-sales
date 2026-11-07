@@ -189,8 +189,20 @@ html:root[data-theme="dark"] .pill.ok,html:root[data-theme="dark"] .pill.bad,htm
 .modal{border-radius:8px;border:0;box-shadow:var(--shadow-2);width:min(780px,100%);padding:20px 22px;gap:14px}
 .modal > h2{font-size:17px;font-weight:600;margin:-20px -22px 0;padding:14px 22px;border-bottom:1px solid var(--line)}
 .drawer{border-left:1px solid var(--line);box-shadow:var(--shadow-2)}
-.toast{border-radius:6px;background:var(--ink);color:#fff;box-shadow:var(--shadow-2)}
-.toast.ai{background:var(--primary);color:#fff}
+/* Bildirishnomalar — tepada, markazda (egasi 07.11): oq karta, chap rangli chiziq, sarlavha + sabab, × tugmasi */
+.toasts{top:14px;bottom:auto;right:auto;left:50%;transform:translateX(-50%);width:min(560px,calc(100% - 32px));max-width:none;gap:8px}
+.toast{position:relative;display:flex;flex-direction:column;gap:2px;background:var(--surface);color:var(--ink);border:1px solid var(--line-2);border-left:4px solid var(--primary);
+  border-radius:6px;padding:10px 36px 10px 14px;font-size:13px;box-shadow:var(--shadow-2);animation:tin .2s ease;text-align:left;align-items:flex-start}
+.toast.ai{background:var(--surface);color:var(--ink);border-left-color:var(--primary)}
+.toast.ok{background:var(--surface);color:var(--ink);border-color:var(--line-2);border-left-color:var(--ok)}
+.toast.bad{background:var(--surface);color:var(--ink);border-color:var(--line-2);border-left-color:var(--bad)}
+.toast .t-title{font-weight:600;color:var(--ink)}
+.toast.bad .t-title{color:var(--bad)}
+.toast.ok .t-title{color:var(--ok)}
+.toast .t-text{color:var(--ink-2);line-height:1.4}
+.toast .t-close{position:absolute;top:6px;right:6px;width:24px;height:24px;border:0;background:transparent;color:var(--ink-3);font-size:18px;line-height:1;border-radius:4px;cursor:pointer}
+.toast .t-close:hover{background:var(--surface-2);color:var(--ink)}
+@media (max-width:820px){.toasts{top:8px;width:calc(100% - 16px)}}
 .empty-state{color:var(--ink-3)}
 
 /* ---------- profil rasmlari (mijoz): rasm to‘liq ko‘rinsin, kanal belgisi burchakda ---------- */

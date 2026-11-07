@@ -20,7 +20,9 @@ export interface AppCtx {
   /** API javobidagi `now` bilan soat farqini yangilash (app.js: `S.offset = r.now - Date.now()`) */
   syncClock: (serverNow: number) => void;
   toast: (text: string, kind?: ToastKind) => void;
-  /** API xatosini toast qilib ko‘rsatadi — `.catch(fail)` uchun */
+  /** Sarlavhali bildirishnoma (tepada, markazda): «Xabar yuborilmadi» + sabab. Xato (bad) 12 s turadi va qo‘lda yopiladi */
+  alert: (title: string, text: string, kind?: ToastKind) => void;
+  /** API xatosini «Xatolik — sabab» ko‘rinishida tepada ko‘rsatadi — `.catch(fail)` uchun */
   fail: (e: unknown) => void;
   openModal: (spec: ModalSpec) => void;
   closeModal: () => void;
@@ -62,7 +64,7 @@ export function routeOf(hash: string): string {
   return h.startsWith('suhbat/') ? 'suhbatlar' : (SCREENS[h] ? h : 'suhbatlar');
 }
 
-interface ToastItem { id: number; text: string; kind: string }
+interface ToastItem { id: number; text: string; kind: string; title?: string }
 interface ModalState { id: number; spec: ModalSpec }
 
 export function AppProvider({ initialBoot, children }: { initialBoot: Boot; children: ReactNode }) {
@@ -92,12 +94,19 @@ export function AppProvider({ initialBoot, children }: { initialBoot: Boot; chil
   const isLead = ['admin', 'rahbar'].includes(boot.me.role);
   useEffect(() => { document.body.dataset.role = isLead ? 'lead' : 'seller'; }, [isLead]);
 
+  const closeToast = useCallback((id: number) => setToasts(t => t.filter(x => x.id !== id)), []);
+  // Egasining talabi (07.11): xatolar tepada, aniq sarlavha va sabab bilan. Xato 12 s turadi (yoki ×), qolganlari 5 s
+  const alert = useCallback((title: string, text: string, kind: ToastKind = 'bad') => {
+    const id = ++seq.current;
+    setToasts(t => [...t.slice(-3), { id, title, text, kind }]);
+    setTimeout(() => closeToast(id), kind === 'bad' ? 12000 : 5000);
+  }, [closeToast]);
   const toast = useCallback((text: string, kind: ToastKind = '') => {
     const id = ++seq.current;
-    setToasts(t => [...t, { id, text, kind }]);
-    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 5000);
-  }, []);
-  const fail = useCallback((e: unknown) => { toast(errorText(e)); }, [toast]);
+    setToasts(t => [...t.slice(-3), { id, text, kind }]);
+    setTimeout(() => closeToast(id), kind === 'bad' ? 12000 : 5000);
+  }, [closeToast]);
+  const fail = useCallback((e: unknown) => { alert('Xatolik', errorText(e), 'bad'); }, [alert]);
 
   const openModal = useCallback((spec: ModalSpec) => { setModal({ id: ++modalId.current, spec }); }, []);
   const closeModal = useCallback(() => setModal(null), []);
@@ -106,9 +115,9 @@ export function AppProvider({ initialBoot, children }: { initialBoot: Boot; chil
   const setBadge = useCallback((k: 'wait', n: number) => setBadges(b => (b[k] === n ? b : { ...b, [k]: n })), []);
 
   const value = useMemo<AppCtx>(() => ({
-    boot, reloadBoot, isLead, clockNow: clockNowFn, syncClock, toast, fail, openModal, closeModal, hash, route: routeOf(hash), navigate,
+    boot, reloadBoot, isLead, clockNow: clockNowFn, syncClock, toast, alert, fail, openModal, closeModal, hash, route: routeOf(hash), navigate,
     badges, setBadge, catalogSeed, setCatalogSeed
-  }), [boot, reloadBoot, isLead, syncClock, toast, fail, openModal, closeModal, hash, navigate, badges, setBadge, catalogSeed]);
+  }), [boot, reloadBoot, isLead, syncClock, toast, alert, fail, openModal, closeModal, hash, navigate, badges, setBadge, catalogSeed]);
 
   /* Modal: tashqariga yoki [data-close] ga bosilsa yopiladi; forma yuborilganda FormData → onSubmit */
   const onBack = (e: MouseEvent<HTMLDivElement>) => {
@@ -146,7 +155,11 @@ export function AppProvider({ initialBoot, children }: { initialBoot: Boot; chil
             </div>)}
       </div>
       <div className="toasts" id="toasts" aria-live="polite">
-        {toasts.map(t => <div key={t.id} className={`toast ${t.kind}`}>{t.text}</div>)}
+        {toasts.map(t => <div key={t.id} className={`toast ${t.kind}`} role={t.kind === 'bad' ? 'alert' : undefined}>
+          {t.title ? <b className="t-title">{t.title}</b> : null}
+          <span className="t-text">{t.text}</span>
+          <button className="t-close" type="button" aria-label="Yopish" onClick={() => closeToast(t.id)}>×</button>
+        </div>)}
       </div>
     </Ctx.Provider>
   );
