@@ -193,7 +193,12 @@ test('mijozga ism bilan murojaat qilinmaydi — faqat aka/opa; username so‘zi 
   assert.equal(latinUz('[ovozli xabar] O\'zi narxini shunday aytolmaysizlarmi?'), true);
   assert.equal(latinUz('шунда номер ва исмини колдирацми'), false);
   assert.equal(latinUz('ok'), false, 'qisqa — aniq emas');
-  assert.equal(clientLang(['Здравствуйте, сколько стоит станция?', 'шунда номер ва исмини колдирацми', 'O\'zi narxini aytolmaysizlarmi?']), 'RUS tili', 'eski yo‘l — shuning uchun context() da latinUz avval tekshiriladi');
+  assert.equal(clientLang(['Здравствуйте, сколько стоит станция?', 'O\'zi narxini aytolmaysizlarmi?']), 'RUS tili', 'eski yo‘l — shuning uchun context() da latinUz avval tekshiriladi');
+  const { tilBelgisi } = await import('../src/agents/fokus.js');
+  assert.equal(tilBelgisi('шунда номер ва исмини колдирацми'), 'o‘zbek tili, KIRILL yozuvi');
+  assert.equal(tilBelgisi('ассалому алейкум мани офиссими томига панеляр кере нечи пулдан'), 'o‘zbek tili, KIRILL yozuvi');
+  assert.equal(tilBelgisi('Здравствуйте, сколько стоит солнечная станция для дома?'), 'RUS tili');
+  assert.equal(tilBelgisi('подскажите, у вас есть станции для дома и сколько по времени монтаж'), 'RUS tili');
   // Mijoz ismini telefon bilan kichik harfda yozgan, profil nomi boshqa («forger») — ism baribir kesiladi (2026-11-07)
   const { namesNearPhone } = await import('../src/agents/fokus.js');
   assert.deepEqual(namesNearPhone(['salom', 'saidazim , 933150342', 'telefonim +998 90 123 45 67 Dilshod aka']), ['saidazim', 'Dilshod']);
