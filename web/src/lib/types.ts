@@ -37,6 +37,45 @@ export interface Boot {
   integrations: Integrations; demo: boolean; bot: string | null; period?: string;
 }
 
+/* ---------- Tahlil (rahbar sahifasi): GET /api/tahlil?period=today|7|30 · POST /api/tahlil/xulosa ---------- */
+export type TahlilPeriod = 'today' | '7' | '30';
+export type TahlilManagerStatus = 'yaxshi' | 'ortacha' | 'etibor' | 'none';
+/** Bugungi ko‘rsatkichni kecha (`prev`) va 7 kun o‘rtachasi (`avg7`) bilan solishtirish */
+export interface TahlilCmp { prev: number; avg7: number }
+export interface TahlilToday {
+  new: number; taken: number; won: number; won_amount: number; lost: number;
+  lost_top_reason: { name: string; n: number } | null;
+  cmp: { new: TahlilCmp; taken: TahlilCmp; won: TahlilCmp; won_amount: TahlilCmp; lost: TahlilCmp };
+}
+export interface TahlilSeriesPoint { date: string; in: number; won: number }
+/** `avg_days` null — bosqichda o‘tish tarixi yo‘q */
+export interface TahlilStage { id: number; name: string; now: number; stuck: number; lost: number; avg_days: number | null; is_bottleneck: boolean }
+export interface TahlilSource { id: number; name: string; in: number; won: number; conv: number }
+export interface TahlilManager {
+  user_id: number | null; name: string; taken: number; on_time_pct: number | null; won: number; won_amount: number; lost_pct: number;
+  silent_leads: number; status: TahlilManagerStatus;
+}
+export interface TahlilAi {
+  conversations: number; ai_replied: number; ai_replied_pct: number; avg_reply_sec: number | null; phones: number; phones_pct: number;
+  handoffs: number; handoffs_unanswered: number;
+}
+/** AI xulosasi: `text` null — hali tuzilmagan; `stale` — raqamlar o‘zgargan, qayta tuzish kerak */
+export interface TahlilXulosa { text: string[] | null; at: number | null; model: string | null; stale: boolean }
+export interface TahlilData {
+  period: TahlilPeriod; team: { id: number; name: string } | null; updated_at: number; odoo_synced_at: number | null;
+  today: TahlilToday; series: TahlilSeriesPoint[]; series_total: { in: number; won: number; conv: number; prev_conv: number };
+  stages: TahlilStage[]; stages_note: string; sources: TahlilSource[]; managers: TahlilManager[]; ai: TahlilAi; xulosa: TahlilXulosa;
+}
+
+/* ---------- AI yordamchi (GET/POST/DELETE /api/yordamchi) ---------- */
+export type YordamchiRole = 'user' | 'ai';
+/** Tarixdagi bitta xabar; `tools` — AI javobi uchun ishlatilgan ma’lumot manbalari (faqat POST javobida keladi, UI da saqlanadi) */
+export interface YordamchiMsg { role: YordamchiRole; text: string; at: number; tools?: string[] }
+/** GET /api/yordamchi → oxirgi 40 ta xabar */
+export interface YordamchiHistory { messages: YordamchiMsg[] }
+/** POST /api/yordamchi { text } → AI javobi */
+export interface YordamchiReply { reply: string; tools: string[]; at: number }
+
 /** Modal oynasi tavsifi (app.js dagi `modal(html, onSubmit, after)` o‘rniga) */
 export interface ModalSpec {
   /** Oyna ichidagi tarkib (<h2>, maydonlar). Inputlar `name` bilan, nazoratsiz (defaultValue) — FormData orqali o‘qiladi */

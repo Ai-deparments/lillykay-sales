@@ -1,0 +1,101 @@
+/* B varianti — b-tahlil ekrani. Faqat shu ekranning qoidalari; umumiy komponentlar — ../b.css
+   Manba: design-demo-b/tahlil.html (<style> qismi). Qamrov: #tahlilPage. */
+@media screen {
+
+/* ---------- yuklanish / xato ---------- */
+#tahlilPage .th-loading{margin:0;font-size:13.5px}
+#tahlilPage .banner.bad .right{margin-left:auto;flex:none}
+
+/* ---------- bugun bir qarashda: 5 ta KPI, solishtiruv belgisi ---------- */
+#tahlilPage .today{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+#tahlilPage .kpi{display:block}
+#tahlilPage .kpi .lbl{text-transform:uppercase}
+#tahlilPage .kpi .v{margin-top:6px;display:flex;align-items:baseline;gap:8px}
+#tahlilPage .kpi .v small{font-size:13px;font-weight:500}
+#tahlilPage .kpi .cmp{display:flex;gap:6px;align-items:center;font-size:12px;margin-top:6px;flex-wrap:wrap}
+#tahlilPage .cmp b{display:inline-flex;align-items:center;gap:3px;font-family:var(--f-mono);font-weight:500;padding:0 6px;border-radius:4px;line-height:20px;font-variant-numeric:tabular-nums}
+#tahlilPage .cmp b.up{background:var(--ok-soft);color:var(--ok)}
+#tahlilPage .cmp b.down{background:var(--bad-soft);color:var(--bad)}
+#tahlilPage .cmp b.flat{background:var(--surface-3);color:var(--ink-2)}
+#tahlilPage .cmp span{color:var(--ink-3)}
+
+/* ---------- panel: sarlavha · izoh · chetdan chetga jadval / pastki qator ---------- */
+#tahlilPage .panel-head .sub{color:var(--ink-3);font-size:12.5px;font-weight:400}
+#tahlilPage .panel-head .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+#tahlilPage .panel-head .muted.mono{font-size:12px}
+#tahlilPage .panel > .tbl{margin:0 -16px}
+#tahlilPage .panel > .tbl:last-child{margin-bottom:-14px}
+#tahlilPage .panel > .tbl:last-child tr:last-child td{border-bottom:0}
+#tahlilPage .tbl th,#tahlilPage .tbl td{padding:9px 16px}
+#tahlilPage .tbl th{backdrop-filter:none}
+#tahlilPage .tbl table{font-size:13.5px}
+#tahlilPage .tbl td.n{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+#tahlilPage .tbl td.who{font-weight:500;white-space:nowrap}
+#tahlilPage .tbl td.who .pill{margin-left:6px;vertical-align:1px}
+#tahlilPage .tbl-note{margin:-12px -16px -14px;padding:8px 16px 12px;font-size:12.5px;color:var(--ink-3);border-top:1px solid var(--line)}
+#tahlilPage .panel-foot{display:flex;gap:4px;align-items:center;flex-wrap:wrap;font-size:12.5px;color:var(--ink-3);border-top:1px solid var(--line);margin:0 -16px -14px;padding:10px 16px}
+#tahlilPage .panel-foot b{font-family:var(--f-mono);font-weight:500;color:var(--ink);padding:0 3px}
+#tahlilPage .panel-foot .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+#tahlilPage .panel > .muted{margin:0;font-size:13.5px}
+#tahlilPage .flag{font-size:12px;color:var(--bad);font-weight:500}
+#tahlilPage .ok-txt{color:var(--ok);font-weight:500}
+
+/* ---------- o‘rtacha vaqt chizig‘i (bosqichlar) ---------- */
+#tahlilPage .bar{display:inline-flex;align-items:center;gap:8px;min-width:140px;width:100%;justify-content:flex-start}
+#tahlilPage .bar .track{flex:1;height:8px;border-radius:2px;background:var(--line);position:relative;overflow:hidden;min-width:64px;width:auto}
+#tahlilPage .bar .fill{position:absolute;inset:0 auto 0 0;background:var(--primary);border-radius:0}
+#tahlilPage .bar .fill.bad{background:var(--bad)}
+#tahlilPage .bar b{font-family:var(--f-mono);font-weight:500;min-width:38px;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* ikki ustunli bo‘limda jadval tor: bosqich nomi ikki qatorga bo‘linsin, chiziq qisqaroq — ustun chetdan chiqib ketmasin */
+#tahlilPage .sec-two td.who{white-space:normal}
+#tahlilPage .sec-two .bar{min-width:110px}
+
+/* ---------- bugun oddiy tilda: AI ro‘yxati + manba ---------- */
+#tahlilPage .summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:start}
+#tahlilPage .summary ul{margin:0;padding:0 0 0 18px;display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--ink);line-height:1.5}
+#tahlilPage .summary li b{font-weight:600}
+#tahlilPage .summary .meta{font-size:12px;color:var(--ink-3);white-space:nowrap;font-family:var(--f-mono)}
+#tahlilPage .th-xulosa .row-actions .muted{font-size:13.5px}
+
+/* ---------- 30 kun dinamika: 30 ustun, kulrang kelgan / ko‘k sotuv ---------- */
+#tahlilPage .legend{display:flex;gap:16px;font-size:12.5px;color:var(--ink-2);align-items:center}
+#tahlilPage .legend i{width:12px;height:12px;display:inline-block;border-radius:2px;vertical-align:-1px;margin-right:6px}
+#tahlilPage .legend i.in{background:var(--line-2)}
+#tahlilPage .legend i.won{background:var(--primary)}
+#tahlilPage .chart{display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:3px;align-items:end;height:120px;padding:4px 0 0}
+#tahlilPage .chart .d{display:flex;flex-direction:column;justify-content:flex-end;gap:1px;height:100%;min-width:0}
+#tahlilPage .chart .in{display:block;background:var(--line-2);border-radius:2px 2px 0 0}
+#tahlilPage .chart .won{display:block;background:var(--primary);border-radius:0}
+#tahlilPage .chart-x{display:flex;justify-content:space-between;font:11px var(--f-mono);color:var(--ink-3);padding-top:6px;border-top:1px solid var(--line);margin-top:-6px}
+
+/* ---------- qayerda yo‘qotamiz + manbalar yonma-yon ---------- */
+#tahlilPage .sec-two{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px}
+#tahlilPage .sec-two > .panel{min-width:0}
+
+/* ---------- AI agent hissasi: 4 katak, chetdan chetga ---------- */
+#tahlilPage .ai-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0 -16px -14px;border-top:1px solid var(--line)}
+#tahlilPage .ai-grid > div{padding:10px 16px;border-right:1px solid var(--line);min-width:0}
+#tahlilPage .ai-grid > div:last-child{border-right:0}
+#tahlilPage .ai-grid .lbl{font-size:12px;color:var(--ink-2);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+#tahlilPage .ai-grid .v{font:600 22px/1.2 var(--f-mono);margin-top:4px;display:flex;align-items:baseline;gap:6px}
+#tahlilPage .ai-grid .v.ok{color:var(--ok)}
+#tahlilPage .ai-grid .v small{font-size:13px;color:var(--ink-3);font-weight:500;font-family:var(--f-body)}
+#tahlilPage .ai-grid .s{font-size:12px;color:var(--ink-3);margin-top:2px}
+
+/* ---------- mobil ---------- */
+@media (max-width:900px){
+  #tahlilPage .today{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #tahlilPage .summary{grid-template-columns:minmax(0,1fr)}
+  #tahlilPage .sec-two{grid-template-columns:minmax(0,1fr)}
+  #tahlilPage .ai-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #tahlilPage .ai-grid > div:nth-child(2){border-right:0}
+  #tahlilPage .ai-grid > div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  #tahlilPage .chart{height:90px}
+  #tahlilPage .tbl th,#tahlilPage .tbl td{padding:9px 14px}
+  #tahlilPage .bar{min-width:110px}
+  #tahlilPage .panel-head .right{margin-left:0;width:100%}
+}
+@media (max-width:360px){
+  #tahlilPage .today{grid-template-columns:minmax(0,1fr)}
+}
+}

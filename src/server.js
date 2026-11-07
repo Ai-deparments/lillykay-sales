@@ -16,6 +16,7 @@ import { startInstagram, igTokenJob, sendInstagram, sendInstagramImage, sendInst
 import { followups } from './services/taqib.js';
 import { odooTick } from './services/odoo.js';
 import { nazoratJob } from './services/nazorat.js';
+import { tahlilJob } from './services/tahlil.js';
 import { pairsJob } from './services/uslub.js';
 import { webImageJob } from './services/webimage.js';
 import { cleanupJob } from './services/tozalash.js';
@@ -104,6 +105,7 @@ server.listen(config.port, config.host, () => {
     igTokenJob().catch(e => console.error('ig token', e));
     odooTick();
     nazoratJob().catch(e => console.error('nazorat', e));
+    tahlilJob().catch(e => console.error('tahlil', e));   // Tahlil AI xulosasi: avval so‘ralganlari eskirsa (1 soat) ish vaqtida yangilanadi
     followups().catch(e => console.error('followups', e));
     try { pairsJob(); } catch (e) { console.error('uslub', e); }
     try { retryAfterOutage(); } catch (e) { console.error('retry', e); }

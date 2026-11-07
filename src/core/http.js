@@ -105,7 +105,7 @@ export function router() {
     }
     return null;
   };
-  return { get: (p, ...h) => add('GET', p, ...h), post: (p, ...h) => add('POST', p, ...h), match };
+  return { get: (p, ...h) => add('GET', p, ...h), post: (p, ...h) => add('POST', p, ...h), del: (p, ...h) => add('DELETE', p, ...h), match };
 }
 
 export class HttpError extends Error { constructor(status, code) { super(code); this.status = status; this.code = code; } }

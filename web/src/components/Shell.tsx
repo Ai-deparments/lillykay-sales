@@ -17,6 +17,8 @@ import { Catalog } from './Catalog';
 import { Agent } from './Agent';
 import { Users } from './Users';
 import { Audit } from './Audit';
+import { Tahlil } from './Tahlil';
+import { Yordamchi } from './Yordamchi';
 
 export const ROLE_L: Record<string, string> = { admin: 'Administrator', rahbar: 'Sotuv rahbari', filial: 'Filial rahbari', sotuvchi: 'Sotuvchi' };
 
@@ -85,6 +87,8 @@ export function Shell() {
           </div>
           <div className="nav-group lead-only">
             <div className="nav-label">Boshqaruv</div>
+            <NavItem href="tahlil" ic="chart" route={route}>Tahlil</NavItem>
+            <NavItem href="yordamchi" ic="chat" route={route}>AI yordamchi</NavItem>
             <NavItem href="agent" ic="spark" route={route}>AI agent</NavItem>
             <NavItem href="xodimlar" ic="users" route={route}>Xodimlar va filiallar</NavItem>
             <NavItem href="jurnal" ic="log" route={route}>Audit jurnali</NavItem>
@@ -118,6 +122,8 @@ export function Shell() {
           <section className="screen" id="s-voronka" hidden={!act('voronka')}><div className="page" id="voronkaPage"><PageHead route="voronka" /><Voronka active={act('voronka')} /></div></section>
           <section className="screen" id="s-nazorat" hidden={!act('nazorat')}><div className="page" id="nazoratPage"><PageHead route="nazorat" /><Nazorat active={act('nazorat')} /></div></section>
           <section className="screen" id="s-katalog" hidden={!act('katalog')}><div className="page" id="catalogPage"><PageHead route="katalog" /><Catalog active={act('katalog')} /></div></section>
+          <section className="screen" id="s-tahlil" hidden={!act('tahlil')}><div className="page" id="tahlilPage"><Tahlil active={act('tahlil')} /></div></section>
+          <section className="screen" id="s-yordamchi" hidden={!act('yordamchi')}><div className="page" id="yordamchiPage"><Yordamchi active={act('yordamchi')} /></div></section>
           <section className="screen" id="s-agent" hidden={!act('agent')}><div className="page" id="agentPage"><PageHead route="agent" /><Agent active={act('agent')} /></div></section>
           <section className="screen" id="s-xodimlar" hidden={!act('xodimlar')}><div className="page" id="usersPage"><PageHead route="xodimlar" /><Users active={act('xodimlar')} /></div></section>
           <section className="screen" id="s-jurnal" hidden={!act('jurnal')}><div className="page" id="auditPage"><PageHead route="jurnal" /><Audit active={act('jurnal')} /></div></section>

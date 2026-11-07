@@ -17,6 +17,8 @@ import { odooLive, odooStatus, syncOdoo } from './services/odoo.js';
 import { voronka, leadList, leadDetail } from './services/voronka.js';
 import { nazoratList, nazoratJob } from './services/nazorat.js';
 import { sababStatus, sababGenerate } from './services/sabab.js';
+import * as yordamchi from './services/yordamchi.js';
+import { tahlil, xulosaRefresh, PERIODS as TAHLIL_PERIODS } from './services/tahlil.js';
 
 export const api = router();
 const R = api;
@@ -85,6 +87,33 @@ R.post('/api/voronka/sabab', async (req, res, u) => {
     json(res, { ok: false, error: e.code, why: AI_WHY[e.code] || (String(e.code).startsWith('budget_') && e.detail) || `AI xatosi: ${e.code}` }, 502);
   }
 });
+/* Tahlil — rahbar sahifasi (faqat rahbar/admin): davr qat’iy today|7|30 (boshqasi → 7), jamoa voronka kabi. AI xulosasini yangilash — POST, jurnalga yoziladi */
+const tahlilArgs = req => { const sp = new URL(req.url, 'http://x').searchParams; return { period: TAHLIL_PERIODS.includes(sp.get('period')) ? sp.get('period') : '7', team: voronkaArgs(sp).team }; };
+R.get('/api/tahlil', (req, res, u) => { need(u, 'settings'); json(res, tahlil(tahlilArgs(req))); });
+R.post('/api/tahlil/xulosa', async (req, res, u) => {
+  need(u, 'settings');
+  const b = await readJson(req);
+  try { json(res, { ok: true, ...(await xulosaRefresh({ team: tahlilArgs(req).team, who: u.name, force: Boolean(b.force) })) }); }
+  catch (e) {
+    if (!(e instanceof AiError)) throw e;
+    console.error('[tahlil] AI xatosi', e.code, String(e.detail || '').slice(0, 300));
+    json(res, { ok: false, error: e.code, why: AI_WHY[e.code] || (String(e.code).startsWith('budget_') && e.detail) || `AI xatosi: ${e.code}` }, 502);
+  }
+});
+/* AI yordamchi — rahbar/admin ish chati (faqat sotuv ma’lumotlari; rol tekshiruvi xizmatning o‘zida — 403). AI xatosi — 502 va sabab */
+R.get('/api/yordamchi', (req, res, u) => json(res, { messages: yordamchi.history({ user: u }) }));
+R.post('/api/yordamchi', async (req, res, u) => {
+  const b = await readJson(req);
+  const text = typeof b.text === 'string' ? b.text.trim() : '';
+  if (!text || text.length > 1000) throw bad('bad_text');
+  try { json(res, await yordamchi.ask({ user: u, text })); }
+  catch (e) {
+    if (!(e instanceof AiError)) throw e;
+    console.error('[yordamchi] AI xatosi', e.code, String(e.detail || '').slice(0, 300));
+    json(res, { ok: false, error: e.code, why: AI_WHY[e.code] || (String(e.code).startsWith('budget_') && e.detail) || `AI xatosi: ${e.code}` }, 502);
+  }
+});
+R.del('/api/yordamchi', (req, res, u) => json(res, yordamchi.clear({ user: u })));
 /* Nazorat 24 soat: qimirlamagan lidlar, menejer kesimi, sozlamalar (bosqichlar va soatlar — rahbar o‘zgartiradi) */
 R.get('/api/nazorat', (req, res) => {
   const sp = new URL(req.url, 'http://x').searchParams;

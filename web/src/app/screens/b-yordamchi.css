@@ -1,0 +1,69 @@
+/* B varianti — b-yordamchi ekrani (AI yordamchi chati). Faqat shu ekranning qoidalari; umumiy komponentlar — ../b.css
+   Ko‘rinish — design-demo-b/suhbatlar.html: tekis 8px pufakchalar, rahbar o‘ngda (--primary-soft), AI chapda (oq, chegara),
+   vaqt mono, tekis yozish maydoni + asosiy «Yuborish». Sinflar ya-* — app.css dagi .msg/.day/.composer bilan to‘qnashmasin. */
+@media screen {
+
+/* ---------- sahifa: sarlavha + bitta panel qolgan balandlikni to‘ldiradi ---------- */
+#s-yordamchi{display:flex;flex-direction:column;overflow:hidden;padding-bottom:24px}
+#yordamchiPage{flex:1;min-height:0;display:flex;flex-direction:column;padding-bottom:0}
+#yordamchiPage > .page-head{flex:none}
+.ya-confirm-note{font-size:12.5px;color:var(--bad)}
+.ya-panel{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+
+/* ---------- xabarlar ---------- */
+.ya-list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:14px 16px 16px;background:var(--surface-2)}
+.ya-day{align-self:center;margin:8px 0 4px;padding:2px 8px;border-radius:4px;background:var(--surface);border:1px solid var(--line-2);font:500 11.5px/18px var(--f-mono);color:var(--ink-2)}
+.ya-msg{max-width:min(640px,74%);padding:8px 12px 6px;border-radius:8px;line-height:1.45;font-size:13.5px;margin-top:4px;color:var(--ink)}
+.ya-msg.user{align-self:flex-end;background:var(--primary-soft)}
+.ya-msg.ai{align-self:flex-start;background:var(--surface);border:1px solid var(--line-2)}
+.ya-txt{white-space:pre-wrap;overflow-wrap:anywhere}
+.ya-msg.ai .ya-txt{white-space:normal}
+.ya-txt b{font-weight:600}
+.ya-txt ul{margin:4px 0;padding-left:18px}
+.ya-txt li{margin:1px 0}
+.ya-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px;font:11px/16px var(--f-mono);color:var(--ink-3)}
+.ya-msg.user .ya-meta{justify-content:flex-end}
+.ya-meta .tools{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.8}
+.ya-msg.pending .ya-txt{color:var(--ink-3);animation:ya-pulse 1.4s ease-in-out infinite}
+@keyframes ya-pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@media (prefers-reduced-motion:reduce){.ya-msg.pending .ya-txt{animation:none}}
+.ya-empty{margin:auto;display:grid;gap:4px;text-align:center;max-width:46ch;font-size:13px;color:var(--ink-3)}
+.ya-empty b{font-size:14px;font-weight:600;color:var(--ink-2)}
+
+/* ---------- pastki qism: xato, tayyor savollar, yozish maydoni ---------- */
+.ya-foot{flex:none;border-top:1px solid var(--line);background:var(--surface)}
+.ya-foot .banner{margin:10px 16px 0}
+.ya-chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 16px 0}
+.ya-chips .chip{cursor:pointer;padding:3px 10px;line-height:18px;transition:background-color .12s}
+.ya-chips .chip:hover:not(:disabled){background:var(--surface-2);color:var(--ink)}
+.ya-chips .chip:disabled{opacity:.5;cursor:default}
+.ya-compose{display:flex;align-items:flex-end;gap:8px;padding:10px 16px 6px}
+.ya-compose textarea{flex:1;min-width:0;border:1px solid var(--line-2);border-radius:var(--radius);background:var(--surface);padding:9px 10px;min-height:36px;max-height:150px;
+  line-height:1.4;font-size:13.5px;color:var(--ink);resize:none;box-shadow:none}
+.ya-compose textarea:focus{outline:2px solid var(--primary);outline-offset:0;border-color:transparent}
+.ya-compose textarea::placeholder{color:var(--ink-3)}
+.ya-compose textarea:disabled{background:var(--surface-2);color:var(--ink-3)}
+.ya-compose .btn.primary{flex:none;height:36px;min-height:36px;padding:0 14px;gap:6px}
+.ya-compose .btn.primary .ic{width:16px;height:16px}
+.ya-compose .btn.primary:disabled{opacity:.5;cursor:default}
+.ya-hint{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:0 16px 10px;font-size:11.5px;color:var(--ink-3)}
+.ya-count{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.ya-count.over{color:var(--bad);font-weight:600}
+
+/* ---------- telefon: panel butun balandlik minus yozish maydoni, pufakcha 86% ---------- */
+@media (max-width:820px){
+  #s-yordamchi{padding:14px 14px 14px}
+  .ya-list{padding:12px 12px 14px}
+  .ya-msg{max-width:86%}
+  .ya-foot .banner{margin:8px 10px 0}
+  .ya-chips{padding:8px 10px 0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .ya-chips::-webkit-scrollbar{display:none}
+  .ya-chips .chip{flex:none}
+  .ya-compose{padding:8px 10px 4px}
+  .ya-compose .btn.primary{width:36px;padding:0;justify-content:center}
+  .ya-compose .btn.primary span{display:none}
+  .ya-hint{padding:0 10px 8px}
+  .ya-kbd{display:none}
+}
+
+}

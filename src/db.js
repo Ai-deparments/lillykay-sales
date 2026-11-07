@@ -484,6 +484,16 @@ CREATE UNIQUE INDEX users_odoo_user ON users(odoo_user_id) WHERE odoo_user_id IS
 /* Odoo menejerini panelga taklif qilish: telefon Odoo’dan (login bo‘ladi), taklif qabul qilinganda hisob shu Odoo foydalanuvchisiga bog‘lanadi */
 ALTER TABLE odoo_users ADD COLUMN phone TEXT;
 ALTER TABLE invites ADD COLUMN odoo_user_id INTEGER;
+`,
+`
+/* AI yordamchi — rahbar/admin uchun ish chati (faqat sotuv bo‘limi ma’lumotlari, services/yordamchi.js).
+   Har foydalanuvchining o‘z tarixi; tools — javobda chaqirilgan vositalar nomlari (JSON massiv). */
+CREATE TABLE yordamchi_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('user','ai')),
+  text TEXT NOT NULL, tools TEXT, created_at INTEGER NOT NULL
+);
+CREATE INDEX yordamchi_user ON yordamchi_messages(user_id, id);
 `
 ];
 

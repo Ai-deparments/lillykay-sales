@@ -47,12 +47,14 @@ export const SCREENS: Record<string, [string, string]> = {
   voronka: ['Voronka', 'Lid qayerda, nimaga, kim tomonidan tushib qolyapti — Odoo CRM'],
   nazorat: ['Nazorat 24 soat', 'Qimirlamay qolgan lidlar, menejerga va rahbarga xabar'],
   katalog: ['Bilim bazasi', 'Mahsulot kartalari — agent faqat shu yerdan gapiradi'],
+  tahlil: ['Tahlil', 'Rahbar uchun uchta savol: bugun nima bo‘ldi, qayerda yo‘qotyapmiz, kimga e’tibor kerak — Odoo CRM, har soatda yangilanadi'],
+  yordamchi: ['AI yordamchi', 'Sotuv raqamlari bo‘yicha savol-javob: lidlar, sotuvlar, menejerlar — faqat ish bo‘yicha'],
   agent: ['AI agent', 'Kanal bo‘yicha yoqish, to‘xtatish va bosqichlar'],
   xodimlar: ['Xodimlar va filiallar', 'Rollar, Telegram bildirishnomalari'],
   jurnal: ['Audit jurnali', 'Har bir avtomatik amal']
 };
 /** Faqat rahbar/admin ko‘radigan bo‘limlar */
-export const LEAD_ONLY = ['agent', 'xodimlar'];
+export const LEAD_ONLY = ['tahlil', 'yordamchi', 'agent', 'xodimlar'];
 
 /** app.js `route()`: hash → bo‘lim kaliti (`#suhbat/12` → suhbatlar; noma’lum → suhbatlar) */
 export function routeOf(hash: string): string {
