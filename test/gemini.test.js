@@ -188,6 +188,12 @@ test('mijozga ism bilan murojaat qilinmaydi — faqat aka/opa; username so‘zi 
   assert.equal(hideClientName('Сардор ака, бор', ['Сардор']), 'ака, бор');
   assert.equal(hideClientName('Malika opa, bor', ['Malika']), 'opa, bor');
   assert.equal(hideClientName('Kamera, objektiv va shtativ bor', ['@kamera_uz']), 'Kamera, objektiv va shtativ bor', 'username so‘zi — gap buzilmaydi');
+  // Mijoz ismini telefon bilan kichik harfda yozgan, profil nomi boshqa («forger») — ism baribir kesiladi (2026-11-07)
+  const { namesNearPhone } = await import('../src/agents/fokus.js');
+  assert.deepEqual(namesNearPhone(['salom', 'saidazim , 933150342', 'telefonim +998 90 123 45 67 Dilshod aka']), ['saidazim', 'Dilshod']);
+  assert.deepEqual(namesNearPhone(['narxi qancha 10 kvt']), []);
+  assert.equal(hideClientName('Va aleykum assalom Saidazim aka 😊 narxi obyektga qarab chiqadi', ['forger', '@fforgger', ...namesNearPhone(['saidazim , 933150342'])]),
+    'Va aleykum assalom aka 😊 narxi obyektga qarab chiqadi');
   assert.equal(hideClientName('opa, bu model yengilroq', ['Malika']), 'opa, bu model yengilroq');
   assert.equal(hideClientName('bor, narxi 50$', [null, '']), 'bor, narxi 50$');
   // Ism xabarda yozilgan bo‘lsa ham (yetkazish ma’lumoti) — 2026-10-09 sinovida AI mijoz xabaridagi ismni murojaatga qo‘shgan

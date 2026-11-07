@@ -568,6 +568,14 @@ export function hideStaffNames(text, staffNames, customerName = '') {
 // Mijoz xabarida yozgan ism-familiya («Sardor Aliyev, Qarshi» — yetkazish uchun): ism profil nomidan farq qilishi mumkin
 const NAME_IN_TEXT = /(?<!\p{L})(\p{Lu}\p{Ll}{2,})\s+\p{Lu}\p{Ll}+(?:ov|ova|ev|eva|yev|yeva|zoda|ов|ова|ев|ева|зода)(?!\p{L})/gu;
 export const namesInText = texts => [...new Set(texts.flatMap(t => [...String(t || '').matchAll(NAME_IN_TEXT)].map(m => m[1])))];
+/* Mijoz ismini telefon bilan birga, kichik harf bilan ham yozadi («saidazim , 933150342», «Dilshod 90 123 45 67») —
+   profil nomi boshqa bo‘lsa (masalan «forger») model baribir o‘sha ismni oladi va «Saidazim aka» deb yozadi (2026-11-07).
+   Telefon bor xabardagi 3+ harfli so‘zlar (xizmat so‘zlaridan tashqari) ism deb olinadi va murojaatdan kesiladi. */
+const PHONE_IN_TEXT = /(?:\+?\d[\d\s().-]{7,}\d)/;
+const NOT_NAME = new Set(['telefon', 'raqam', 'raqamim', 'nomer', 'nomerim', 'ism', 'ismim', 'mening', 'men', 'aka', 'opa', 'tel', 'telefonim',
+  'номер', 'телефон', 'меня', 'зовут', 'мой', 'имя', 'telegram', 'whatsapp', 'yozing', 'qiling', 'kerak', 'bor', 'yoq', 'uyga', 'uyim', 'uyimga']);
+export const namesNearPhone = texts => [...new Set(texts.filter(t => PHONE_IN_TEXT.test(String(t || '')))
+  .flatMap(t => (String(t).replace(/\[[^\]]*\]/g, ' ').match(/\p{L}{3,}/gu) || []).filter(w => !NOT_NAME.has(w.toLowerCase()))))];
 export function hideClientName(text, names = []) {
   let t = String(text || '');
   const raw = names.flatMap(n => String(n || '').split(/[\s_.@-]+/)).filter(w => /^\p{L}{3,}$/u.test(w));
@@ -780,7 +788,8 @@ export async function fokusDraft({ conv, acct, mode = 'reply', evalExclude = nul
       const h = hideStaffNames(text, staff, conv.display_name || '');
       if (h !== text) { text = h; out.sources.push('Xodim ismi javobdan olib tashlandi'); }
       // Mijozga ism bilan emas — faqat «aka» / «opa»
-      const typed = namesInText(all(`SELECT text FROM messages WHERE conversation_id=? AND author='client' ORDER BY id DESC LIMIT 30`, conv.id).map(m => m.text));
+      const clientTexts = all(`SELECT text FROM messages WHERE conversation_id=? AND author='client' ORDER BY id DESC LIMIT 30`, conv.id).map(m => m.text);
+      const typed = [...namesInText(clientTexts), ...namesNearPhone(clientTexts)];
       const n = hideClientName(text, [conv.display_name, conv.handle, ...typed]);
       if (n !== text) { text = n; out.sources.push('Mijoz ismi murojaatdan olib tashlandi — faqat aka/opa'); }
     }
