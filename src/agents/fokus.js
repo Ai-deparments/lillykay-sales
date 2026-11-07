@@ -218,6 +218,13 @@ export function tilBelgisi(t) {
   if (!uz && !ru) return '';   // aniq emas — model o‘zi tanlaydi
   return uz >= ru ? 'o‘zbek tili, KIRILL yozuvi' : 'RUS tili';
 }
+/* Lotin yozuvidagi mijoz matni — o‘zbek (lotin). Ilgari bu «aniq emas» hisoblanib, oxirgi 3 xabar birga olinardi va undagi
+   bitta ruscha xabar butun suhbatni «RUS tili» qilib qo‘yardi: 2026-11-07 da mijoz lotincha ovozli xabar yozdi, javob ruscha ketdi. */
+export function latinUz(t) {
+  const x = String(t || '').replace(/\[[^\]]*\]/g, ' ');
+  const lat = (x.match(/[a-z]/gi) || []).length, kir = (x.match(/[а-яёўқғҳ]/gi) || []).length;
+  return lat >= 6 && lat > kir;
+}
 /* Suhbat tili: avval oxirgi xabar, aniqlanmasa — oxirgi 3, keyin 6 tasi birga («ой», «ок» kabi qisqa xabardan til chiqmaydi) */
 export function clientLang(texts) {
   const list = (texts || []).map(t => String(t || '').replace(/\[[^\]]*\]/g, ' ').trim()).filter(Boolean);
@@ -260,9 +267,12 @@ function context(conv, acct, mode = 'reply', excludeConv = conv.id) {
   // Til: oxirgi xabar «[rasm]» yoki «ok» bo‘lsa yozuvni aniqlab bo‘lmaydi — so‘nggi mazmunli mijoz matniga qaraymiz, u ham bo‘lmasa kartadagi til
   const clientTexts = msgs.filter(m => m.author === 'client').map(m => String(m.text || '').replace(/\[[^\]]*\]/g, ' ').trim()).filter(Boolean);
   const lastClient = [...clientTexts].reverse().find(t => t.replace(/[^\p{L}]/gu, '').length >= 8) || clientTexts.slice(-3).join(' ');
-  const til = tilBelgisi(lastClient) || clientLang(clientTexts) || ({ 'o‘zbek (kirill)': 'o‘zbek tili, KIRILL yozuvi', rus: 'RUS tili' }[conv.lang] || '');
+  // Oxirgi xabar lotinda — o‘zbek (lotin); oldingi ruscha xabar hisobga olinmaydi (mijoz tilni almashtirgan bo‘lishi mumkin)
+  const til = tilBelgisi(lastClient) || (latinUz(lastClient) ? 'o‘zbek tili, LOTIN yozuvi' : '') || clientLang(clientTexts)
+    || ({ 'o‘zbek (kirill)': 'o‘zbek tili, KIRILL yozuvi', rus: 'RUS tili' }[conv.lang] || '');
   return [
     ...(til === 'RUS tili' ? ['MIJOZ XABARI TILI: rus tili — javobni ruscha yozing.']
+      : til === 'o‘zbek tili, LOTIN yozuvi' ? ['MIJOZ XABARI TILI: o‘zbek tili (mijoz oxirgi xabarini lotinda yozgan) — javobni o‘zbekcha, LOTIN yozuvida yozing; suhbatda avval ruscha xabar bo‘lsa ham ruscha yozmang.']
       : til ? ['MIJOZ XABARI TILI: o‘zbek tili (mijoz kirillda yozgan) — javobni o‘zbekcha, LOTIN yozuvida yozing, bitta ham kirill harfi aralashmasin.'] : []),
     `Hozir: ${l.date} ${l.hm} (Toshkent). Tun: ${isNight(Date.now(), s) ? 'ha' : 'yo‘q'} (ish vaqti ${s.work_from}–${s.work_to}).`,
     `Kanal: ${acct.channel === 'ig' ? 'Instagram' : acct.channel === 'tg' ? 'Telegram' : 'Demo'} · akkaunt: ${acct.name}. Filial: ${branch?.name || 'belgilanmagan'}. Mas’ul sotuvchi: ${owner?.name || 'belgilanmagan'}.`,

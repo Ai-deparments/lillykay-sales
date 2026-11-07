@@ -188,6 +188,12 @@ test('mijozga ism bilan murojaat qilinmaydi — faqat aka/opa; username so‘zi 
   assert.equal(hideClientName('Сардор ака, бор', ['Сардор']), 'ака, бор');
   assert.equal(hideClientName('Malika opa, bor', ['Malika']), 'opa, bor');
   assert.equal(hideClientName('Kamera, objektiv va shtativ bor', ['@kamera_uz']), 'Kamera, objektiv va shtativ bor', 'username so‘zi — gap buzilmaydi');
+  // Lotin yozuvidagi oxirgi xabar — o‘zbek (lotin), oldingi ruscha xabar suhbat tilini aniqlamaydi (2026-11-07: ovozli xabarga ruscha javob ketgan)
+  const { latinUz, clientLang } = await import('../src/agents/fokus.js');
+  assert.equal(latinUz('[ovozli xabar] O\'zi narxini shunday aytolmaysizlarmi?'), true);
+  assert.equal(latinUz('шунда номер ва исмини колдирацми'), false);
+  assert.equal(latinUz('ok'), false, 'qisqa — aniq emas');
+  assert.equal(clientLang(['Здравствуйте, сколько стоит станция?', 'шунда номер ва исмини колдирацми', 'O\'zi narxini aytolmaysizlarmi?']), 'RUS tili', 'eski yo‘l — shuning uchun context() da latinUz avval tekshiriladi');
   // Mijoz ismini telefon bilan kichik harfda yozgan, profil nomi boshqa («forger») — ism baribir kesiladi (2026-11-07)
   const { namesNearPhone } = await import('../src/agents/fokus.js');
   assert.deepEqual(namesNearPhone(['salom', 'saidazim , 933150342', 'telefonim +998 90 123 45 67 Dilshod aka']), ['saidazim', 'Dilshod']);
