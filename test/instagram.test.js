@@ -134,6 +134,38 @@ test('sotuvchi Instagram ilovasidan yozsa (is_echo) — AI javobi bekor bo‘lad
   assert.equal(msgs(c, 'seller').length, 1);
 });
 
+test('Meta Business Suite avtojavobi (is_echo) — sotuvchi javobi EMAS: AI kutishi saqlanadi va javob baribir ketadi', async () => {
+  const before = sends().length, sellers = msgs(conv(), 'seller').length;
+  await ig.handleWebhook(event({ mid: 'm4a', text: 'Quyosh stansiya narxi qancha?' }));
+  await sleep(120);
+  const auto = 'Assalomu alaykum ali_v  , xabaringiz uchun tashakkur.\nQuyosh stansiya bo‘yicha savollaringizga javob olish uchun bizga qo\'ng\'iroq qiling yoki telegramdan yozing.\n\nMenejer: +998 55-506-78-88';
+  await ig.handleWebhook(event({ mid: 'm4b', text: auto, is_echo: true }, { sender: IGID, recipient: CLIENT }));
+  // Avtojavobga ergashgan matnsiz aks-sado (tugma/karta) — ham avtojavob
+  await ig.handleWebhook(event({ mid: 'm4c', attachments: [{ type: 'template', payload: {} }], is_echo: true }, { sender: IGID, recipient: CLIENT }));
+  let c = conv();
+  assert.ok(c.pending_since, 'kutish o‘chmadi');
+  assert.equal(msgs(c, 'seller').length, sellers, 'sotuvchi javobi deb yozilmadi');
+  const sys = msgs(c, 'system').filter(m => JSON.parse(m.meta).tag === 'Meta avtojavobi');
+  assert.equal(sys.length, 2);
+  assert.equal(JSON.parse(sys[0].meta).via, 'instagram');
+  for (let i = 0; i < 100 && sends().length === before; i++) await sleep(50);
+  assert.equal(sends().length, before + 1, 'AI javobi baribir yuborildi');
+  await sleep(100);
+  c = conv();
+  assert.equal(c.pending_since, null);
+});
+
+test('sotuvchining haqiqiy javobi avtojavob ortidan 15 s dan keyin kelsa — baribir sotuvchi javobi', async () => {
+  await ig.handleWebhook(event({ mid: 'm4d', text: 'Yana bir savol' }));
+  await sleep(120);
+  const t = Date.now();
+  await ig.handleWebhook(event({ mid: 'm4e', text: 'Assalomu alaykum ali_v, xabaringiz uchun tashakkur. Menejer: +998 55', is_echo: true }, { sender: IGID, recipient: CLIENT, ts: t }));
+  await ig.handleWebhook(event({ mid: 'm4f', attachments: [{ type: 'image', payload: { url: 'https://cdn.ig.sinov/seller.jpg' } }], is_echo: true }, { sender: IGID, recipient: CLIENT, ts: t + 20000 }));
+  const c = conv();
+  assert.equal(c.pending_since, null, 'sotuvchi rasm yubordi — AI to‘xtadi');
+  assert.ok(msgs(c, 'seller').some(m => m.ext_msg_id === 'm4f'));
+});
+
 test('rasm: matn «[rasm]», havola meta’da; fayl yuklab olinadi va keshlanadi', async () => {
   const url = 'https://cdn.ig.sinov/photo1.jpg?sig=abc';
   await ig.handleWebhook(event({ mid: 'm5', attachments: [{ type: 'image', payload: { url } }] }));

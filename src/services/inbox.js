@@ -149,11 +149,11 @@ export function markSellerReply(convId, { text, userId = null, extMsgId = null, 
   return n;
 }
 
-/* Telegram’ning o‘zi yuborgan xabar (Business «Uzoqdaman»/«Salomlashuv» yoki rejalashtirilgan) — sotuvchi javobi EMAS:
+/* Platformaning o‘zi yuborgan xabar (Telegram Business «Uzoqdaman»/«Salomlashuv», Meta Business Suite avtojavobi) — sotuvchi javobi EMAS:
    kutish va AI qoralamasi o‘zgarmaydi, faqat tarixda ko‘rinadi */
-export function recordAutoMessage(convId, { text, extMsgId, ts = now() }) {
+export function recordAutoMessage(convId, { text, extMsgId, ts = now(), via = 'telegram', tag = 'Telegram avtojavobi' }) {
   run('INSERT OR IGNORE INTO messages(conversation_id,author,text,ext_msg_id,meta,created_at) VALUES(?,?,?,?,?,?)',
-    convId, 'system', text || '', extMsgId == null ? null : String(extMsgId), JSON.stringify({ via: 'telegram', offline: true, tag: 'Telegram avtojavobi' }), ts);
+    convId, 'system', text || '', extMsgId == null ? null : String(extMsgId), JSON.stringify({ via, offline: true, tag }), ts);
 }
 
 /* Mijoz o‘z xabarini o‘chirdi: kutilayotgan hamma savol o‘chirilgan bo‘lsa — AI unga javob yozmaydi */

@@ -3,7 +3,7 @@ import { config, igReady, geminiReady } from '../config.js';
 import { one, run, all, kvGet, kvSet } from '../db.js';
 import { now, clip, jparse } from '../util.js';
 import { setIntegration, getSettings } from '../services/settings.js';
-import { ingestClient, markSellerReply, confirmEcho, clientDeleted, aiOn, scheduleDraft, upsertConversation } from '../services/inbox.js';
+import { ingestClient, markSellerReply, confirmEcho, clientDeleted, aiOn, scheduleDraft, upsertConversation, recordAutoMessage } from '../services/inbox.js';
 import { transcribe, sttReady } from '../services/stt.js';
 import { audit } from '../core/audit.js';
 import { runAgent as geminiAgent } from '../ai/gemini.js';
@@ -197,6 +197,20 @@ async function enrichShare(text, media, m) {
   return !m.text && !String(text).includes('«') && cap ? `${label} «${clip(cap, 300)}»` : text;
 }
 
+/* Meta Business Suite’ning o‘z avtojavobi («Assalomu alaykum @user, xabaringiz uchun tashakkur… qo‘ng‘iroq qiling yoki
+   telegramdan yozing. Menejer: +998…») mijozning HAR birinchi xabaridan ~4 s keyin aks-sado (is_echo) bo‘lib keladi.
+   2026-11-07 gacha u sotuvchi javobi deb olinardi: kutish o‘chirilib, AI qoralamasi bekor bo‘lardi — mijoz faqat
+   «qo‘ng‘iroq qiling» matnini olardi (415 ta suhbatdan 10 tasida telefon). Endi u tizim xabari sifatida yoziladi,
+   AI o‘z javobini baribir beradi. Avtojavobga ergashgan matnsiz aks-sado (tugma/karta) ham shunga kiradi.
+   O‘chirish — Business Suite → Inbox → Automations; bu filtr unga qadar va undan keyin ham xavfsiz. */
+const META_AUTO_RE = /xabaringiz\s+uchun\s+(tashakkur|rahmat|raxmat)/i;
+const META_AUTO_FOLLOW_MS = 15000;
+function isMetaAutoReply(convId, m, ts) {
+  if (m.text) return META_AUTO_RE.test(m.text);
+  const last = one(`SELECT created_at, json_extract(meta,'$.tag') tag FROM messages WHERE conversation_id=? ORDER BY created_at DESC, id DESC LIMIT 1`, convId);
+  return Boolean(last && last.tag === 'Meta avtojavobi' && ts - last.created_at <= META_AUTO_FOLLOW_MS);
+}
+
 /* Bitta hodisa: mijoz xabari, bizning javobimiz aks-sadosi (is_echo), o‘chirilgan xabar */
 async function onMessaging(ev, acct) {
   // Tahrirlangan xabar (message_edit) — panel tarixi ham yangilanadi, avvalgi matn saqlanadi
@@ -223,6 +237,10 @@ async function onMessaging(ev, acct) {
     if (!c) return;
     if (m.text && confirmEcho(c.id, m.text, m.mid)) return;             // bizning «noma’lum» javobimiz tasdiqlandi
     if (one('SELECT 1 FROM messages WHERE conversation_id=? AND ext_msg_id=?', c.id, String(m.mid))) return; // allaqachon yozilgan
+    if (isMetaAutoReply(c.id, m, ts)) {
+      recordAutoMessage(c.id, { text: describe(m), extMsgId: m.mid, ts, via: 'instagram', tag: 'Meta avtojavobi' });
+      return;
+    }
     markSellerReply(c.id, { text: describe(m), userId: acct.owner_user_id, extMsgId: m.mid, ts, via: 'instagram' });
     return;
   }
